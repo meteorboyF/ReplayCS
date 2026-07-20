@@ -2,7 +2,7 @@ export const subjects = {
   'dsa-1': {
     title: 'Data Structures & Algorithms I',
     description:
-      'Trace the fundamentals: arrays, linked structures, searching, sorting, stacks, queues and recursion.',
+      'Trace binary search and compare Bubble, Selection, and Insertion Sort operation by operation.',
     lessons: [
       {
         title: 'Binary Search',
@@ -26,7 +26,8 @@ export const subjects = {
   },
   'dsa-2': {
     title: 'Data Structures & Algorithms II',
-    description: 'Move into trees, graph traversal, heaps, greedy methods and dynamic programming.',
+    description:
+      'Trace BFS, iterative DFS, and recursive DFS across connected and disconnected graphs.',
     lessons: [
       {
         title: 'Graph Explorer',

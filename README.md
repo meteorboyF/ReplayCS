@@ -49,8 +49,9 @@ are the real product interactions.
 The Challenge Arena adds five deterministic two-checkpoint bosses: Binary Bounds, BFS Frontier, SQL
 Pipeline, Round Robin, and Packet Route. Each supports check, retry, reveal, and replay; completion
 awards 30 XP once, with Boss Tracer/Arena Champion badges. Revealing an answer makes that run
-practice-only, so it cannot clear the boss or award XP. Planned lesson cards remain labeled as
-planned; ReplayCS does not treat a subject dashboard as a finished lab.
+practice-only, so it cannot clear the boss or award XP. Planned lesson entries remain labeled in
+the internal curriculum metadata and documentation, but unfinished topics are omitted
+from primary public navigation. ReplayCS does not treat a subject dashboard as a finished lab.
 
 Curated C, C++, Java, and Python source mappings apply to Binary Search and Graph Explorer.
 Switching languages preserves the semantic trace step and visualization state. SQL Query Pipeline,

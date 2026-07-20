@@ -165,8 +165,8 @@ REPLAYCS_BASE_URL=https://replaycs.vercel.app \
   storage. Progress intentionally does not sync between devices.
 - **Home still says Start tracing:** that is the correct fresh-learner state. Complete onboarding
   once to activate the personalized returning-learner CTA.
-- **A planned lesson card does not open:** only the functional labs listed in the README are shipped;
-  roadmap cards are deliberately labeled planned.
+- **A roadmap topic is absent from a subject dashboard:** only lessons satisfying the public lesson
+  contract are shown. Unfinished roadmap topics remain documented without appearing as product cards.
 - **A trace differs from a real production system:** SQL physical plans, packet timing/topology, and
   scheduler assumptions are explicitly bounded teaching models, not telemetry from an external
   system.
