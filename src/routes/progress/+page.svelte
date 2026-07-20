@@ -67,7 +67,7 @@
   const subjectMastery = [
     {
       label: 'DSA I',
-      prefixes: ['binary-search', 'sorting-arena', 'linked-list-lab'],
+      prefixes: ['binary-search', 'sorting-arena', 'linked-list-lab', 'array-lab'],
       accent: 'cyan'
     },
     { label: 'DSA II', prefixes: ['graph-explorer'], accent: 'violet' },
@@ -81,6 +81,8 @@
   function reset() {
     if (confirm('Reset all ReplayCS progress and preferences? This cannot be undone.')) {
       localStorage.removeItem('replaycs-progress');
+      localStorage.removeItem('replaycs-linked-list-operations');
+      localStorage.removeItem('replaycs-array-operations');
       progress = createEmptyProgress();
       resetMessage = 'Progress reset. Your next lesson will start fresh.';
     }
@@ -118,6 +120,7 @@
       'binary-search': 'Binary Search',
       'sorting-arena': 'Sorting Arena',
       'linked-list-lab': 'Linked List Lab',
+      'array-lab': 'Array & Dynamic Array Lab',
       'graph-explorer': 'Graph Explorer',
       'query-pipeline': 'Query Pipeline',
       'cpu-scheduling': 'CPU Scheduling',

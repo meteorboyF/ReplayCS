@@ -11,6 +11,8 @@ export type MisconceptionTag =
   | 'node-vs-value'
   | 'incorrect-predecessor'
   | 'fast-vs-slow-pointer'
+  | 'capacity-vs-size'
+  | 'amortized-vs-worst'
   | 'stack-vs-queue'
   | 'recursive-base-case'
   | 'visited-marking-timing'

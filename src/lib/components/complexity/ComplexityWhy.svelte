@@ -4,7 +4,26 @@
   let { evidence }: { evidence: ComplexityEvidence } = $props();
   let n = $derived(Math.max(1, evidence.inputSize.n));
   let linear = $derived(evidence.timeComplexity === 'O(n)');
-  let recursiveSpace = $derived(evidence.auxiliarySpace === 'O(n)');
+  let amortized = $derived(evidence.selectedCase === 'amortized');
+  let linearSpace = $derived(evidence.auxiliarySpace === 'O(n)');
+  let recursiveSpace = $derived(
+    linearSpace &&
+      ((evidence.space.callStackDepth ?? 1) > 1 ||
+        evidence.space.auxiliary.unit.toLowerCase().includes('frame'))
+  );
+  let bufferSpace = $derived(linearSpace && !recursiveSpace);
+  let arrayWork = $derived(evidence.space.auxiliary.unit.toLowerCase().startsWith('slots'));
+  let visitedWork = $derived(
+    evidence.cumulativeWork['node-inspection'] ??
+      evidence.cumulativeWork['loop-iteration'] ??
+      Math.min(n, (evidence.cumulativeWork.read ?? 0) + (evidence.cumulativeWork.write ?? 0))
+  );
+
+  function resizeSizes(inputSize: number) {
+    const sizes: number[] = [];
+    for (let capacity = 1; capacity < inputSize; capacity *= 2) sizes.push(capacity);
+    return sizes;
+  }
 </script>
 
 <section class="why" aria-label="Visual complexity explanation">
@@ -16,13 +35,19 @@
     <code>{evidence.selectedCase}</code>
   </div>
 
-  <div class="growth" class:constant={!linear}>
-    {#if linear}
-      {#each Array(n) as _, index}<span
-          class:visited={index < (evidence.cumulativeWork['node-inspection'] ?? 0)}
-          >node {index + 1}</span
+  <div class="growth" class:constant={!linear && !amortized} class:amortized>
+    {#if amortized}
+      {#each resizeSizes(n) as copies}
+        <span class="resize" style={`--resize-height:${Math.min(90, 38 + copies * 6)}px`}
+          >copy {copies}</span
+        >
+      {/each}
+      <b>Copies form 1 + 2 + 4 + … &lt; 2n, so n appends cost O(n) total → amortized O(1).</b>
+    {:else if linear}
+      {#each Array(n) as _, index}<span class:visited={index < visitedWork}
+          >{arrayWork ? 'slot' : 'node'} {index + 1}</span
         >{/each}
-      <b>Work can grow once per node → n</b>
+      <b>Work can grow once per {arrayWork ? 'affected slot' : 'node'} → n</b>
     {:else}
       <span class="visited">fixed read</span><span class="visited">fixed write</span><b
         >Input may grow; this fixed-width work does not → 1</b
@@ -37,9 +62,19 @@
         {#each Array(n) as _, index}<i style={`--depth: ${index}`}>frame {index + 1}</i>{/each}
       </div>
       <p>Recursive calls remain live together, so peak call-stack depth grows with <b>n</b>.</p>
+    {:else if bufferSpace}
+      <div class="frames buffer-slots">
+        {#each Array(n) as _, index}<i>slot {index}</i>{/each}
+      </div>
+      <p>
+        A second/resized buffer can hold a linear number of slots, so peak auxiliary storage is
+        <b>O(n)</b>.
+      </p>
     {:else}
-      <div class="slots"><i>current</i><i>previous</i><i>next</i></div>
-      <p>A bounded number of references is reused, so auxiliary storage stays constant.</p>
+      <div class="slots"><i>cursor</i><i>temporary</i><i>counter</i></div>
+      <p>
+        A bounded number of scalar/reference slots is reused, so auxiliary storage stays constant.
+      </p>
     {/if}
   </div>
 
@@ -100,6 +135,12 @@
     background: #2dd4bf18;
     color: var(--primary);
   }
+  .growth span.resize {
+    height: var(--resize-height);
+    border-color: var(--secondary);
+    background: #9b7cff12;
+    color: var(--secondary);
+  }
   .growth b {
     flex: 2 0 180px;
     align-self: center;
@@ -135,6 +176,14 @@
   }
   .frames i {
     transform: translateY(calc(var(--depth) * 2px));
+  }
+  .buffer-slots {
+    flex-wrap: wrap;
+  }
+  .buffer-slots i {
+    border-color: #2dd4bf66;
+    color: var(--primary);
+    transform: none;
   }
   .space-model p {
     margin: 0.55rem 0 0;

@@ -68,6 +68,24 @@ const definitions: readonly LiveLessonDefinition[] = [
     }
   },
   {
+    completionId: 'array-lab',
+    subject: 'dsa-1',
+    slug: 'arrays',
+    completionXp: 35,
+    recovery: {
+      title: 'Array Lab Recovery',
+      href: '/lesson/dsa-1/arrays',
+      reason: 'Replay the first shift, resize, or index divergence in contiguous memory.',
+      misconceptionTags: [
+        'index-vs-value',
+        'off-by-one',
+        'loop-boundary',
+        'capacity-vs-size',
+        'amortized-vs-worst'
+      ]
+    }
+  },
+  {
     completionId: 'graph-explorer',
     subject: 'dsa-2',
     slug: 'graph-explorer',
