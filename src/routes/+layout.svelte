@@ -9,6 +9,7 @@
     content="Learn computer science by predicting the next execution state."
   /></svelte:head
 >
+<a class="skip-link" href="#main-content">Skip to main content</a>
 <header class="site-header">
   <a class="brand" href="/"><span class="mark">R▶</span> ReplayCS</a>
   <nav aria-label="Main navigation">
@@ -19,5 +20,5 @@
     >
   </nav>
 </header>
-<main>{@render children()}</main>
+<main id="main-content" tabindex="-1">{@render children()}</main>
 <footer>ReplayCS · Built to make invisible state visible.</footer>

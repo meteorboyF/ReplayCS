@@ -87,6 +87,17 @@ test('landing page and mobile navigation expose the judge route', async ({ page 
   await expect(
     page.getByRole('navigation').getByRole('link', { name: 'Judge Demo' })
   ).toBeVisible();
+  const primaryNavigation = page.getByRole('navigation', { name: 'Main navigation' });
+  for (const label of ['Learn', 'Trace Lab', 'Challenges', 'Judge Demo', 'Progress', 'About']) {
+    await expect(primaryNavigation.getByRole('link', { name: label, exact: true })).toBeVisible();
+  }
+
+  await page.keyboard.press('Home');
+  await page.keyboard.press('Tab');
+  const skipLink = page.getByRole('link', { name: 'Skip to main content' });
+  await expect(skipLink).toBeFocused();
+  await skipLink.click();
+  await expect(page.locator('#main-content')).toBeFocused();
 
   await page.goto('/lesson/dsa-2/graph-explorer');
   const lessonHeader = page.locator('header.lesson-head');
