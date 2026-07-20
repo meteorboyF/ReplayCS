@@ -32,7 +32,12 @@
     min="0"
     max={total - 1}
     value={index}
-    oninput={(e) => onjump(Number(e.currentTarget.value))}
+    oninput={(e) => {
+      const requested = Number(e.currentTarget.value);
+      onjump(requested);
+      // A gated jump can be rejected without changing `index`; resync the DOM value.
+      e.currentTarget.value = String(index);
+    }}
   /><span>{index + 1} / {total}</span>
 </div>
 

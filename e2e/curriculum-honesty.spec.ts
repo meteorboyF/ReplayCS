@@ -1,7 +1,10 @@
 import { expect, test } from '@playwright/test';
 
 const subjects = [
-  { path: '/learn/dsa-1', liveLessons: ['Binary Search', 'Sorting Arena'] },
+  {
+    path: '/learn/dsa-1',
+    liveLessons: ['Binary Search', 'Sorting Arena', 'Linked List Lab']
+  },
   { path: '/learn/dsa-2', liveLessons: ['Graph Explorer'] },
   { path: '/learn/dbms', liveLessons: ['SQL Execution Lab'] },
   { path: '/learn/operating-systems', liveLessons: ['CPU Scheduling Arena'] },

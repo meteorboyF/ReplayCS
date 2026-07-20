@@ -2,7 +2,7 @@ export const subjects = {
   'dsa-1': {
     title: 'Data Structures & Algorithms I',
     description:
-      'Trace binary search and compare Bubble, Selection, and Insertion Sort operation by operation.',
+      'Trace binary search, compare classic sorting algorithms, and replay linked-list pointer changes operation by operation.',
     lessons: [
       {
         title: 'Binary Search',
@@ -17,10 +17,11 @@ export const subjects = {
         detail: 'Compare Bubble, Selection, and Insertion Sort operation by operation.'
       },
       {
-        title: 'Linked-list insertion',
-        slug: 'linked-list-insertion',
-        status: 'planned',
-        detail: 'Follow pointer rewiring without losing the list.'
+        title: 'Linked List Lab',
+        slug: 'linked-list',
+        status: 'live',
+        detail:
+          'Trace access, insertion, deletion, reversal, and cycle detection pointer by pointer.'
       }
     ]
   },

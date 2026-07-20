@@ -381,16 +381,16 @@ export function awardPrediction(progress: Progress, id: string, xp: number) {
   return syncLessonMastery(next, lessonIdFromEvidence(id));
 }
 
-export function completeLesson(progress: Progress, id: string) {
+export function completeLesson(progress: Progress, id: string, xp = 25) {
   if (progress.completed.includes(id)) return syncLessonMastery(progress, id);
   const next = {
     ...progress,
-    xp: progress.xp + 25,
+    xp: progress.xp + xp,
     completed: [...progress.completed, id],
     recentActivity: activity(progress, {
       type: 'completion',
       lessonId: id,
-      xp: 25,
+      xp,
       at: new Date().toISOString()
     })
   };

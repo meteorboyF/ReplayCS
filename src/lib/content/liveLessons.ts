@@ -47,6 +47,27 @@ const definitions: readonly LiveLessonDefinition[] = [
     }
   },
   {
+    completionId: 'linked-list-lab',
+    subject: 'dsa-1',
+    slug: 'linked-list',
+    completionXp: 35,
+    recovery: {
+      title: 'Linked List Lab Recovery',
+      href: '/lesson/dsa-1/linked-list',
+      reason: 'Replay the first pointer divergence before reconnecting or traversing the list.',
+      misconceptionTags: [
+        'pointer-update-order',
+        'head-update-timing',
+        'lost-list',
+        'tail-pointer-maintenance',
+        'node-vs-value',
+        'incorrect-predecessor',
+        'recursive-base-case',
+        'fast-vs-slow-pointer'
+      ]
+    }
+  },
+  {
     completionId: 'graph-explorer',
     subject: 'dsa-2',
     slug: 'graph-explorer',
