@@ -46,6 +46,96 @@ export interface Progress extends OnboardingPreferences {
   badge?: string;
 }
 
+interface ProgressStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+
+const learnerLevels: readonly LearnerLevel[] = ['beginner', 'intermediate', 'advanced'];
+const learningGoals: readonly LearningGoal[] = ['foundation', 'exam', 'interview', 'curiosity'];
+const languages: readonly SupportedLanguage[] = ['c', 'cpp', 'java', 'python'];
+const explanationLanguages = ['en', 'bn'] as const;
+const explanationLevels: readonly ExplanationLevel[] = [
+  'beginner',
+  'standard',
+  'exam-ready',
+  'technical'
+];
+const subjectIds: readonly SubjectId[] = [
+  'dsa-1',
+  'dsa-2',
+  'dbms',
+  'operating-systems',
+  'computer-networks'
+];
+const activityTypes: readonly Activity['type'][] = ['prediction', 'recovery', 'completion'];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
+  return typeof value === 'string' && allowed.includes(value as T) ? (value as T) : fallback;
+}
+
+function boundedInteger(value: unknown, fallback: number, minimum: number, maximum: number) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
+  return Math.min(maximum, Math.max(minimum, Math.floor(value)));
+}
+
+function uniqueStrings(value: unknown, limit = 500): string[] {
+  if (!Array.isArray(value)) return [];
+  return [
+    ...new Set(
+      value.filter(
+        (item): item is string => typeof item === 'string' && item.length > 0 && item.length <= 200
+      )
+    )
+  ].slice(0, limit);
+}
+
+function numberRecord(value: unknown, maximum: number): Record<string, number> {
+  if (!isRecord(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(
+        (entry): entry is [string, number] =>
+          entry[0].length > 0 &&
+          entry[0].length <= 200 &&
+          typeof entry[1] === 'number' &&
+          Number.isFinite(entry[1])
+      )
+      .slice(0, 500)
+      .map(([key, count]) => [key, Math.min(maximum, Math.max(0, Math.floor(count)))])
+  );
+}
+
+function activities(value: unknown): Activity[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(isRecord)
+    .flatMap((item) => {
+      if (
+        typeof item.lessonId !== 'string' ||
+        item.lessonId.length === 0 ||
+        item.lessonId.length > 200 ||
+        typeof item.at !== 'string' ||
+        !activityTypes.includes(item.type as Activity['type'])
+      ) {
+        return [];
+      }
+      return [
+        {
+          type: item.type as Activity['type'],
+          lessonId: item.lessonId,
+          xp: boundedInteger(item.xp, 0, 0, 1_000_000),
+          at: item.at
+        }
+      ];
+    })
+    .slice(0, 20);
+}
+
 export function createEmptyProgress(): Progress {
   return {
     version: 3,
@@ -81,24 +171,102 @@ function activity(progress: Progress, item: Activity): Activity[] {
   return [item, ...progress.recentActivity].slice(0, 20);
 }
 
-export function loadProgress(): Progress {
+export function sanitizeProgress(value: unknown): Progress {
   const empty = createEmptyProgress();
-  if (!browser) return empty;
+  if (!isRecord(value) || ![1, 2, 3].includes(value.version as number)) return empty;
+
+  const storedSubjects = uniqueStrings(value.subjectsOfInterest).filter(
+    (subject): subject is SubjectId => subjectIds.includes(subject as SubjectId)
+  );
+  const storedLanguageUsage = numberRecord(value.languageUsage, 1_000_000);
+  const languageUsage = Object.fromEntries(
+    languages.flatMap((language) =>
+      typeof storedLanguageUsage[language] === 'number'
+        ? [[language, storedLanguageUsage[language]]]
+        : []
+    )
+  ) as Partial<Record<SupportedLanguage, number>>;
+  const storedBadge =
+    typeof value.badge === 'string' && value.badge.length <= 100 ? value.badge : undefined;
+  const predictionAttempts = boundedInteger(
+    value.predictionAttempts,
+    empty.predictionAttempts,
+    0,
+    1_000_000_000
+  );
+  const correctPredictions = Math.min(
+    predictionAttempts,
+    boundedInteger(value.correctPredictions, empty.correctPredictions, 0, 1_000_000_000)
+  );
+  const firstAttemptCorrect = Math.min(
+    correctPredictions,
+    boundedInteger(value.firstAttemptCorrect, empty.firstAttemptCorrect, 0, 1_000_000_000)
+  );
+
+  return {
+    version: 3,
+    onboardingComplete:
+      typeof value.onboardingComplete === 'boolean'
+        ? value.onboardingComplete
+        : empty.onboardingComplete,
+    learnerLevel: oneOf(value.learnerLevel, learnerLevels, empty.learnerLevel),
+    primaryGoal: oneOf(value.primaryGoal, learningGoals, empty.primaryGoal),
+    preferredLanguage: oneOf(value.preferredLanguage, languages, empty.preferredLanguage),
+    explanationLanguage: oneOf(
+      value.explanationLanguage,
+      explanationLanguages,
+      empty.explanationLanguage
+    ),
+    explanationLevel: oneOf(value.explanationLevel, explanationLevels, empty.explanationLevel),
+    subjectsOfInterest: storedSubjects.length ? storedSubjects : empty.subjectsOfInterest,
+    dailyGoalMinutes: boundedInteger(value.dailyGoalMinutes, empty.dailyGoalMinutes, 5, 45),
+    xp: boundedInteger(value.xp, empty.xp, 0, 1_000_000_000),
+    streak: boundedInteger(value.streak, empty.streak, 0, 1_000_000),
+    hearts: boundedInteger(value.hearts, empty.hearts, 0, 3),
+    completed: uniqueStrings(value.completed),
+    awardedPredictions: uniqueStrings(value.awardedPredictions),
+    misconceptionCounts: numberRecord(value.misconceptionCounts, 1_000_000),
+    mistakeEvidence: uniqueStrings(value.mistakeEvidence),
+    recoveredMistakes: uniqueStrings(value.recoveredMistakes),
+    lessonMastery: numberRecord(value.lessonMastery, 100),
+    predictionAttempts,
+    correctPredictions,
+    firstAttemptCorrect,
+    hintsUsed: boundedInteger(value.hintsUsed, empty.hintsUsed, 0, 1_000_000_000),
+    recentActivity: activities(value.recentActivity),
+    languageUsage,
+    badges: uniqueStrings(value.badges, 100),
+    completedBossChallenges: uniqueStrings(value.completedBossChallenges),
+    ...(storedBadge ? { badge: storedBadge } : {})
+  };
+}
+
+export function readProgressFromStorage(storage: Pick<ProgressStorage, 'getItem'>): Progress {
   try {
-    const value = JSON.parse(localStorage.getItem('replaycs-progress') ?? 'null') as
-      (Partial<Omit<Progress, 'version'>> & { version?: number }) | null;
-    if (value?.version === 1 || value?.version === 2 || value?.version === 3) {
-      const { version: _storedVersion, ...storedProgress } = value;
-      return { ...empty, ...storedProgress, version: 3 };
-    }
-    return empty;
+    return sanitizeProgress(JSON.parse(storage.getItem('replaycs-progress') ?? 'null'));
   } catch {
-    return empty;
+    return createEmptyProgress();
   }
 }
 
-export function saveProgress(value: Progress) {
-  if (browser) localStorage.setItem('replaycs-progress', JSON.stringify(value));
+export function writeProgressToStorage(
+  storage: Pick<ProgressStorage, 'setItem'>,
+  value: Progress
+): boolean {
+  try {
+    storage.setItem('replaycs-progress', JSON.stringify(sanitizeProgress(value)));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function loadProgress(): Progress {
+  return browser ? readProgressFromStorage(localStorage) : createEmptyProgress();
+}
+
+export function saveProgress(value: Progress): boolean {
+  return browser ? writeProgressToStorage(localStorage, value) : false;
 }
 
 export function configureProfile(progress: Progress, preferences: OnboardingPreferences) {
@@ -144,6 +312,30 @@ export function completeLesson(progress: Progress, id: string) {
       type: 'completion',
       lessonId: id,
       xp: 25,
+      at: new Date().toISOString()
+    })
+  };
+}
+
+export function completeBossChallenge(progress: Progress, id: string, xp: number) {
+  if (progress.completedBossChallenges.includes(id)) return progress;
+  const completedBossChallenges = [...progress.completedBossChallenges, id];
+  const badge = completedBossChallenges.length === 5 ? 'Arena Champion' : 'Boss Tracer';
+  return {
+    ...progress,
+    xp: progress.xp + xp,
+    streak: progress.streak + 1,
+    completedBossChallenges,
+    lessonMastery: {
+      ...progress.lessonMastery,
+      [id]: 100
+    },
+    badges: progress.badges.includes(badge) ? progress.badges : [...progress.badges, badge],
+    badge,
+    recentActivity: activity(progress, {
+      type: 'completion',
+      lessonId: id,
+      xp,
       at: new Date().toISOString()
     })
   };
