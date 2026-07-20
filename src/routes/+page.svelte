@@ -18,7 +18,7 @@
       <a class="button primary" href="/onboarding">Start tracing →</a><a
         class="button"
         href="/learn/dsa-1">Explore subjects</a
-      >
+      ><a class="button judge" href="/judge-demo">Judge demo · 3 min</a>
     </div>
     <p class="languages">Curated equivalents in <strong>C · C++ · Java · Python</strong></p>
   </div>
@@ -84,8 +84,15 @@
   }
   .actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.8rem;
     margin: 1.8rem 0;
+  }
+  .judge {
+    border-color: #9b7cff88;
+    background: #9b7cff12;
+    color: #c8baff;
+    font-weight: 750;
   }
   .languages {
     font-size: 0.85rem;
