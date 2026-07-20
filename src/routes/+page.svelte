@@ -57,7 +57,7 @@
   <p class="eyebrow">Curriculum</p>
   <h2>From pointers to packets.</h2>
   <div class="cards subjects">
-    {#each [['DSA I', 'Arrays, lists, stacks, sorting and searching', '/learn/dsa-1', 'Live'], ['DSA II', 'Trees, graphs, heaps and dynamic programming', '/learn/dsa-2', 'Graph lab live'], ['DBMS', 'Trace joins, filters, grouping and transactions', '/learn/dbms', 'Pipeline live'], ['Operating Systems', 'Processes, scheduling, pages and locks', '/learn/operating-systems', 'Scheduling live'], ['Networks', 'Packets, protocols, DNS and TCP', '/learn/computer-networks', 'Foundation']] as s}<a
+    {#each [['DSA I', 'Arrays, lists, stacks, sorting and searching', '/learn/dsa-1', 'Live'], ['DSA II', 'Trees, graphs, heaps and dynamic programming', '/learn/dsa-2', 'Graph lab live'], ['DBMS', 'Trace joins, filters, grouping and transactions', '/learn/dbms', 'Pipeline live'], ['Operating Systems', 'Processes, scheduling, pages and locks', '/learn/operating-systems', 'Scheduling live'], ['Networks', 'Packets, protocols, DNS and TCP', '/learn/computer-networks', 'Packet lab live']] as s}<a
         class="card panel"
         href={s[2]}
         ><span class="pill">{s[3]}</span>
