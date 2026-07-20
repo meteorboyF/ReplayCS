@@ -5,8 +5,10 @@ describe('health endpoint', () => {
   it('returns safe deployment metadata', async () => {
     const originalVercelSha = process.env.VERCEL_GIT_COMMIT_SHA;
     const originalGitSha = process.env.GIT_COMMIT_SHA;
+    const originalVercelUrl = process.env.VERCEL_URL;
     process.env.VERCEL_GIT_COMMIT_SHA = '';
     process.env.GIT_COMMIT_SHA = '';
+    process.env.VERCEL_URL = '';
     const response = GET();
     const body = await response.json();
 
@@ -14,6 +16,8 @@ describe('health endpoint', () => {
     else process.env.VERCEL_GIT_COMMIT_SHA = originalVercelSha;
     if (originalGitSha === undefined) delete process.env.GIT_COMMIT_SHA;
     else process.env.GIT_COMMIT_SHA = originalGitSha;
+    if (originalVercelUrl === undefined) delete process.env.VERCEL_URL;
+    else process.env.VERCEL_URL = originalVercelUrl;
 
     expect(response.status).toBe(200);
     expect(body).toMatchObject({ status: 'ok', app: 'ReplayCS' });
