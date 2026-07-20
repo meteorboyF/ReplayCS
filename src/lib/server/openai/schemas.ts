@@ -29,10 +29,10 @@ export const explanationSchema = z.object({
   whyNow: z.string(),
   stateChange: z.string(),
   unchangedState: z.array(z.string()),
-  commonMistake: z.string().optional(),
-  analogy: z.string().optional(),
+  commonMistake: z.string().nullable(),
+  analogy: z.string().nullable(),
   groundingNote: z.string(),
-  recoveryChallenge: z.string().optional(),
+  recoveryChallenge: z.string().nullable(),
   checkQuestion: z.object({ prompt: z.string(), expectedConcept: z.string() })
 });
 export type StepContext = z.infer<typeof stepContextSchema>;

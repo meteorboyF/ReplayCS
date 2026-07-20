@@ -1,6 +1,41 @@
+import { APIError } from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
 import { getOpenAI } from './client';
 import { explanationSchema, type StepContext, type AiStepExplanation } from './schemas';
+
+type OpenAIErrorMetadata = {
+  name: string;
+  status?: number;
+  code?: string;
+  type?: string;
+  requestId?: string;
+};
+
+function safeMetadataToken(value: unknown) {
+  return typeof value === 'string' && /^[A-Za-z0-9._:-]{1,128}$/.test(value) ? value : undefined;
+}
+
+export function openAIErrorMetadata(error: unknown): OpenAIErrorMetadata {
+  const constructorName =
+    error instanceof Error ? safeMetadataToken(error.constructor.name) : undefined;
+  const metadata: OpenAIErrorMetadata = { name: constructorName ?? 'UnknownError' };
+
+  if (!(error instanceof APIError)) return metadata;
+
+  if (Number.isInteger(error.status) && error.status >= 100 && error.status <= 599) {
+    metadata.status = error.status;
+  }
+
+  const code = safeMetadataToken(error.code);
+  const type = safeMetadataToken(error.type);
+  const requestId = safeMetadataToken(error.requestID);
+  if (code) metadata.code = code;
+  if (type) metadata.type = type;
+  if (requestId) metadata.requestId = requestId;
+
+  return metadata;
+}
+
 export function deterministicFallback(c: StepContext): AiStepExplanation {
   const bangla = c.explanationLanguage === 'bn';
   const groundingNote = bangla
@@ -28,7 +63,9 @@ export function deterministicFallback(c: StepContext): AiStepExplanation {
       commonMistake: bangla
         ? 'operation execute হওয়ার আগে outcome ধরে নেবেন না।'
         : 'Do not assume the outcome before applying the active operation.',
+      analogy: null,
       groundingNote,
+      recoveryChallenge: null,
       checkQuestion: {
         prompt:
           c.currentPrediction?.prompt ??
@@ -60,6 +97,7 @@ export function deterministicFallback(c: StepContext): AiStepExplanation {
       commonMistake: c.misconceptionTags.length
         ? `Recorded misconception: ${c.misconceptionTags.join(', ')}.`
         : 'Compare the predicted operation with the active deterministic operation.',
+      analogy: null,
       groundingNote,
       recoveryChallenge: bangla
         ? 'একই operation আবার চালিয়ে mutation হওয়ার আগের value বলুন।'
@@ -93,7 +131,9 @@ export function deterministicFallback(c: StepContext): AiStepExplanation {
     commonMistake: bangla
       ? 'source line execute হওয়ার আগেই state পরিবর্তন হয়েছে ধরে নেবেন না।'
       : 'Do not infer a state change before its source line executes.',
+    analogy: null,
     groundingNote,
+    recoveryChallenge: null,
     checkQuestion: {
       prompt: bangla ? 'এই ধাপে কোন মানটি পরিবর্তিত হয়েছে?' : 'Which value changed in this step?',
       expectedConcept: 'Identify the recorded mutation.'
@@ -135,9 +175,7 @@ export async function explainStep(c: StepContext) {
     });
     return parsedExplanationOrFallback(c, response.output_parsed);
   } catch (error) {
-    console.error('OpenAI explanation failed', {
-      name: error instanceof Error ? error.name : 'UnknownError'
-    });
+    console.error('OpenAI explanation failed', openAIErrorMetadata(error));
     return {
       available: false,
       source: 'fallback' as const,
