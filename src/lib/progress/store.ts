@@ -29,8 +29,11 @@ export function loadProgress(): Progress {
   try {
     const value = JSON.parse(localStorage.getItem('replaycs-progress') ?? 'null') as
       (Partial<Omit<Progress, 'version'>> & { version?: number }) | null;
-    if (value?.version === 1) return { ...empty, ...value, version: 2 };
-    return value?.version === 2 ? { ...empty, ...value } : empty;
+    if (value?.version === 1 || value?.version === 2) {
+      const { version: _storedVersion, ...storedProgress } = value;
+      return { ...empty, ...storedProgress, version: 2 };
+    }
+    return empty;
   } catch {
     return empty;
   }
