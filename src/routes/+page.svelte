@@ -15,7 +15,7 @@
       and understand why it happened.
     </p>
     <div class="actions">
-      <a class="button primary" href="/lesson/dsa-1/binary-search">Start tracing →</a><a
+      <a class="button primary" href="/onboarding">Start tracing →</a><a
         class="button"
         href="/learn/dsa-1">Explore subjects</a
       >

@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 test('keeps the trace step while switching language', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('link', { name: /Start tracing/ }).click();
+  await page.goto('/lesson/dsa-1/binary-search');
   await expect(page.getByRole('heading', { name: 'Binary Search' })).toBeVisible();
   await page.getByRole('button', { name: /Next/ }).click();
   await page.getByRole('button', { name: /Next/ }).click();
