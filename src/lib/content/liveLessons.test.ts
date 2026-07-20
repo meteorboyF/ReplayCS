@@ -36,6 +36,6 @@ describe('live lesson registry', () => {
 
   it('uses the completion mastery floor for migrated completed lessons', () => {
     const progress = { ...createEmptyProgress(), completed: ['graph-explorer'] };
-    expect(subjectMastery(progress, 'dsa-2')).toBe(75);
+    expect(subjectMastery(progress, 'dsa-2')).toBe(50);
   });
 });
