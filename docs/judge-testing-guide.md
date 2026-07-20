@@ -7,6 +7,8 @@ curated path; the Binary Search flagship also has an automated 390 × 844 produc
 The fastest entry point is <https://replaycs.vercel.app/judge-demo>. It is a browser-local checklist
 that links to real, stable lab states. Tour markers do not award XP. Predictions, recoveries, lesson
 completion, and Challenge Arena bosses use the actual product logic and update local progress.
+After onboarding has been completed once, the home-page **Start tracing** action becomes a
+personalized **Continue · [recommended lesson]** link derived from that same progress record.
 
 ## Before testing
 
@@ -36,10 +38,12 @@ Open the first Judge Demo stop, or go directly to:
 5. Switch the source tab from **PYTHON** to **C++**, then back to **PYTHON**.
 6. Expected: the current semantic step and array state remain selected while the source syntax
    changes.
-7. Choose **Explain this step** in the mentor.
+7. Choose **Explain my mistake** in the now-unlocked mentor.
 8. Expected with no key: a **Deterministic** badge and the message that AI is not configured.
    Expected with a configured key: a **GPT-5.6** badge and a response grounded in the same midpoint
    state. Either source is a passing state; neither changes the canonical trace.
+9. Optional persistence check: choose **Give me a hint**, then later confirm that **Hints used** on
+   `/progress` increments. A hint is recorded as evidence; it does not alter the trace or award XP.
 
 Optional accuracy check: replace the values with an unsorted list such as `9, 3, 7`. **Build trace**
 must reject it with an ascending-input message rather than silently running invalid binary search.
@@ -94,22 +98,43 @@ Open <https://replaycs.vercel.app/lesson/computer-networks/packet-journey#timeli
 
 Open <https://replaycs.vercel.app/challenges>.
 
-1. Choose any subject boss and correctly answer its two deterministic checkpoints.
-2. Expected: check/retry/reveal controls work, completion awards `30 XP` once, and replaying a
-   completed boss awards no additional XP. Revealing an answer makes that attempt practice-only and
-   prevents boss completion/XP until a fresh unassisted run.
-3. Open <https://replaycs.vercel.app/progress>.
-4. Expected: browser-local XP, prediction evidence, misconception history, subject mastery, and a
-   deterministic next recommendation reflect the real interactions above. Export produces JSON;
-   reset requires confirmation.
+1. Confirm the map contains all five shipped bosses: **Binary Bounds Boss**, **BFS Frontier Boss**,
+   **SQL Pipeline Boss**, **Round Robin Boss**, and **Packet Route Boss**.
+2. Keep the default Binary Bounds Boss. For checkpoint 1 choose `low = 4, high = 6`; for checkpoint
+   2 choose `31 at index 5`. Check each prediction and complete the challenge.
+3. Expected: the boss clears and awards `30 XP` once. Replaying a completed boss awards no
+   additional XP.
+4. Optional practice-mode check: on an unbeaten boss, answer incorrectly, choose **Reveal answer**,
+   and finish both checkpoints. Expected: the run says **Guided practice** and awards neither a
+   clear nor XP. **Replay without reveals** starts the fresh unassisted run required to clear it.
+5. Open <https://replaycs.vercel.app/progress>.
+6. Expected: the dashboard derives all of these panels from browser-local evidence:
+   - prediction accuracy, first-attempt accuracy, and average attempts;
+   - hints used, code-language activity, and recent rewarded activity;
+   - boss progress out of five, subject mastery, misconception history, badges, and the next
+     deterministic recommendation.
+7. Mastery is intentionally explainable per live lesson: `50` points for trace completion, `30` for
+   a correct prediction or recovery, and `20` for a first-try answer without a hint or for fully
+   recovering every recorded mistake. A boss clear records `100%` for that boss, while the subject
+   rows summarize live lesson evidence rather than AI opinion.
+8. Export produces JSON; reset requires confirmation.
+
+### 6. Returning learner handoff
+
+Complete onboarding through the UI, return to <https://replaycs.vercel.app>, and reload if needed.
+Expected: the primary action reads **Continue · [lesson title]** and links to the same deterministic
+recommendation shown on `/progress`. Unfinished recovery evidence takes priority; otherwise ReplayCS
+uses the learner's subject interests and incomplete live lessons. Fresh learners still see **Start
+tracing** and go to onboarding.
 
 ## What GPT-5.6 contributes
 
 GPT-5.6 explains an already-computed transition using bounded trace context: active operation,
 before/after state, mutation, learner answer, misconception tags, selected programming language,
 learner level, and requested English/Bangla explanation depth. It does not generate trace steps,
-score predictions, schedule processes, execute SQL, or decide packet order. The deterministic
-fallback demonstrates the same trust boundary when the key is absent or the upstream call fails.
+score predictions, compute mastery, schedule processes, execute SQL, or decide packet order. The
+deterministic fallback demonstrates the same trust boundary when the key is absent, its output is
+invalid, or the upstream call fails.
 
 ## Automated verification
 
@@ -138,6 +163,8 @@ REPLAYCS_BASE_URL=https://replaycs.vercel.app \
   remains fully usable.
 - **Progress is empty:** use the same non-private browser tab for the whole path and allow local
   storage. Progress intentionally does not sync between devices.
+- **Home still says Start tracing:** that is the correct fresh-learner state. Complete onboarding
+  once to activate the personalized returning-learner CTA.
 - **A planned lesson card does not open:** only the functional labs listed in the README are shipped;
   roadmap cards are deliberately labeled planned.
 - **A trace differs from a real production system:** SQL physical plans, packet timing/topology, and

@@ -52,9 +52,9 @@ awards 30 XP once, with Boss Tracer/Arena Champion badges. Revealing an answer m
 practice-only, so it cannot clear the boss or award XP. Planned lesson cards remain labeled as
 planned; ReplayCS does not treat a subject dashboard as a finished lab.
 
-Curated C, C++, Java, and Python source mappings currently apply to Binary Search. Switching
-languages preserves the semantic trace step and visualization state. The domain labs do not claim
-four-language simulation.
+Curated C, C++, Java, and Python source mappings apply to Binary Search and Graph Explorer.
+Switching languages preserves the semantic trace step and visualization state. SQL Query Pipeline,
+CPU Scheduling, and Packet Journey do not claim four-language simulation.
 
 ## Manual Trace and Replay My Mistake
 
@@ -68,6 +68,12 @@ an incorrect prediction preserves the learner's answer, places predicted and act
 side, labels the first divergence, replays the correct transition, and offers an idempotently
 rewarded recovery check.
 
+Lesson mastery is transparent rather than inferred by a model: 50 points come from completing the
+trace, 30 from a correct prediction or recovery, and the final 20 from succeeding first try without
+a hint or fully recovering every recorded mistake. The progress page also derives first-attempt
+accuracy and average attempts from unique checkpoint evidence, and persists hint requests,
+code-language interactions, recent XP activity, and boss clears in the same local profile.
+
 ## Grounded GPT-5.6 mentor
 
 The shared mentor is connected inside every shipped flagship lab. The browser sends a bounded
@@ -77,10 +83,12 @@ Server-only code calls the OpenAI Responses API with a structured Zod schema; th
 never comes from the model.
 
 The mentor supports step explanations, “why,” hints, simplification, mistake explanation, four depth
-levels, and English or Bangla teaching text. Without `OPENAI_API_KEY`, or when an upstream call
-fails, the same UI shows a deterministic grounded explanation. The public deployment currently
-operates in this no-key fallback mode; `/api/health` reports that state without exposing
-configuration values.
+levels, and English or Bangla teaching text. Without `OPENAI_API_KEY`, when an upstream call fails,
+or when model output misses the structured schema, the same UI shows a deterministic grounded
+explanation. The public deployment currently operates in this no-key fallback mode; `/api/health`
+reports that state without exposing configuration values. Hint requests are recorded as learning
+evidence; deterministic hints reason from the current operation without revealing the resulting
+state.
 
 See [OpenAI integration](docs/openai-integration.md) for the trust boundary and production behavior.
 
@@ -93,6 +101,10 @@ See [OpenAI integration](docs/openai-integration.md) for the trust boundary and 
 | CPU scheduling                                                       | Packet journey                                                          |
 | -------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | ![CPU Scheduling Gantt trace](static/screenshots/cpu-scheduling.png) | ![Packet Journey event timeline](static/screenshots/packet-journey.png) |
+
+| SQL reasoning                                                  | Judge path                                                |
+| -------------------------------------------------------------- | --------------------------------------------------------- |
+| ![SQL HAVING prediction](static/screenshots/sql-execution.png) | ![ReplayCS Judge Demo](static/screenshots/judge-demo.png) |
 
 The checked-in images are generated from the real application. Recreate the full landing, lesson,
 progress, and Judge Demo set with the [capture script](scripts/capture-screenshots.mjs):
@@ -108,12 +120,10 @@ To capture the public deployment instead of a local production build:
 REPLAYCS_BASE_URL=https://replaycs.vercel.app npm run screenshots
 ```
 
-For the final submission gate, require both cross-product routes instead of allowing the script to
-skip a not-yet-merged route:
-
-```bash
-REQUIRE_CHALLENGE_ARENA=1 REQUIRE_JUDGE_DEMO=1 npm run screenshots
-```
+The workflow is strict: it captures 11 real screens across 10 routes, including Graph Explorer,
+Challenge Arena, and Judge Demo, and exits unsuccessfully if any required screen cannot be reached.
+When running locally, it also refuses to reuse an unknown process already listening on the preview
+port.
 
 ## Architecture
 
@@ -141,7 +151,8 @@ routes in production. Read the [architecture](docs/architecture.md) and
 
 ## Local setup
 
-Requires Node.js 22 and npm.
+Requires Node.js 22 or 24 and npm. CI and Vercel builds use Node.js 24; deployed functions explicitly
+target the Node.js 22 runtime.
 
 ```bash
 git clone https://github.com/meteorboyF/ReplayCS.git

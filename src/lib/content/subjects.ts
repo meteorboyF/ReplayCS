@@ -53,10 +53,10 @@ export const subjects = {
     description: 'See the logical stages between a SQL query and its result.',
     lessons: [
       {
-        title: 'Compound query pipeline',
+        title: 'SQL Execution Lab',
         slug: 'query-pipeline',
-        status: 'next',
-        detail: 'JOIN, filter, group, aggregate, sort, and limit.'
+        status: 'live',
+        detail: 'Predict JOIN, filter, grouping, aggregate, sort, and limit transitions.'
       },
       {
         title: 'Normalization',

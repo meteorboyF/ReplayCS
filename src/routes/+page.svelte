@@ -1,9 +1,27 @@
 <script lang="ts">
   import { createBinarySearchLesson } from '$lib/engines/dsa/binarySearch';
+  import { recommendNext } from '$lib/progress/recommendations';
+  import { loadProgress } from '$lib/progress/store';
+  import { onMount } from 'svelte';
+
   const preview = createBinarySearchLesson().steps.find(
     (s) => s.semanticOperationId === 'calculate-middle'
   )!;
-  const previewValues = preview.stateAfter.values as (string | number)[];
+  const previewState = preview.stateBefore;
+  const previewValues = previewState.values as (string | number)[];
+
+  let primaryCta = $state({ label: 'Start tracing →', href: '/onboarding' });
+
+  onMount(() => {
+    const progress = loadProgress();
+    if (!progress.onboardingComplete) return;
+
+    const recommendation = recommendNext(progress);
+    primaryCta = {
+      label: `Continue · ${recommendation.title} →`,
+      href: recommendation.href
+    };
+  });
 </script>
 
 <section class="hero">
@@ -15,10 +33,10 @@
       and understand why it happened.
     </p>
     <div class="actions">
-      <a class="button primary" href="/onboarding">Start tracing →</a><a
+      <a class="button primary" href={primaryCta.href}>{primaryCta.label}</a><a
         class="button"
         href="/learn/dsa-1">Explore subjects</a
-      >
+      ><a class="button judge" href="/judge-demo">Judge demo · 3 min</a>
     </div>
     <p class="languages">Curated equivalents in <strong>C · C++ · Java · Python</strong></p>
   </div>
@@ -28,14 +46,14 @@
     </div>
     <code><i>3</i> mid = left + (right - left) // 2</code>
     <div class="array">
-      {#each previewValues as value, i}<div class:active={i === preview.stateAfter.mid}>
+      {#each previewValues as value, i}<div class:active={i === previewState.mid}>
           <small>{i}</small><b>{value}</b>
         </div>{/each}
     </div>
     <div class="state">
-      <span>left <b>{preview.stateAfter.left}</b></span><span
-        >mid <b>{preview.stateAfter.mid}</b></span
-      ><span>right <b>{preview.stateAfter.right}</b></span>
+      <span>left <b>{previewState.left}</b></span><span>mid <b>?</b></span><span
+        >right <b>{previewState.right}</b></span
+      >
     </div>
     <p><strong>Predict:</strong> which index becomes <code>mid</code>?</p>
   </div>
@@ -84,8 +102,15 @@
   }
   .actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.8rem;
     margin: 1.8rem 0;
+  }
+  .judge {
+    border-color: #9b7cff88;
+    background: #9b7cff12;
+    color: #c8baff;
+    font-weight: 750;
   }
   .languages {
     font-size: 0.85rem;

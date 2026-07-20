@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { page } from '$app/state';
   import { onMount } from 'svelte';
+  import AiMentor from '$lib/components/ai/AiMentor.svelte';
   import CodePane from '$lib/components/code/CodePane.svelte';
   import PredictionCheckpoint from '$lib/components/trace/PredictionCheckpoint.svelte';
   import TraceControls from '$lib/components/trace/TraceControls.svelte';
@@ -13,10 +15,28 @@
     type GraphPresetId,
     type TraversalAlgorithm
   } from '$lib/engines/dsa/graphTraversal';
+  import {
+    awardPrediction,
+    completeLesson,
+    loadProgress,
+    recordHint,
+    recordLanguageUse,
+    recordMisconception,
+    saveProgress
+  } from '$lib/progress/store';
+  import type { StepContext } from '$lib/server/openai/schemas';
   import type { SupportedLanguage } from '$lib/trace/types';
 
   type InputMode = 'preset' | 'custom';
   type Point = { x: number; y: number };
+  const supportedLanguages: readonly SupportedLanguage[] = ['c', 'cpp', 'java', 'python'];
+
+  function requestedLanguage() {
+    const candidate = page.url.searchParams.get('lang');
+    return supportedLanguages.includes(candidate as SupportedLanguage)
+      ? (candidate as SupportedLanguage)
+      : null;
+  }
 
   const initialPreset = getGraphPreset('learning-tree');
   const initialLesson = createGraphTraversalLesson({
@@ -34,18 +54,29 @@
   let graph = $state<GraphDefinition>(initialPreset.graph);
   let lesson = $state(initialLesson);
   let index = $state(0);
-  let language = $state<SupportedLanguage>('python');
+  let language = $state<SupportedLanguage>(requestedLanguage() ?? 'python');
   let playing = $state(false);
   let error = $state('');
   let submitted = $state<string[]>([]);
+  let progress = $state(loadProgress());
+  let predictionCorrect = $state<boolean | null>(null);
+  let predictionAnswer = $state('');
+  let predictionNudge = $state('');
   let runId = $state(0);
   let timer: ReturnType<typeof setInterval> | undefined;
 
   let step = $derived(lesson.steps[index]);
-  let traversal = $derived(getGraphTraversalState(step));
+  let predictionResolved = $derived(!step.prediction || submitted.includes(step.prediction.id));
+  let visibleStep = $derived(predictionResolved ? step : { ...step, stateAfter: step.stateBefore });
+  let traversal = $derived(getGraphTraversalState(visibleStep));
   let positions = $derived(layoutNodes(graph.nodes));
+  let completed = $derived(progress.completed.includes('graph-explorer'));
 
-  onMount(() => () => clearInterval(timer));
+  onMount(() => {
+    progress = loadProgress();
+    language = requestedLanguage() ?? progress.preferredLanguage;
+    return () => clearInterval(timer);
+  });
 
   function layoutNodes(nodes: string[]): Record<string, Point> {
     const centerX = 360;
@@ -88,6 +119,9 @@
       lesson = nextLesson;
       index = 0;
       submitted = [];
+      predictionCorrect = null;
+      predictionAnswer = '';
+      predictionNudge = '';
       runId += 1;
       error = '';
     } catch (caught) {
@@ -96,10 +130,28 @@
   }
 
   function jump(next: number) {
-    index = Math.max(0, Math.min(next, lesson.steps.length - 1));
+    const bounded = Math.max(0, Math.min(next, lesson.steps.length - 1));
+    const checkpointIndex = lesson.steps.findIndex((candidate) => candidate.prediction);
+    if (checkpointIndex >= 0 && bounded > checkpointIndex && submitted.length === 0) {
+      index = checkpointIndex;
+      predictionNudge = 'Lock the frontier prediction before revealing the traversal.';
+      playing = false;
+      clearInterval(timer);
+      return;
+    }
+    predictionNudge = '';
+    index = bounded;
+    if (index === lesson.steps.length - 1) {
+      progress = completeLesson(progress, 'graph-explorer');
+      saveProgress(progress);
+    }
   }
 
   function togglePlayback() {
+    if (submitted.length === 0) {
+      predictionNudge = 'Lock the frontier prediction before playing the traversal.';
+      return;
+    }
     playing = !playing;
     clearInterval(timer);
     if (!playing) return;
@@ -113,9 +165,61 @@
     }, 900);
   }
 
-  function recordPrediction() {
+  function recordPrediction(correct: boolean, answer: string) {
     if (!step.prediction || submitted.includes(step.prediction.id)) return;
     submitted = [...submitted, step.prediction.id];
+    predictionCorrect = correct;
+    predictionAnswer = answer;
+    predictionNudge = '';
+    const evidenceId = `graph-explorer:${algorithm}:frontier-prediction`;
+    progress = correct
+      ? awardPrediction(
+          progress,
+          `graph-explorer:${algorithm}:frontier-prediction`,
+          step.prediction.xpReward
+        )
+      : recordMisconception(progress, evidenceId, 'stack-vs-queue');
+    saveProgress(progress);
+  }
+
+  function selectLanguage(next: SupportedLanguage) {
+    language = next;
+    progress = recordLanguageUse(progress, next);
+    saveProgress(progress);
+  }
+
+  function recordMentorHint() {
+    progress = recordHint(progress, 'graph-explorer');
+    saveProgress(progress);
+  }
+
+  function mentorContext(): StepContext {
+    const activeLines = lesson.sourceByLanguage[language]
+      .filter((line) => step.sourceLineIds.includes(line.id))
+      .map((line) => line.text);
+    return {
+      subject: 'dsa-2',
+      lesson: lesson.id,
+      learningObjective: lesson.learningObjectives[0],
+      selectedLanguage: language,
+      activeSourceLines: activeLines,
+      stateBefore: step.stateBefore,
+      mutation: step.mutations,
+      stateAfter: step.stateAfter,
+      deterministicExplanation: step.deterministicExplanation,
+      learnerLevel: progress.learnerLevel,
+      misconceptionTags: predictionCorrect === false ? ['stack-vs-queue'] : [],
+      interaction: 'explain',
+      explanationLevel: progress.explanationLevel,
+      explanationLanguage: progress.explanationLanguage,
+      currentPrediction: step.prediction
+        ? {
+            prompt: step.prediction.prompt,
+            learnerAnswer: predictionAnswer || undefined,
+            correctAnswer: String(step.prediction.correctAnswer)
+          }
+        : undefined
+    };
   }
 
   function isTreeEdge(edge: GraphEdge): boolean {
@@ -164,6 +268,7 @@
   <div class="run-summary" aria-label="Current trace summary">
     <span>{traversal.visited.length}/{graph.nodes.length} visited</span>
     <span>{traversal.component} component{traversal.component === 1 ? '' : 's'}</span>
+    <span>⚡ {progress.xp} XP</span>
   </div>
 </header>
 
@@ -307,6 +412,7 @@
       onplay={togglePlayback}
       onjump={jump}
     />
+    {#if predictionNudge}<p class="prediction-nudge" role="status">{predictionNudge}</p>{/if}
 
     <section class="frontiers" aria-label="Traversal frontier state">
       <article class:active-frontier={traversal.algorithm === 'bfs'} class="panel frontier-card">
@@ -341,7 +447,11 @@
   <aside class="panel inspector" aria-live="polite">
     <span class="eyebrow">Step {index + 1} / {lesson.steps.length}</span>
     <h2>{step.title}</h2>
-    <p class="explanation">{step.deterministicExplanation}</p>
+    <p class="explanation">
+      {predictionResolved
+        ? step.deterministicExplanation
+        : 'Predict the frontier result before ReplayCS reveals this transition.'}
+    </p>
 
     <dl class="state-grid">
       <div>
@@ -401,8 +511,20 @@
     source={lesson.sourceByLanguage}
     {language}
     activeSemantic={step.semanticOperationId}
-    onlanguage={(next) => (language = next)}
+    onlanguage={selectLanguage}
   />
+</section>
+
+<section class="panel mentor-panel" aria-label="Grounded graph mentor">
+  {#if completed}<p class="completion" role="status">✓ Traversal complete · mastery saved</p>{/if}
+  {#if !predictionResolved}
+    <p class="mentor-locked" role="note">Lock the prediction before asking the mentor.</p>
+  {:else}
+    {#key `${lesson.id}:${step.id}`}<AiMentor
+        context={mentorContext()}
+        onhint={recordMentorHint}
+      />{/key}
+  {/if}
 </section>
 
 <style>
@@ -412,6 +534,21 @@
     justify-content: space-between;
     gap: 1rem;
     margin-bottom: 1rem;
+  }
+  .mentor-panel {
+    margin-top: 1rem;
+    padding: 1rem;
+  }
+  .completion {
+    margin: 0;
+    color: var(--success);
+    font-size: 0.8rem;
+    font-weight: 750;
+  }
+  .prediction-nudge,
+  .mentor-locked {
+    color: var(--warning);
+    font-size: 0.78rem;
   }
   .back {
     color: var(--primary);

@@ -15,7 +15,7 @@ UI builds bounded StepContext
 SvelteKit server validates with Zod
         ┌─────┴──────────────┐
         ▼                    ▼
-OPENAI_API_KEY present   key absent / upstream failure
+OPENAI_API_KEY present   unavailable / invalid output
 Responses API, GPT-5.6   deterministic fallback
         └─────┬──────────────┘
               ▼
@@ -42,7 +42,7 @@ The shared mentor panels in every flagship lab can send:
 - deterministic explanation;
 - current prediction, learner answer, and correct deterministic answer;
 - known misconception tags;
-- selected programming language where relevant;
+- selected programming language for Binary Search and Graph Explorer;
 - learner level and explanation depth;
 - English or Bangla explanation language;
 - one scoped learner question of at most 300 characters.
@@ -52,13 +52,20 @@ interactions. It returns a summary, why the operation happened now, what changed
 possible common mistake, grounding note, and check question. Technical terms and identifiers remain
 intact in Bangla teaching text.
 
+Prediction checkpoints gate the mentor until the learner commits, so an explanation cannot replace
+the required prediction. A hint request is persisted in the local progress profile and influences
+the transparent mastery calculation. The deterministic hint path reasons from the active operation
+and its inputs while deliberately withholding `stateAfter`.
+
 ## Fallback and errors
 
 If `OPENAI_API_KEY` is absent, `getOpenAI()` returns no client and the route immediately responds with
 `source: "fallback"` and `reason: "not-configured"`. If the upstream call fails after timeout/retry,
 the route responds with the same validated deterministic explanation and `reason: "upstream-error"`.
-The UI labels the source as **Deterministic**, explains why fallback was used, and keeps the lesson
-interactive.
+If a model response fails the structured schema, the same path returns `reason: "invalid-output"`.
+The UI labels all three cases as **Deterministic**, states the actual fallback reason, and keeps the
+lesson interactive. The public deployment currently reports `aiConfigured: false`, so its mentor
+uses the visible no-key fallback.
 
 The route rejects request bodies over 20 KB, rejects invalid trace context, omits stack traces, and
 applies an in-memory 12-requests-per-minute client-address limit. The UI handles loading, retry, and
@@ -85,8 +92,8 @@ recorded in history.
 Check safe availability at <https://replaycs.vercel.app/api/health>. The endpoint reveals only a
 boolean `aiConfigured`, never the value. Verify both modes:
 
-1. Without a key, open Binary Search at `?step=2`, choose **Explain this step**, and confirm the
-   deterministic badge/message and grounded midpoint explanation.
+1. Without a key, open the Judge Demo's Binary Search link, lock a midpoint prediction, choose
+   **Explain this step**, and confirm the deterministic badge/message and grounded explanation.
 2. With a key added by the owner, redeploy, confirm `aiConfigured: true`, request the same step, and
    confirm the **GPT-5.6** badge and structured trace-grounded response.
 3. In both modes, submit a prediction before and after the request and confirm canonical state and
@@ -96,7 +103,8 @@ boolean `aiConfigured`, never the value. Verify both modes:
 
 Responses are not token-streamed; there is no shared response cache, user cancellation, distributed
 limiter, token/cost dashboard, or comprehensive model-quality fixture suite. Binary Search and SQL
-have richer side-by-side mistake recovery than the other mentor-enabled labs. See
+have richer side-by-side mistake recovery than the other mentor-enabled labs. Hint evidence records
+that help was requested, not whether the response was pedagogically effective. See
 [known-limitations.md](known-limitations.md) for the full production boundary.
 
 Official model guidance: <https://developers.openai.com/api/docs/guides/model-guidance?model=gpt-5.6>

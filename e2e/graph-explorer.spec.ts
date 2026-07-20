@@ -2,9 +2,10 @@ import { expect, test } from '@playwright/test';
 
 test.describe('Graph Explorer', () => {
   test('validates custom edges and rebuilds a DFS trace', async ({ page }) => {
-    await page.goto('/lesson/dsa-2/graph-explorer');
+    await page.goto('/lesson/dsa-2/graph-explorer?lang=java');
 
     await expect(page.getByRole('heading', { name: 'Graph Explorer' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'JAVA' })).toHaveAttribute('aria-selected', 'true');
     await page.getByLabel('Custom edges').check();
     await page.getByLabel(/Edges/).fill('A-A');
     await page.getByRole('button', { name: 'Build trace' }).click();
@@ -22,6 +23,10 @@ test.describe('Graph Explorer', () => {
     await page.goto('/lesson/dsa-2/graph-explorer');
 
     await expect(page.getByText('Step 1 /')).toBeVisible();
+    await page.getByRole('button', { name: 'Next' }).click();
+    await expect(page.getByText(/Lock the frontier prediction/)).toBeVisible();
+    await page.getByLabel('Your prediction').fill('A');
+    await page.getByRole('button', { name: 'Lock prediction' }).click();
     await page.getByRole('button', { name: 'Next' }).click();
     await expect(page.getByText('Step 2 /')).toBeVisible();
     await page.getByRole('button', { name: 'Previous' }).click();

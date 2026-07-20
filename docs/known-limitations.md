@@ -43,8 +43,9 @@ complete CS curriculum. This document keeps those boundaries explicit.
 
 - Binary Search accepts 2–16 ascending integers, permits duplicates, and uses curated semantic source
   mappings. It is not an arbitrary-code debugger.
-- Curated C, C++, Java, and Python mapping exists only for Binary Search. Domain labs must not be
-  described as four-language simulations, and there is no side-by-side language comparison.
+- Curated C, C++, Java, and Python semantic mapping exists for Binary Search and Graph Explorer.
+  SQL, CPU Scheduling, and Packet Journey must not be described as four-language simulations, and
+  there is no side-by-side language comparison.
 - SQL uses two bounded in-memory HR scenarios. The displayed order is an educational logical model;
   the physical-plan panel is illustrative, not captured output from a database optimizer. Learner SQL,
   subqueries, normalization, indexing, transactions, and concurrency are not executed.
@@ -57,14 +58,15 @@ complete CS curriculum. This document keeps those boundaries explicit.
 ## AI mentor
 
 - GPT-5.6 is connected through the shared mentor in every shipped flagship lab. The quality/depth of
-  domain context varies with each state model; only Binary Search has four-language programming
-  source maps, while SQL and the other domains supply their relevant clause/operation context.
+  domain context varies with each state model; Binary Search and Graph Explorer have four-language
+  programming source maps, while SQL, CPU, and Packet supply their relevant clause/operation
+  context.
 - The mentor is request/response rather than token-streaming. It supports explain, why, hint,
   simplify, and mistake interactions but is not a free-form general chatbot or a complete multi-step
   hint ladder.
 - The OpenAI client times out after 12 seconds and retries once. A validated deterministic fallback
-  handles a missing key or upstream failure, but there is no response cache, token/cost dashboard,
-  user-cancel control, or broad mocked model-quality evaluation suite.
+  handles a missing key, upstream failure, or invalid structured output, but there is no response
+  cache, token/cost dashboard, user-cancel control, or broad mocked model-quality evaluation suite.
 - Rate limiting is an in-memory per-process map. It is not shared or globally consistent across
   Vercel serverless instances and must not be presented as distributed abuse prevention.
 - Exact answers, traces, XP, and recommendations remain deterministic. GPT-5.6 does not execute code
@@ -74,6 +76,14 @@ complete CS curriculum. This document keeps those boundaries explicit.
 
 - Progress and onboarding preferences use versioned browser local storage. There are no accounts,
   cloud backup, cross-device synchronization, classrooms, or leaderboards.
+- Lesson mastery is a transparent interaction score, not a psychometric assessment: 50 points for
+  trace completion, 30 for a correct prediction or recovery, and 20 for an unhinted first try with no
+  unresolved mistake or for fully recovering all recorded mistakes. Later recovery can improve the
+  score without re-awarding the 25 XP lesson completion; the recovery itself can award 6 XP once.
+- The dashboard persists and reports first-attempt evidence, average attempts per evidenced
+  checkpoint, mentor hint requests, recent XP activity, language interactions, and boss progress.
+  Language counts represent onboarding/code-tab interactions, not proof that a lesson was completed
+  in that language; a hint count records the request, not the quality of the response.
 - Export is local JSON. Corrupt v1–v3 data is sanitized and blocked storage access no longer crashes
   the product, but the UI does not yet tell a learner that persistence failed. Clearing browser data
   removes progress.

@@ -36,13 +36,17 @@ ownership or permission for third-party redistribution.
   algorithms; BFS/DFS; SQL logical stages; five CPU scheduling policies; and Packet Journey.
 - Prediction checkpoints, local scoring, trace controls, exact backward restoration, bounded custom
   input, visible mutations, and domain visualizations.
-- Semantic C, C++, Java, and Python line mapping for Binary Search with state-preserving switching.
+- Semantic C, C++, Java, and Python line mapping for Binary Search and Graph Explorer with
+  state-preserving switching.
 - Replay My Mistake comparison, first-divergence evidence, misconception tagging, recovery, and
   idempotent XP.
 - Versioned browser-local preferences, XP, accuracy, hearts, mastery, activities, badges,
-  misconception evidence, recommendations, exports, and challenge completion.
-- A five-subject deterministic Challenge Arena and a guided Judge Demo that links real product
-  interactions.
+  misconception evidence, first-attempt/attempt metrics, hint evidence, language activity,
+  recommendations, exports, and challenge completion. Lesson mastery uses a visible
+  completion/prediction/recovery formula rather than AI scoring.
+- A returning-learner home CTA connected to the same live-lesson recommendation as Progress.
+- A five-subject deterministic Challenge Arena—Binary Bounds, BFS Frontier, SQL Pipeline, Round
+  Robin, and Packet Route—and a guided Judge Demo that links real product interactions.
 - Server-only OpenAI Responses API integration with bounded Zod schemas, GPT-5.6 grounding,
   English/Bangla explanation settings, timeout/retry behavior, in-memory limiting, and deterministic
   fallback.

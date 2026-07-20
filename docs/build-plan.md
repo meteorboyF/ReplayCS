@@ -4,14 +4,15 @@
 - [x] **Foundation:** SvelteKit shell, brand, responsive tokens, subject routes, error route, tests.
 - [x] **Trace core:** serializable snapshots, deterministic navigation, source mappings, predictions.
 - [x] **Learning core:** custom Binary Search, Replay My Mistake, grounded mentor, onboarding,
-      versioned progress, mastery, and recommendations.
+      returning CTA, versioned evidence, transparent mastery, and live-lesson recommendations.
 - [x] **DSA breadth:** three sorting algorithms plus BFS and iterative/recursive DFS.
 - [x] **DBMS flagship:** two SQL scenarios with INNER/LEFT JOIN, NULLs, WHERE/GROUP/HAVING,
       before/after tables, recovery, completion, and mentor.
 - [x] **OS flagship:** five-policy CPU Scheduling with validated workload/quantum, Gantt, metrics,
       prediction gating, and comparison.
 - [x] **Networks flagship:** bounded cold/warm Packet Journey with protocol/layer/address state.
-- [x] **Cross-product loop:** five-subject Challenge Arena and real-link Judge Demo.
+- [x] **Cross-product loop:** Binary Bounds, BFS Frontier, SQL Pipeline, Round Robin, and Packet Route
+      bosses plus the real-link Judge Demo.
 - [x] **Operations:** Vercel Node deployment, health endpoint, production smoke, rollback/recovery.
 - [x] **Submission P0:** GitHub Actions, README, judge guide, Devpost draft, 2:55 demo script,
       provenance/Codex/new-work docs, reproducible screenshots.

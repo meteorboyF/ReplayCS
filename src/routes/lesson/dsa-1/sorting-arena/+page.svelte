@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import AiMentor from '$lib/components/ai/AiMentor.svelte';
   import PredictionCheckpoint from '$lib/components/trace/PredictionCheckpoint.svelte';
   import TraceControls from '$lib/components/trace/TraceControls.svelte';
   import {
@@ -9,6 +10,15 @@
     type SortingAlgorithm,
     type SortingTrace
   } from '$lib/engines/dsa/sorting';
+  import {
+    awardPrediction,
+    completeLesson,
+    loadProgress,
+    recordHint,
+    recordMisconception,
+    saveProgress
+  } from '$lib/progress/store';
+  import type { StepContext } from '$lib/server/openai/schemas';
 
   const algorithmOrder: SortingAlgorithm[] = ['bubble', 'selection', 'insertion'];
   const initialValues = [7, 3, 5, 2, 9, 1];
@@ -20,13 +30,22 @@
   let index = $state(0);
   let playing = $state(false);
   let predictionSubmitted = $state(false);
+  let predictionCorrect = $state<boolean | null>(null);
+  let predictionAnswer = $state('');
+  let predictionNudge = $state('');
+  let progress = $state(loadProgress());
   let traceRevision = $state(0);
   let timer: ReturnType<typeof setInterval> | undefined;
 
   let step = $derived(trace.steps[index]);
   let info = $derived(SORTING_ALGORITHMS[algorithm]);
+  let lessonId = $derived(`sorting-arena:${algorithm}`);
+  let completed = $derived(progress.completed.includes('sorting-arena'));
 
-  onMount(() => () => clearInterval(timer));
+  onMount(() => {
+    progress = loadProgress();
+    return () => clearInterval(timer);
+  });
 
   function stopPlayback() {
     playing = false;
@@ -35,6 +54,9 @@
 
   function resetCheckpoint() {
     predictionSubmitted = false;
+    predictionCorrect = null;
+    predictionAnswer = '';
+    predictionNudge = '';
     traceRevision++;
   }
 
@@ -64,8 +86,20 @@
   }
 
   function jump(nextIndex: number) {
-    index = Math.max(0, Math.min(nextIndex, trace.steps.length - 1));
-    if (index === trace.steps.length - 1) stopPlayback();
+    const bounded = Math.max(0, Math.min(nextIndex, trace.steps.length - 1));
+    if (bounded > 0 && !predictionSubmitted) {
+      index = 0;
+      predictionNudge = 'Lock the opening prediction before revealing the sorting trace.';
+      stopPlayback();
+      return;
+    }
+    predictionNudge = '';
+    index = bounded;
+    if (index === trace.steps.length - 1) {
+      stopPlayback();
+      progress = completeLesson(progress, 'sorting-arena');
+      saveProgress(progress);
+    }
   }
 
   function restart() {
@@ -75,6 +109,10 @@
   }
 
   function togglePlayback() {
+    if (!predictionSubmitted) {
+      predictionNudge = 'Lock the opening prediction before playing the sorting trace.';
+      return;
+    }
     if (playing) {
       stopPlayback();
       return;
@@ -87,8 +125,68 @@
     }, 900);
   }
 
-  function submitPrediction() {
+  function submitPrediction(correct: boolean, answer: string) {
     predictionSubmitted = true;
+    predictionCorrect = correct;
+    predictionAnswer = answer;
+    predictionNudge = '';
+    if (!step.prediction) return;
+    const misconception =
+      algorithm === 'selection'
+        ? 'index-vs-value'
+        : algorithm === 'insertion'
+          ? 'key-vs-index'
+          : 'comparison-direction';
+    progress = correct
+      ? awardPrediction(progress, `${lessonId}:first-prediction`, step.prediction.xpReward)
+      : recordMisconception(progress, `${lessonId}:first-prediction`, misconception);
+    saveProgress(progress);
+  }
+
+  function recordMentorHint() {
+    progress = recordHint(progress, 'sorting-arena');
+    saveProgress(progress);
+  }
+
+  function mentorContext(): StepContext {
+    const previous = trace.steps[Math.max(0, index - 1)];
+    const misconception =
+      algorithm === 'selection'
+        ? 'index-vs-value'
+        : algorithm === 'insertion'
+          ? 'key-vs-index'
+          : 'comparison-direction';
+    return {
+      subject: 'dsa-1',
+      lesson: lessonId,
+      learningObjective: `Explain how ${info.name} transforms the array one deterministic operation at a time.`,
+      activeSourceLines: [],
+      stateBefore: {
+        values: index === 0 ? trace.input : previous.values,
+        metrics: index === 0 ? { comparisons: 0, writes: 0, swaps: 0 } : previous.metrics
+      },
+      mutation: [
+        {
+          event: step.event,
+          activeIndices: step.activeIndices,
+          sortedIndices: step.sortedIndices
+        }
+      ],
+      stateAfter: { values: step.values, metrics: step.metrics },
+      deterministicExplanation: step.explanation,
+      learnerLevel: progress.learnerLevel,
+      misconceptionTags: predictionCorrect === false ? [misconception] : [],
+      interaction: 'explain',
+      explanationLevel: progress.explanationLevel,
+      explanationLanguage: progress.explanationLanguage,
+      currentPrediction: step.prediction
+        ? {
+            prompt: step.prediction.prompt,
+            learnerAnswer: predictionAnswer || undefined,
+            correctAnswer: String(step.prediction.correctAnswer)
+          }
+        : undefined
+    };
   }
 </script>
 
@@ -107,7 +205,9 @@
     <h1>Sorting <span class="gradient">Arena</span></h1>
     <p>Run the same values through three classic algorithms and inspect every operation.</p>
   </div>
-  <div class="status-pill"><span class="status-dot"></span> Deterministic trace</div>
+  <div class="status-pill">
+    <span class="status-dot"></span> Deterministic trace · ⚡ {progress.xp} XP
+  </div>
 </div>
 
 <section class="setup panel" aria-labelledby="algorithm-heading">
@@ -194,6 +294,7 @@
       onplay={togglePlayback}
       onjump={jump}
     />
+    {#if predictionNudge}<p class="prediction-nudge" role="status">{predictionNudge}</p>{/if}
   </section>
 
   <aside class="side-column">
@@ -244,6 +345,18 @@
   </aside>
 </div>
 
+<section class="panel mentor-panel" aria-label="Grounded sorting mentor">
+  {#if completed}<p class="completion" role="status">✓ Sort complete · mastery saved</p>{/if}
+  {#if step.prediction && !predictionSubmitted}
+    <p class="mentor-locked" role="note">Lock the prediction before asking the mentor.</p>
+  {:else}
+    {#key `${lessonId}:${step.id}`}<AiMentor
+        context={mentorContext()}
+        onhint={recordMentorHint}
+      />{/key}
+  {/if}
+</section>
+
 <style>
   .lesson-head {
     display: flex;
@@ -251,6 +364,21 @@
     justify-content: space-between;
     gap: 1rem;
     margin-bottom: 1.2rem;
+  }
+  .mentor-panel {
+    margin-top: 1rem;
+    padding: 1rem;
+  }
+  .completion {
+    margin: 0;
+    color: var(--success);
+    font-size: 0.8rem;
+    font-weight: 750;
+  }
+  .prediction-nudge,
+  .mentor-locked {
+    color: var(--warning);
+    font-size: 0.78rem;
   }
   .lesson-head > div:first-child {
     display: grid;

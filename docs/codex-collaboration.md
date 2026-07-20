@@ -68,15 +68,17 @@ Codex collaborated on:
 
 - the SvelteKit application shell and subject/lesson information architecture;
 - deterministic, serializable trace snapshots and forward/backward playback;
-- semantic cross-language source mapping for Binary Search;
+- semantic cross-language source mapping for Binary Search and Graph Explorer;
 - bounded input validation and domain-specific engines for sorting, traversal, SQL, scheduling, and
   packet journeys;
 - local deterministic scoring, versioned progress, mastery, misconception evidence, idempotent XP,
-  onboarding, and recommendations;
+  onboarding, returning-learner routing, first-attempt/attempt metrics, hint and language evidence,
+  recent activity, boss progress, and recommendations;
 - the server-only OpenAI Responses API boundary, Zod structured response, timeout/retry/fallback,
   and safe health metadata;
 - Replay My Mistake and deterministic recovery challenges;
-- Challenge Arena and Judge Demo integration around real labs;
+- the five-boss Challenge Arena (Binary Bounds, BFS Frontier, SQL Pipeline, Round Robin, and Packet
+  Route) and Judge Demo integration around real labs;
 - Vercel deployment, production smoke checks, milestone/recovery strategy, and GitHub Actions;
 - architecture, provenance, operational, testing, demo, and submission documentation.
 
@@ -96,10 +98,11 @@ The test suite includes deterministic unit coverage for:
 - cold/warm Packet Journey order and addressing assumptions;
 - health metadata and AI fallback contracts.
 
-Playwright journeys cover onboarding, custom input, reverse restoration, language preservation,
-mentor fallback, Replay My Mistake recovery, SQL, scheduling, packet tracing, challenges, Judge Demo,
-mobile flagship smoke, and production health. The exact current count should be taken from the final
-CI run rather than hard-coded here.
+Playwright journeys cover onboarding and the returning CTA, custom input, reverse restoration,
+keyboard code tabs, language preservation, mentor fallback and hint persistence, Replay My Mistake
+recovery, evidence-derived Progress panels, SQL, scheduling, packet tracing, five-boss challenges,
+Judge Demo, mobile flagship smoke, and production health. The exact current count should be taken
+from the final CI run rather than hard-coded here.
 
 ## Recoverable evidence
 
@@ -117,6 +120,9 @@ submission commit. Representative published checkpoints include:
 | Verified production baseline                 | `replaycs-production-baseline` |
 | Tested OS curriculum milestone               | `replaycs-os-curriculum`       |
 | Tested Networks curriculum milestone         | `replaycs-networks-curriculum` |
+| Tested DBMS curriculum milestone             | `replaycs-dbms-curriculum`     |
+| Guided Judge Demo release                    | `replaycs-judge-demo`          |
+| Five-boss Challenge Arena release            | `replaycs-challenge-arena`     |
 
 Inspect author and committer timestamps with:
 

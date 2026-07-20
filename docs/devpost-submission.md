@@ -36,10 +36,16 @@ SQL add **Replay My Mistake**: the product preserves the learner's predicted sta
 first divergence, replays deterministic truth, tags a misconception, and offers a recovery check.
 
 Onboarding stores level, goal, subject, programming-language, explanation-language, and daily-goal
-preferences without an account. Real activity updates browser-local XP, accuracy, hearts, mastery,
-misconception evidence, badges, and deterministic recommendations. The Challenge Arena adds one
-two-checkpoint boss per subject with idempotent rewards. Judge Demo links the complete cross-domain
-story using stable presets and real lab components.
+preferences without an account. On return, the landing page replaces its onboarding action with the
+same deterministic next lesson shown on Progress. Real activity updates browser-local XP, overall
+and first-attempt accuracy, average attempts, hints used, language activity, hearts, recent rewards,
+mastery, misconception evidence, badges, and recommendations.
+
+The Challenge Arena ships five fixed two-checkpoint challenges: **Binary Bounds Boss**, **BFS
+Frontier Boss**, **SQL Pipeline Boss**, **Round Robin Boss**, and **Packet Route Boss**. Each boss
+awards 30 XP once. Retry remains available, while revealing an answer makes the run practice-only
+until the learner starts a fresh unassisted attempt. Judge Demo links the cross-domain story using
+stable presets and the real labs rather than demo-only state.
 
 ## How it was built
 
@@ -49,11 +55,15 @@ restores exact state instead of trying to reverse an animation. Semantic operati
 Binary Search's C, C++, Java, and Python source mappings synchronized with one trace.
 
 The UI is responsive hand-authored CSS with bounded, validated input. Versioned local storage holds
-the learner profile and idempotent reward evidence. Playwright tests critical browser journeys,
-including custom input, backward restoration, cross-language preservation, mentor fallback, mistake
-recovery, onboarding, SQL, scheduling, packet tracing, challenges, Judge Demo, and production smoke.
-GitHub Actions runs checks, formatting, unit tests, production build, and Chromium E2E on pull
-requests and `main`.
+the learner profile and canonical evidence IDs. Lesson mastery is transparent: 50 points for trace
+completion, 30 for a demonstrated correct prediction or recovery, and 20 for first-try/no-hint
+evidence or fully recovering every recorded mistake. XP and completion remain idempotent.
+
+Playwright tests critical browser journeys, including custom input, backward restoration,
+keyboard-operated code tabs, cross-language preservation, mentor fallback, mistake recovery,
+returning-learner recommendations, progress integrity, SQL, scheduling, packet tracing, all five
+bosses, Judge Demo, and production smoke. GitHub Actions runs checks, formatting, unit tests,
+production build, and Chromium E2E on pull requests and `main`.
 
 The app is deployed to Vercel with the SvelteKit Vercel adapter and server routes. `/api/health`
 returns safe deployment/AI availability metadata. Focused feature branches, pushed commits,
@@ -69,9 +79,10 @@ calls the OpenAI Responses API with structured Zod output.
 
 The mentor can explain, answer a scoped “why,” give a hint, simplify, or explain a recorded mistake
 at beginner, standard, exam-ready, or technical depth in English or Bangla. Scoring and canonical
-state remain local and deterministic. If no key is configured, a call times out, or the upstream
-request fails, the same UI labels and displays a deterministic fallback rather than breaking the
-lesson. The current public deployment reports its AI configuration honestly through `/api/health`.
+state remain local and deterministic. If no key is configured, model output fails schema validation,
+a call times out, or the upstream request fails, the same UI labels and displays a deterministic
+fallback rather than breaking the lesson. `/api/health` reports configuration status without
+exposing a secret; at the 2026-07-20 audit, production truthfully reported `aiConfigured: false`.
 
 ## How Codex was used
 
@@ -109,6 +120,9 @@ The exact session placeholder and evidence are documented in
 - Binary Search stays on the same semantic operation while switching among four languages.
 - GPT-5.6 is useful without being trusted as the source of execution truth.
 - Every advertised subject has at least one real tested interactive lab.
+- Mastery, first attempts, hints, language choices, recent rewards, and boss progress are inspectable
+  evidence rather than a hidden model score.
+- Returning learners get a real recommended lesson instead of being sent through onboarding again.
 - The public product remains useful with no account and no OpenAI key.
 
 ## What we learned
@@ -137,7 +151,11 @@ more recovery-driven challenges.
    explicitly labeled deterministic response is valid depending on `/api/health`.
 4. In SQL, select `HAVING`; in Round Robin, predict `P1`; in Packet Journey, compare cold and warm
    cache paths.
-5. Complete a subject boss, then inspect `/progress` for the resulting local evidence.
+5. In Binary Bounds Boss, answer `low = 4, high = 6` and then `31 at index 5`; confirm the one-time
+   clear. The Arena map should also list BFS Frontier, SQL Pipeline, Round Robin, and Packet Route.
+6. Inspect `/progress` for first-attempt/attempt metrics, hints, language activity, recent activity,
+   `1/5` boss progress, mastery, misconceptions, and a live recommendation. Return home after
+   onboarding and confirm **Continue · [lesson]** reaches that recommended route.
 
 Exact expected states, local verification commands, supported fallback behavior, and troubleshooting
 are in the [judge testing guide](judge-testing-guide.md). Known boundaries are documented in

@@ -5,22 +5,23 @@ configured as a static-only site because `/api/ai/*` and `/api/health` execute o
 
 ## Current deployment status
 
-| Item                       | Value                                                                         |
-| -------------------------- | ----------------------------------------------------------------------------- |
-| Production URL             | `https://replaycs.vercel.app`                                                 |
-| Vercel account/team        | `meteorboy-f`                                                                 |
-| Vercel project name and ID | `replaycs` / `prj_krxZW0eGkuFVme30ZAx2AG6OWFU7`                               |
-| Git repository             | `https://github.com/meteorboyF/ReplayCS.git`                                  |
-| Production branch          | `main`                                                                        |
-| Framework                  | SvelteKit                                                                     |
-| Adapter                    | `@sveltejs/adapter-vercel`                                                    |
-| Function runtime           | Node.js 22 (`nodejs22.x`)                                                     |
-| Install command            | `npm ci`                                                                      |
-| Build command              | `npm run build`                                                               |
-| Output directory           | Managed by the SvelteKit Vercel adapter; do not set a static output directory |
-| Health endpoint            | `/api/health`                                                                 |
-| AI state at docs audit     | Not configured; deterministic mentor fallback verified                        |
-| Git deployment connection  | One-time Vercel dashboard confirmation still required                         |
+| Item                       | Value                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------ |
+| Production URL             | `https://replaycs.vercel.app`                                                              |
+| Vercel account/team        | `meteorboy-f`                                                                              |
+| Vercel project name and ID | `replaycs` / `prj_krxZW0eGkuFVme30ZAx2AG6OWFU7`                                            |
+| Git repository             | `https://github.com/meteorboyF/ReplayCS.git`                                               |
+| Production branch          | `main`                                                                                     |
+| Framework                  | SvelteKit                                                                                  |
+| Adapter                    | `@sveltejs/adapter-vercel`                                                                 |
+| Vercel build Node.js       | 24.x (verified project setting)                                                            |
+| Function runtime           | Node.js 22 (`nodejs22.x` in `svelte.config.js`)                                            |
+| Install command            | Vercel npm auto-detection from `package-lock.json`; local/CI reproducibility uses `npm ci` |
+| Build command              | SvelteKit framework default (`vite build`, the command behind `npm run build`)             |
+| Output directory           | Managed by the SvelteKit Vercel adapter; do not set a static output directory              |
+| Health endpoint            | `/api/health`                                                                              |
+| AI state at docs audit     | Not configured; deterministic mentor fallback verified                                     |
+| Git deployment connection  | One-time provider connection/Production Branch confirmation still required                 |
 
 The first verified CLI production deployment completed on 2026-07-20, and later curriculum
 milestones were deployed to the same stable alias. The health endpoint and automated public learner
@@ -35,17 +36,19 @@ or `OPENAI_API_KEY` into chat or a committed file:
 ```bash
 npx vercel@latest login
 npx vercel@latest whoami
-npx vercel@latest link
+npx vercel@latest link --yes --project replaycs --scope meteorboy-f
 ```
 
 During `link`, select the correct account/team and link or create the ReplayCS project. The generated
 `.vercel/` directory contains local project metadata and is ignored by Git.
 
-The CLI project link and production domain are verified. Git-based automatic deployments still
-depend on a one-time dashboard check: import/connect `meteorboyF/ReplayCS`, verify the SvelteKit framework preset,
-and set `main` as the Production Branch under **Project Settings → Environments → Production →
-Branch Tracking**. Once connected, branch pushes and pull requests create Preview deployments and
-updates to `main` create Production deployments.
+The CLI project and production domain are verified. Git-based automatic deployments still depend on
+a one-time provider connection: import/connect `meteorboyF/ReplayCS` in the dashboard (or, from an
+already linked clean checkout, run `npx vercel@latest git connect
+https://github.com/meteorboyF/ReplayCS.git`). Verify the SvelteKit framework preset and set `main` as
+the Production Branch under **Project Settings → Environments → Production → Branch Tracking**.
+Once connected, branch pushes and pull requests create Preview deployments and updates to `main`
+create Production deployments.
 
 Before the first remote deployment, verify locally:
 
@@ -54,6 +57,7 @@ npm ci
 npm run check
 npm run lint
 npm run test
+npx playwright install --with-deps chromium
 npm run test:e2e
 npm run build
 git status --short
@@ -127,6 +131,13 @@ npx vercel@latest
 Copy the URL printed by Vercel into the pull request/checkpoint report. A CLI preview is a fallback,
 not a reason to skip pushing the corresponding Git commit.
 
+Preview deployments may be protected by Vercel Authentication. Validate a protected preview with
+the authenticated CLI instead of weakening protection:
+
+```bash
+npx vercel@latest curl /api/health --deployment PREVIEW_DEPLOYMENT_URL
+```
+
 ### Preview smoke test
 
 Against the Preview URL:
@@ -153,6 +164,7 @@ npm ci
 npm run check
 npm run lint
 npm run test
+npx playwright install --with-deps chromium
 npm run test:e2e
 npm run build
 git status --short
@@ -165,8 +177,9 @@ deployment is unavailable, deploy that same clean, pushed checkout explicitly:
 npx vercel@latest --prod
 ```
 
-Record the production URL, deployment ID, and Git SHA. Do not treat a successful build alone as a
-successful release.
+Record the production URL, deployment ID, and Git SHA. Confirm the deployment metadata names the
+same SHA already present on `origin/main`. Do not treat a successful build alone as a successful
+release.
 
 ### Production validation
 
@@ -251,8 +264,10 @@ with newly changed environment variables.
 
 After traffic is restored, verify `/api/health` and the production smoke checklist. Then revert the
 bad Git change on a new branch and merge the tested revert into `main`; otherwise a later deployment
-can reintroduce the bug. Follow [the recovery guide](recovery-guide.md) for exact branch and revert
-steps.
+can reintroduce the bug. Vercel disables automatic production-domain assignment while a project is
+rolled back, so the tested fixed deployment must be promoted explicitly before normal branch-driven
+promotion resumes. Follow [the recovery guide](recovery-guide.md) for the exact branch, revert, and
+promotion sequence.
 
 ## Troubleshooting
 
@@ -285,9 +300,11 @@ npx vercel@latest inspect [deployment-url] --logs
 
 ### The build fails on Vercel but passes locally
 
-Use Node.js 22, run `npm ci && npm run build` from a clean clone, and confirm `package-lock.json` is
-committed. Check that the framework preset is SvelteKit and that no static output directory override
-is configured. Read the deployment build logs for the first failure.
+Reproduce once with Node.js 24, which matches the verified Vercel build setting, and keep the Node.js
+22 CI build green because deployed functions explicitly target `nodejs22.x`. Run `npm ci && npm run
+build` from a clean clone and confirm `package-lock.json` is committed. Check that the framework
+preset is SvelteKit and that no static output directory override is configured. Read the deployment
+build logs for the first failure.
 
 ### `/api/*` returns 404 or behaves like a static file
 

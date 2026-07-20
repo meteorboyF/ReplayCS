@@ -16,6 +16,8 @@ inspect → predict → reveal deterministic state → compare → recover/expla
 
 - No account is required; first visit may configure level, goal, preferred code/explanation
   language, subject interests, and daily goal or skip to safe defaults.
+- After onboarding, the landing CTA continues to the same deterministic recovery or unfinished live
+  lesson recommendation shown on Progress.
 - The learner opens a curated scenario or validated bounded input.
 - A meaningful checkpoint gates reveal until a prediction is locked.
 - Forward, backward, play, timeline, and restart operate on exact state histories.
@@ -23,8 +25,9 @@ inspect → predict → reveal deterministic state → compare → recover/expla
   state and run Replay My Mistake recovery.
 - GPT-5.6 may explain a supplied trace in English/Bangla at four depths; fallback keeps the same
   interface usable without a key.
-- Real evidence updates versioned local XP, accuracy, mastery, misconceptions, activities, badges,
-  bosses, and deterministic recommendations.
+- Real evidence updates versioned local XP, overall and first-attempt accuracy, average attempts,
+  hints, code-language activity, recent rewards, mastery, misconceptions, badges, bosses, and
+  deterministic recommendations.
 
 ## Shipped curriculum
 
@@ -33,10 +36,11 @@ inspect → predict → reveal deterministic state → compare → recover/expla
 - DBMS: two-scenario SQL Query Pipeline with logical/physical distinction.
 - Operating Systems: five-policy CPU Scheduling Arena.
 - Computer Networks: cold/warm Packet Journey.
-- Cross-subject: one deterministic two-checkpoint Challenge Arena boss per subject.
+- Cross-subject: five deterministic two-checkpoint Challenge Arena bosses—Binary Bounds, BFS
+  Frontier, SQL Pipeline, Round Robin, and Packet Route.
 
-Only Binary Search claims C/C++/Java/Python semantic source mapping. Planned cards remain visibly
-planned and are not included in shipped-functionality counts.
+Binary Search and Graph Explorer claim C/C++/Java/Python semantic source mapping. Planned cards
+remain visibly planned and are not included in shipped-functionality counts.
 
 ## Completion and rewards
 
@@ -44,6 +48,13 @@ XP is awarded from idempotent evidence IDs. A correct unique prediction, success
 recovery, completed supported lesson, or first completion of a boss may reward progress. Merely
 visiting Judge Demo or replaying a completed boss does not. Recommendations use deterministic profile
 rules; GPT-5.6 does not compute mastery or decide unlocks.
+
+Live-lesson mastery is explainable: 50 points for completing the trace, 30 for demonstrating a
+correct prediction or recovery, and 20 for a first-try answer without a hint or for fully recovering
+every recorded mistake. A revealed boss run is guided practice and cannot clear the boss or award
+XP; a fresh unassisted run can. The Progress surface exposes first-attempt accuracy, average attempts,
+hints used, language activity, recent activity, five-boss completion, subject mastery, and the
+recommendation alongside empty states for new learners.
 
 ## Judge experience
 

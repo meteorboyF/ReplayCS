@@ -12,15 +12,48 @@
     onlanguage: (l: SupportedLanguage) => void;
   } = $props();
   const languages: SupportedLanguage[] = ['c', 'cpp', 'java', 'python'];
+
+  function moveLanguageFocus(event: KeyboardEvent, currentLanguage: SupportedLanguage) {
+    let nextIndex: number;
+    const currentIndex = languages.indexOf(currentLanguage);
+
+    switch (event.key) {
+      case 'ArrowLeft':
+        nextIndex = (currentIndex - 1 + languages.length) % languages.length;
+        break;
+      case 'ArrowRight':
+        nextIndex = (currentIndex + 1) % languages.length;
+        break;
+      case 'Home':
+        nextIndex = 0;
+        break;
+      case 'End':
+        nextIndex = languages.length - 1;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    onlanguage(languages[nextIndex]);
+
+    const tablist = (event.currentTarget as HTMLButtonElement).closest('[role="tablist"]');
+    tablist?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[nextIndex]?.focus();
+  }
 </script>
 
 <section class="panel code-panel">
-  <div class="tabs" role="tablist" aria-label="Programming language">
+  <div class="tabs" role="tablist" aria-label="Programming language" aria-orientation="horizontal">
     {#each languages as lang}<button
+        type="button"
         role="tab"
         aria-selected={lang === language}
+        tabindex={lang === language ? 0 : -1}
         class:active={lang === language}
-        onclick={() => onlanguage(lang)}>{lang === 'cpp' ? 'C++' : lang.toUpperCase()}</button
+        onclick={() => onlanguage(lang)}
+        onkeydown={(event) => moveLanguageFocus(event, lang)}
+        >{lang === 'cpp' ? 'C++' : lang.toUpperCase()}</button
       >{/each}
   </div>
   <pre aria-label="Source code">{#each source[language] as line}<div

@@ -36,10 +36,10 @@ histories. Current engines cover Binary Search; Bubble, Selection, and Insertion
 SQL logical stages; FCFS, SJF, SRTF, Priority, and Round Robin scheduling; and cold/warm Packet
 Journey events. Vitest asserts intermediate and final truth independent of Svelte rendering.
 
-Binary Search uses the normalized `TraceLesson`/`TraceStep` model with semantic operation IDs. C,
-C++, Java, and Python source maps point to the same semantic step, so switching syntax does not reset
-state. Newer domain engines keep the same deterministic snapshot/navigation principles while using
-typed domain-specific tables, process states, graph frontiers, and network envelopes.
+Binary Search and Graph Explorer use the normalized `TraceLesson`/`TraceStep` model with semantic
+operation IDs. Their C, C++, Java, and Python source maps point to the same semantic operation, so
+switching syntax does not reset state. The other domain engines keep the same deterministic
+snapshot/navigation principles while using typed relations, process states, and network envelopes.
 
 Selecting an earlier snapshot restores it directly. Playback never attempts to infer a previous
 state by running an animation backward.
@@ -55,13 +55,25 @@ All learner input is bounded. ReplayCS does not execute submitted code or SQL. S
 and illustrative physical plan are labeled separately; Packet Journey uses reserved/illustrative
 addresses and an explicit simplification notice.
 
+Challenge Arena evaluates five curated, two-checkpoint boss traces locally. A reveal marks the whole
+run as guided practice, so that run cannot clear the boss or award XP. Judge Demo is a separately
+persisted tour checklist that deep-links to real labs; checking a tour stop neither claims the linked
+interaction happened nor awards learning progress.
+
 ## Learner evidence
 
 `src/lib/progress` stores a versioned profile in browser local storage: onboarding preferences, XP,
-prediction attempts/accuracy, hearts, streak, completion, mastery, misconception evidence,
-recoveries, recent activity, badges, and completed bosses. Evidence IDs make normal prediction/
-recovery/lesson/boss rewards idempotent. Recommendations are deterministic rules, not model-scored
-learner diagnoses.
+prediction attempts and first-attempt evidence, hearts, streak, completion, misconception evidence,
+recoveries, hint requests, code-language interactions, recent XP activity, badges, completed bosses,
+and derived lesson mastery. Evidence IDs make prediction, recovery, lesson, and boss rewards
+idempotent. Recommendations are deterministic rules over live lessons, learner interests,
+completion, and unresolved mistake evidence—not model-scored diagnoses.
+
+Mastery uses an inspectable 50/30/20 rule: trace completion contributes 50 points; a correct
+prediction or recovery contributes 30; and either an unhinted first-try success with no unresolved
+mistake or full recovery contributes 20. Later recovery can raise mastery without awarding lesson XP
+again, although the idempotent recovery itself can award 6 XP. A cleared Challenge Arena boss records
+100 mastery for that boss.
 
 There is intentionally no account or server learner database in the hackathon release.
 
@@ -69,9 +81,9 @@ There is intentionally no account or server learner database in the hackathon re
 
 `src/lib/server/openai` reads server-only environment variables and calls the OpenAI Responses API.
 `/api/ai/explain-step` validates a bounded trace context with Zod, applies a small in-memory limiter,
-and returns structured GPT-5.6 output or a deterministic fallback. The panel identifies the source.
-The model cannot mutate the lesson, decide the correct answer, or award progress. See
-[openai-integration.md](openai-integration.md).
+and returns structured GPT-5.6 output or a deterministic fallback for a missing key, upstream error,
+or invalid structured output. The panel identifies the source. The model cannot mutate the lesson,
+decide the correct answer, or award progress. See [openai-integration.md](openai-integration.md).
 
 ## Runtime and operations
 
