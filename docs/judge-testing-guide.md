@@ -21,6 +21,24 @@ Production currently reports `aiConfigured: true`, so the mentor should identify
 GPT-5.6 response. `false` remains an expected supported mode after configuration removal: the same
 panel visibly labels and returns a deterministic fallback.
 
+## Operation Complexity foundation stop
+
+After checkpoint `28d4f6b` is deployed, open <https://replaycs.vercel.app/complexity> (use its Vercel
+Preview before production promotion).
+
+1. Confirm **Operation count ≠ wall-clock time**, then vary the input and scale on the nine-family
+   chart. The full reference below it documents 15 families; multivariable families are not forced
+   onto the one-input chart.
+2. In **Binary search**, select an iterative best, average, or worst case and open Visual Trace and
+   Code Trace. Expected: the chosen case changes the real deterministic input, and both views show
+   exact step and cumulative work while C, C++, Java, and Python stay on the same semantic step.
+3. Select the recursive case. Expected: Visual Trace and Code Trace disappear because that source
+   trace is not implemented. Dynamic-array append similarly exposes cases and derivation without
+   invented trace tabs.
+
+This is a bounded complexity foundation, not proof that every curriculum topic or existing lesson
+has a complete complexity explorer.
+
 ## Curated under-three-minute path
 
 ### 1. Binary Search: prediction, recovery, language, and mentor
@@ -167,6 +185,8 @@ REPLAYCS_BASE_URL=https://replaycs.vercel.app \
   once to activate the personalized returning-learner CTA.
 - **A roadmap topic is absent from a subject dashboard:** only lessons satisfying the public lesson
   contract are shown. Unfinished roadmap topics remain documented without appearing as product cards.
+- **A complexity trace tab is absent:** recursive Binary Search and dynamic-array append currently
+  provide analysis only. Missing tabs are the expected honest state, not a loading failure.
 - **A trace differs from a real production system:** SQL physical plans, packet timing/topology, and
   scheduler assumptions are explicitly bounded teaching models, not telemetry from an external
   system.

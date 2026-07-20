@@ -30,6 +30,13 @@ ReplayCS is a prediction-first execution laboratory spanning five computer scien
 - **Operating Systems:** FCFS, SJF, SRTF, Priority, and Round Robin CPU scheduling.
 - **Computer Networks:** cold and warm browser-to-server Packet Journeys.
 
+The Operation Complexity Lab adds a shared analysis foundation: 15 documented growth families,
+nine safe chart curves, and an explicit separation between operation counts and wall-clock
+benchmarks. Iterative Binary Search best/average/worst cases connect to matching visuals, exact step
+work, and C/C++/Java/Python source traces. Recursive Binary Search and dynamic-array append are
+analysis-only, so unsupported trace tabs are omitted. This does not claim the remaining curriculum
+is built.
+
 Every shipped engine computes deterministic intermediate state. Learners move forward and backward,
 inspect before/after mutations, and answer checkpoints before meaningful reveals. Binary Search and
 SQL add **Replay My Mistake**: the product preserves the learner's predicted state, identifies the
@@ -59,10 +66,15 @@ the learner profile and canonical evidence IDs. Lesson mastery is transparent: 5
 completion, 30 for a demonstrated correct prediction or recovery, and 20 for first-try/no-hint
 evidence or fully recovering every recorded mistake. XP and completion remain idempotent.
 
+A versioned complexity model records input variables, implementation, case, counted primitive,
+assumptions, derivation, growth family, and separate auxiliary/output space. Bounded evaluators cap
+explosive curves instead of overflowing the chart.
+
 Playwright tests critical browser journeys, including custom input, backward restoration,
 keyboard-operated code tabs, cross-language preservation, mentor fallback, mistake recovery,
 returning-learner recommendations, progress integrity, SQL, scheduling, packet tracing, all five
-bosses, Judge Demo, and production smoke. GitHub Actions runs checks, formatting, unit tests,
+bosses, Judge Demo, production smoke, and a focused mobile/axe check for `/complexity`. GitHub
+Actions runs checks, formatting, unit tests,
 production build, and Chromium E2E on pull requests and `main`.
 
 The app is deployed to Vercel with the SvelteKit Vercel adapter and server routes. `/api/health`
@@ -119,6 +131,8 @@ The exact session placeholder and evidence are documented in
 - Replay My Mistake converts a wrong state into a visible, finishable recovery trace.
 - The same learning architecture works across algorithms, relational data, scheduling, and networks.
 - Binary Search stays on the same semantic operation while switching among four languages.
+- Complexity claims keep their case, counted work, assumptions, derivation, and space cost visible;
+  Binary Search can connect those claims to exact deterministic trace evidence.
 - GPT-5.6 is useful without being trusted as the source of execution truth.
 - Every advertised subject has at least one real tested interactive lab.
 - Mastery, first attempts, hints, language choices, recent rewards, and boss progress are inspectable
@@ -140,21 +154,25 @@ linked structures and trees; normalization, index plans, and transaction anomali
 replacement and deadlock; TCP reliability and subnetting. We also want the full visual mistake-
 recovery component in every flagship lab, side-by-side language comparison, shared distributed rate
 limiting/caching, cloud progress sync, broader browser and automated accessibility coverage, and
-more recovery-driven challenges.
+more recovery-driven challenges. The shared complexity model also needs evidence-backed integration
+with every eligible shipped lesson before that curriculum-wide expansion can be called complete.
 
 ## Testing instructions
 
 1. Open the [Judge Demo](https://replaycs.vercel.app/judge-demo) in a fresh browser; no sign-in is
    needed.
-2. In Binary Search, deliberately predict midpoint `4` where the deterministic answer is `3`, then
+2. Open `/complexity`; compare the nine chartable families, then verify an iterative Binary Search
+   case has exact visual/source work while recursive and dynamic-array analysis omit unsupported
+   trace tabs.
+3. In Binary Search, deliberately predict midpoint `4` where the deterministic answer is `3`, then
    replay and recover with `3`.
-3. Switch from Python to C++ and back without leaving the step, then invoke the mentor. A GPT-5.6 or
+4. Switch from Python to C++ and back without leaving the step, then invoke the mentor. A GPT-5.6 or
    explicitly labeled deterministic response is valid depending on `/api/health`.
-4. In SQL, select `HAVING`; in Round Robin, predict `P1`; in Packet Journey, compare cold and warm
+5. In SQL, select `HAVING`; in Round Robin, predict `P1`; in Packet Journey, compare cold and warm
    cache paths.
-5. In Binary Bounds Boss, answer `low = 4, high = 6` and then `31 at index 5`; confirm the one-time
+6. In Binary Bounds Boss, answer `low = 4, high = 6` and then `31 at index 5`; confirm the one-time
    clear. The Arena map should also list BFS Frontier, SQL Pipeline, Round Robin, and Packet Route.
-6. Inspect `/progress` for first-attempt/attempt metrics, hints, language activity, recent activity,
+7. Inspect `/progress` for first-attempt/attempt metrics, hints, language activity, recent activity,
    `1/5` boss progress, mastery, misconceptions, and a live recommendation. Return home after
    onboarding and confirm **Continue · [lesson]** reaches that recommended route.
 

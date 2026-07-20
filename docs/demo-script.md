@@ -1,6 +1,6 @@
 # ReplayCS under-three-minute demo
 
-Target runtime: **2:55**. Use the public site at <https://replaycs.vercel.app>, a 1440 × 900 capture,
+Target runtime: **2:59**. Use the public site at <https://replaycs.vercel.app>, a 1440 × 900 capture,
 100% zoom, and real product routes. Prepare the browser only by completing onboarding once through
 the UI, with no lesson or boss evidence, so the truthful returning-learner CTA is visible. Rehearse
 once after the final deployment. Do not edit local storage, mock API output, or use developer tools
@@ -18,9 +18,10 @@ in the video.
 | 1:30–1:47 | Packet Judge stop — choose **Warm · fresh response**, build, select **Hand cached bytes to the renderer**, lock, then advance.                                        | Answer-bearing packet panels stay hidden until commitment; the warm route has three deterministic events.         | “A warm cache compresses the journey to three events. The cold engine still models DNS, ARP, TCP, TLS, HTTP, and hop-local versus end-to-end addressing.”                                              |
 | 1:47–2:13 | `/challenges` — keep **Binary Bounds Boss**; answer `low = 4, high = 6`, continue, answer `31 at index 5`, then complete.                                             | Five-boss map, two checked predictions, and `Boss cleared. +30 XP`.                                               | “The Arena ships Binary Bounds, BFS Frontier, SQL Pipeline, Round Robin, and Packet Route bosses. Each has two deterministic checkpoints, and each reward is earned once.”                             |
 | 2:13–2:36 | Reload `/progress`; sweep first-attempt accuracy, average attempts, hints, boss progress, language activity, recent activity, mastery, misconceptions, and next step. | Panels show only evidence produced in this browser, including `1/5` boss progress and activity from the live run. | “Progress exposes its evidence: attempts, hints, language use, recent rewards, boss clears, and lesson mastery. The score is deterministic—completion, demonstrated prediction, and recovery quality.” |
-| 2:36–2:45 | Reload `/`; point to the personalized **Continue** action.                                                                                                            | Home and Progress recommend the same real route.                                                                  | “That evidence closes the loop: returning learners continue into a live lesson selected from interests, unfinished work, and recovery needs.”                                                          |
-| 2:45–2:52 | Prepared GitHub `commits/main` and `docs/architecture.md` tabs.                                                                                                       | Recoverable commit history and deterministic-engine → snapshot → optional-mentor boundary.                        | “Codex helped audit, build, test, and document this through recoverable pushes, while execution truth stayed separate from AI wording.”                                                                |
-| 2:52–2:55 | Return to the hero.                                                                                                                                                   | ReplayCS mark and closing promise.                                                                                | “Predict the next state. Then make the machine make sense.”                                                                                                                                            |
+| 2:36–2:42 | Reload `/`; point to the personalized **Continue** action.                                                                                                            | Home and Progress recommend the same real route.                                                                  | “That evidence closes the loop: returning learners continue into a real lesson selected from interests, unfinished work, and recovery needs.”                                                          |
+| 2:42–2:52 | Prepared `/complexity#operations` tab — show an iterative Binary Search work ledger and point to the recursive case with trace tabs absent.                           | Exact step/cumulative work for a case-matched real trace, plus honest omission of unsupported trace modes.        | “The complexity foundation documents fifteen families and charts nine. Iterative Binary Search connects exact work to its real trace; analysis-only cases never invent one.”                           |
+| 2:52–2:57 | Prepared GitHub `commits/main` and `docs/architecture.md` tabs.                                                                                                       | Recoverable commit history and deterministic-engine → snapshot → optional-mentor boundary.                        | “Codex helped audit, build, test, and document recoverable checkpoints, while deterministic engines—not AI—kept execution truth.”                                                                      |
+| 2:57–2:59 | Return to the hero.                                                                                                                                                   | ReplayCS mark and closing promise.                                                                                | “Predict the next state. Then make the machine make sense.”                                                                                                                                            |
 
 ## Recording checklist
 
@@ -29,9 +30,9 @@ in the video.
   narration; never imply a fallback response came from the model.
 - Prepare the profile only through ReplayCS onboarding; do not complete a lesson or boss before the
   take. Use only the recorded interactions to create lesson and boss evidence.
-- Pre-open the Judge Demo stops, Challenge Arena, Progress, the public commit history, and the
-  repository architecture document in shot order. Reload Progress and the final landing tab before
-  showing them so they read the latest browser-local evidence.
+- Pre-open the Judge Demo stops, Challenge Arena, Progress, and `/complexity#operations` in shot
+  order. Use the complexity Preview URL until checkpoint `28d4f6b` has been production-verified.
+  Reload Progress and the final landing tab before showing them so they read the latest evidence.
 - Keep the pointer still during narration and use only the published lesson cards.
 - Retake if a toast, prediction, XP value, or model-source badge is not readable.
 - Export at 1080p and verify the final file is strictly shorter than three minutes.
