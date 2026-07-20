@@ -154,7 +154,11 @@ h2 {
   font-weight: 700;
 }
 @media (max-width: 760px) {
-  nav a:not(:first-child):not(:nth-last-child(2)) {
+  header nav {
+    gap: 0.65rem;
+    font-size: 0.78rem;
+  }
+  header nav a:not(:first-child):not(:nth-last-child(2)):not(.judge-link) {
     display: none;
   }
   .cards {

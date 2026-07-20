@@ -14,7 +14,9 @@
   <nav aria-label="Main navigation">
     <a href="/learn/dsa-1">Learn</a><a href="/trace-lab">Trace Lab</a><a href="/challenges"
       >Challenges</a
-    ><a href="/progress">Progress</a><a href="/about">About</a>
+    ><a class="judge-link" href="/judge-demo">Judge Demo</a><a href="/progress">Progress</a><a
+      href="/about">About</a
+    >
   </nav>
 </header>
 <main>{@render children()}</main>
