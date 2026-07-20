@@ -34,6 +34,13 @@ complete CS curriculum. This document keeps those boundaries explicit.
 - Judge Demo is a persistent guided checklist that opens real labs in new tabs. Checklist state marks
   tour position only; it does not infer that every linked interaction was completed and does not
   award XP itself.
+- The Operation Complexity foundation documents 15 families and charts nine safe one-input curves.
+  Its iterative Binary Search best/average/worst cases have matching visual and four-language source
+  traces with exact work counts. Recursive Binary Search is analysis-only; dynamic-array append has
+  cases and derivation only. Unsupported trace tabs are omitted rather than simulated.
+- `/complexity` does not make a new canonical topic expansion complete. Complexity evidence has not
+  yet been attached to every shipped lesson, and operation counts must not be read as wall-clock
+  benchmarks.
 - Linked lists, trees/heaps/DP, normalization/indexing/concurrency, page replacement/deadlock, and
   TCP/subnetting/routing remain roadmap topics rather than shipped labs. They are omitted from
   primary public lesson navigation until they satisfy the lesson completion contract.
@@ -100,7 +107,8 @@ complete CS curriculum. This document keeps those boundaries explicit.
 - Responsive layouts, visible focus, semantic controls, reduced-motion styles, and a mobile flagship
   production smoke test exist. The complete cross-domain journey has not been certified against a
   WCAG conformance level.
-- Automated axe testing, screen-reader matrix testing, and full keyboard audits are not configured.
+- A focused axe check covers serious/critical issues on `/complexity`; route-wide axe coverage,
+  screen-reader matrix testing, and full keyboard audits are not configured.
 - Playwright currently targets desktop Chromium; Firefox, WebKit, and a broad physical-device matrix
   remain future coverage.
 - Dynamic visual state has useful labels in the newer labs, but some dense diagrams/tables still need
@@ -113,6 +121,8 @@ complete CS curriculum. This document keeps those boundaries explicit.
 - There is no user database, analytics warehouse, distributed cache, queue, or centralized telemetry.
 - Vercel Hobby rollback limitations may restrict instant rollback to the immediately previous
   production deployment; Git revert remains the durable recovery path.
+- Checkpoint `28d4f6b` pins transitive `cookie` to `0.7.2` through an override and has a clean package
+  audit. That result is point-in-time and should be rerun for future releases.
 - The prior Interview-Prep source had no detected license file. ReplayCS has no selected open-source
   license, and ownership/redistribution rights must be confirmed before adding one or inviting reuse.
 - Screenshot assets are generated from the real app. They can become stale after UI changes and

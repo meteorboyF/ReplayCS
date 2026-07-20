@@ -1,3 +1,5 @@
+import type { ComplexityEvidence } from '$lib/complexity/types';
+
 export type SubjectId = 'dsa-1' | 'dsa-2' | 'dbms' | 'operating-systems' | 'computer-networks';
 export type SupportedLanguage = 'c' | 'cpp' | 'java' | 'python';
 export type TraceValue =
@@ -71,6 +73,7 @@ export interface TraceStep {
   visualFocus: string[];
   prediction?: PredictionChallenge;
   complexityCost?: { comparisons?: number; reads?: number; writes?: number; swaps?: number };
+  complexityEvidence?: ComplexityEvidence;
   metadata?: Record<string, TraceValue>;
 }
 export interface TraceLesson {

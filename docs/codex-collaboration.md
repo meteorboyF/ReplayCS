@@ -69,6 +69,8 @@ Codex collaborated on:
 - the SvelteKit application shell and subject/lesson information architecture;
 - deterministic, serializable trace snapshots and forward/backward playback;
 - semantic cross-language source mapping for Binary Search and Graph Explorer;
+- the versioned Operation Complexity model, safe growth evaluator, 15-family reference, shared
+  explorer, and case-matched exact work evidence for iterative Binary Search;
 - bounded input validation and domain-specific engines for sorting, traversal, SQL, scheduling, and
   packet journeys;
 - local deterministic scoring, versioned progress, mastery, misconception evidence, idempotent XP,
@@ -96,13 +98,16 @@ The test suite includes deterministic unit coverage for:
 - SQL source rows, joins, NULL preservation, grouping, filtering, ordering, and limits;
 - FCFS, SJF, SRTF, Priority, and Round Robin scheduling metrics/tie behavior;
 - cold/warm Packet Journey order and addressing assumptions;
+- complexity catalog validation, bounded growth evaluation, and dynamic-array amortized accounting;
 - health metadata and AI fallback contracts.
 
 Playwright journeys cover onboarding and the returning CTA, custom input, reverse restoration,
 keyboard code tabs, language preservation, mentor fallback and hint persistence, Replay My Mistake
 recovery, evidence-derived Progress panels, SQL, scheduling, packet tracing, five-boss challenges,
 Judge Demo, mobile flagship smoke, and production health. The exact current count should be taken
-from the final CI run rather than hard-coded here.
+from the final CI run rather than hard-coded here. The complexity foundation adds a focused browser
+journey for case-matched visual/source work, honest omission of unsupported modes, mobile overflow,
+and serious/critical axe findings.
 
 ## Recoverable evidence
 
@@ -123,6 +128,8 @@ submission commit. Representative published checkpoints include:
 | Tested DBMS curriculum milestone             | `replaycs-dbms-curriculum`     |
 | Guided Judge Demo release                    | `replaycs-judge-demo`          |
 | Five-boss Challenge Arena release            | `replaycs-challenge-arena`     |
+| Operation-complexity data model              | `cdd63d4`                      |
+| Operation Complexity explorer foundation     | `28d4f6b`                      |
 
 Inspect author and committer timestamps with:
 

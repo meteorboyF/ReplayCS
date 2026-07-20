@@ -8,6 +8,7 @@ grounded GPT-5.6 mentor why the transition occurred.
 
 [Open ReplayCS](https://replaycs.vercel.app) ·
 [Start the Judge Demo](https://replaycs.vercel.app/judge-demo) ·
+[Open the Complexity Lab](https://replaycs.vercel.app/complexity) ·
 [View the repository](https://github.com/meteorboyF/ReplayCS) ·
 [Check system health](https://replaycs.vercel.app/api/health)
 
@@ -52,6 +53,16 @@ awards 30 XP once, with Boss Tracer/Arena Champion badges. Revealing an answer m
 practice-only, so it cannot clear the boss or award XP. Planned lesson entries remain labeled in
 the internal curriculum metadata and documentation, but unfinished topics are omitted
 from primary public navigation. ReplayCS does not treat a subject dashboard as a finished lab.
+
+The Operation Complexity Lab adds a shared analysis explorer and growth comparison. All 15 catalog
+families have reference scenarios, assumptions, and derivations; nine one-input families are
+chartable. The currently executable explorer interfaces cover Binary Search and dynamic-array
+append. Binary Search connects case-specific deterministic visual/source traces with exact per-step
+work evidence for its iterative best, average, and worst cases. Dynamic-array append provides honest
+case and amortized analysis while its trace engine remains unimplemented, so unsupported trace modes
+are omitted. The 15-family catalog is reference/chart coverage, not 15 executable algorithm labs.
+Read the
+[complexity model](docs/complexity-model.md) and [operation-case coverage](docs/operation-case-coverage.md).
 
 Curated C, C++, Java, and Python source mappings apply to Binary Search and Graph Explorer.
 Switching languages preserves the semantic trace step and visualization state. SQL Query Pipeline,
@@ -226,6 +237,8 @@ decisions remained user-directed. See [existing versus new work](docs/existing-v
 - [Devpost submission draft](docs/devpost-submission.md)
 - [Known limitations](docs/known-limitations.md)
 - [Product completion board](docs/product-completion-board.md)
+- [Operation-complexity model](docs/complexity-model.md)
+- [Operation-case coverage](docs/operation-case-coverage.md)
 
 ## Roadmap
 
@@ -242,7 +255,8 @@ decisions remained user-directed. See [existing versus new work](docs/existing-v
 - Exact trace state and scoring are deterministic and local; AI explains but does not adjudicate.
 - Learning progress is versioned browser local storage and does not sync across devices.
 - The serverless rate limiter is in-memory, so it is not distributed enforcement across instances.
-- Some curriculum cards are honest roadmap entries, not implemented labs.
+- Incomplete curriculum topics remain in internal metadata and documentation and are hidden from
+  primary public lesson navigation.
 - The current screenshot set and E2E suite use Chromium; broader browser/accessibility automation is
   future work.
 
