@@ -81,7 +81,7 @@ export const COMPLEXITY_FAMILIES: readonly ComplexityFamilyDefinition[] = [
     notation: 'O(n log n)',
     complexityClass: 'O(n log n)',
     title: 'Logarithmic levels, linear work each',
-    formula: 'n * ceil(log2 n)',
+    formula: 'ceil(n * log2 n)',
     summary: 'Divide-and-conquer creates logarithmic levels with linear total work per level.',
     scenarios: ['Merge sort', 'Heap sort', 'Balanced divide and conquer'],
     assumptions: [
