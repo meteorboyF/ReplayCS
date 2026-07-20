@@ -17,6 +17,10 @@
     ><span class="pill">Live</span>
     <h2>CPU Scheduling</h2>
     <p class="muted">Compare five policies with exact Gantt metrics.</p></a
+  ><a class="panel card" href="/lesson/computer-networks/packet-journey"
+    ><span class="pill">Live</span>
+    <h2>Packet Journey</h2>
+    <p class="muted">Follow one URL across protocols, layers, and addresses.</p></a
   ><a class="panel card" href="/lesson/dbms/query-pipeline"
     ><span class="pill">Live</span>
     <h2>SQL Pipeline</h2>

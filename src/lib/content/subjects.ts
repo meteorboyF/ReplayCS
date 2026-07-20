@@ -93,19 +93,19 @@ export const subjects = {
   },
   'computer-networks': {
     title: 'Computer Networks',
-    description: 'Foundation prepared for packets, layers, protocols and routing traces.',
+    description: 'Trace packets, protocols, layers, and hop-by-hop addressing from URL to render.',
     lessons: [
       {
-        title: 'TCP handshake',
-        slug: 'tcp-handshake',
-        status: 'planned',
-        detail: 'Predict SYN, SYN-ACK, ACK and connection state.'
+        title: 'Packet Journey',
+        slug: 'packet-journey',
+        status: 'live',
+        detail: 'Follow cache, DNS, ARP, TCP, TLS, HTTP, and response decapsulation.'
       },
       {
-        title: 'DNS resolution',
-        slug: 'dns',
+        title: 'TCP Reliability',
+        slug: 'tcp-reliability',
         status: 'planned',
-        detail: 'Trace caches, recursive queries and responses.'
+        detail: 'Predict acknowledgements, loss, timeout, and retransmission.'
       }
     ]
   }
