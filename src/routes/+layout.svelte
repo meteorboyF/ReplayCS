@@ -9,7 +9,7 @@
     content="Learn computer science by predicting the next execution state."
   /></svelte:head
 >
-<header>
+<header class="site-header">
   <a class="brand" href="/"><span class="mark">R▶</span> ReplayCS</a>
   <nav aria-label="Main navigation">
     <a href="/learn/dsa-1">Learn</a><a href="/trace-lab">Trace Lab</a><a href="/challenges"

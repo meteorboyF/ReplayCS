@@ -87,4 +87,16 @@ test('landing page and mobile navigation expose the judge route', async ({ page 
   await expect(
     page.getByRole('navigation').getByRole('link', { name: 'Judge Demo' })
   ).toBeVisible();
+
+  await page.goto('/lesson/dsa-2/graph-explorer');
+  const lessonHeader = page.locator('header.lesson-head');
+  const setup = page.locator('form.setup');
+  await expect(lessonHeader).toBeVisible();
+  await expect(setup).toBeVisible();
+  expect(await lessonHeader.evaluate((element) => getComputedStyle(element).position)).not.toBe(
+    'sticky'
+  );
+  const headerBox = await lessonHeader.boundingBox();
+  const setupBox = await setup.boundingBox();
+  expect(headerBox && setupBox && headerBox.y + headerBox.height <= setupBox.y + 1).toBe(true);
 });

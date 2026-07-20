@@ -35,7 +35,7 @@ a {
   color: inherit;
   text-decoration: none;
 }
-header {
+.site-header {
   height: 68px;
   display: flex;
   align-items: center;
@@ -56,14 +56,14 @@ header {
   color: var(--primary);
   margin-right: 0.35rem;
 }
-nav {
+.site-header nav {
   display: flex;
   gap: 1.4rem;
   color: var(--muted);
   font-size: 0.9rem;
 }
-nav a:hover,
-nav a:focus-visible {
+.site-header nav a:hover,
+.site-header nav a:focus-visible {
   color: var(--primary);
 }
 main {
@@ -154,11 +154,11 @@ h2 {
   font-weight: 700;
 }
 @media (max-width: 760px) {
-  header nav {
+  .site-header nav {
     gap: 0.65rem;
     font-size: 0.78rem;
   }
-  header nav a:not(:first-child):not(:nth-last-child(2)):not(.judge-link) {
+  .site-header nav a:not(:first-child):not(:nth-last-child(2)):not(.judge-link) {
     display: none;
   }
   .cards {
