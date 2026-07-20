@@ -13,10 +13,14 @@ test('personalizes the recommended lesson without an account', async ({ page }) 
   await page.getByLabel('Daily learning goal').fill('25');
   await page.getByRole('button', { name: 'Build my learning path' }).click();
 
-  await expect(page).toHaveURL(/lesson\/dsa-1\/binary-search/);
+  await expect(page).toHaveURL(/lesson\/dsa-1\/binary-search\?lang=python/);
   await expect(page.getByRole('heading', { name: 'Binary Search' })).toBeVisible();
   await expect(page.getByRole('tab', { name: 'PYTHON' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('combobox', { name: 'Explanation language' })).toHaveValue('bn');
+
+  await page.evaluate(() => localStorage.removeItem('replaycs-progress'));
+  await page.reload();
+  await expect(page.getByRole('tab', { name: 'PYTHON' })).toHaveAttribute('aria-selected', 'true');
 });
 
 test('welcomes a returning learner with their personalized next lesson', async ({ page }) => {

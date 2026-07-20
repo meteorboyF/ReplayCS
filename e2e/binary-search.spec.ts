@@ -38,6 +38,7 @@ test('clamps hostile shared state and leaves focused controls in charge of Space
   await page.goto('/lesson/dsa-1/binary-search?values=1%2Cnope%2C3&target=3&lang=python&step=999');
   await expect(page.getByRole('alert')).toContainText('comma-separated whole numbers');
   await expect(page.getByRole('heading', { name: 'Binary Search' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'PYTHON' })).toHaveAttribute('aria-selected', 'true');
 
   await page.goto('/lesson/dsa-1/binary-search');
   const next = page.getByRole('button', { name: 'Next' });

@@ -6,7 +6,8 @@
     loadProgress,
     saveProgress,
     type LearnerLevel,
-    type LearningGoal
+    type LearningGoal,
+    type Progress
   } from '$lib/progress/store';
   import type { SubjectId, SupportedLanguage } from '$lib/trace/types';
 
@@ -24,6 +25,19 @@
     { id: 'operating-systems', label: 'Operating Systems' },
     { id: 'computer-networks', label: 'Networks' }
   ];
+  const languageAwareLessons = new Set([
+    '/lesson/dsa-1/binary-search',
+    '/lesson/dsa-2/graph-explorer'
+  ]);
+
+  function learningPathFor(progress: Progress) {
+    const recommendation = recommendNext(progress);
+    const destination = new URL(recommendation.href, 'https://replaycs.invalid');
+    if (languageAwareLessons.has(destination.pathname)) {
+      destination.searchParams.set('lang', progress.preferredLanguage);
+    }
+    return `${destination.pathname}${destination.search}${destination.hash}`;
+  }
 
   function toggleSubject(subject: SubjectId) {
     subjectsOfInterest = subjectsOfInterest.includes(subject)
@@ -42,13 +56,14 @@
       dailyGoalMinutes
     });
     saveProgress(profile);
-    goto(recommendNext(profile).href);
+    goto(learningPathFor(profile));
   }
 
   function skip() {
     const current = loadProgress();
-    saveProgress({ ...current, onboardingComplete: true });
-    goto(recommendNext(current).href);
+    const profile = { ...current, onboardingComplete: true };
+    saveProgress(profile);
+    goto(learningPathFor(profile));
   }
 </script>
 

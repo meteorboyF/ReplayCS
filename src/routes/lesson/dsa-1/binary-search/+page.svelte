@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/state';
   import { onMount } from 'svelte';
   import CodePane from '$lib/components/code/CodePane.svelte';
   import ArrayVisualizer from '$lib/components/visualizers/ArrayVisualizer.svelte';
@@ -19,13 +20,20 @@
   } from '$lib/progress/store';
   import type { StepContext } from '$lib/server/openai/schemas';
   import type { SupportedLanguage } from '$lib/trace/types';
+  const supportedLanguages: readonly SupportedLanguage[] = ['c', 'cpp', 'java', 'python'];
+  function requestedLanguage() {
+    const candidate = page.url.searchParams.get('lang');
+    return supportedLanguages.includes(candidate as SupportedLanguage)
+      ? (candidate as SupportedLanguage)
+      : null;
+  }
   let lesson = $state(createBinarySearchLesson());
   let inputText = $state('2, 5, 8, 12, 16, 23, 38, 56');
   let targetText = $state('23');
   let inputError = $state('');
   let shareStatus = $state('');
   let index = $state(0),
-    language = $state<SupportedLanguage>('cpp'),
+    language = $state<SupportedLanguage>(requestedLanguage() ?? 'cpp'),
     playing = $state(false),
     progress = $state(loadProgress()),
     submitted = $state<string[]>([]),
@@ -39,10 +47,7 @@
   onMount(() => {
     progress = loadProgress();
     const params = new URLSearchParams(location.search);
-    const urlLanguage = params.get('lang');
-    language = ['c', 'cpp', 'java', 'python'].includes(urlLanguage ?? '')
-      ? (urlLanguage as SupportedLanguage)
-      : progress.preferredLanguage;
+    language = requestedLanguage() ?? progress.preferredLanguage;
     const urlValues = params.get('values');
     const urlTarget = params.get('target');
     if (urlValues && urlTarget) {
