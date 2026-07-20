@@ -11,10 +11,10 @@ export const subjects = {
         detail: 'Shrink a sorted search range and predict every midpoint.'
       },
       {
-        title: 'Bubble Sort',
-        slug: 'bubble-sort',
-        status: 'next',
-        detail: 'Watch comparisons and swaps settle each suffix.'
+        title: 'Sorting Arena',
+        slug: 'sorting-arena',
+        status: 'live',
+        detail: 'Compare Bubble, Selection, and Insertion Sort operation by operation.'
       },
       {
         title: 'Linked-list insertion',
