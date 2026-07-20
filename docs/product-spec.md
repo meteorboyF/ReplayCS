@@ -39,8 +39,8 @@ inspect → predict → reveal deterministic state → compare → recover/expla
 - Cross-subject: five deterministic two-checkpoint Challenge Arena bosses—Binary Bounds, BFS
   Frontier, SQL Pipeline, Round Robin, and Packet Route.
 
-Binary Search and Graph Explorer claim C/C++/Java/Python semantic source mapping. Planned cards
-remain visibly planned and are not included in shipped-functionality counts.
+Binary Search and Graph Explorer claim C/C++/Java/Python semantic source mapping. Unfinished roadmap
+topics remain documented but are omitted from primary public lesson navigation and shipped counts.
 
 ## Completion and rewards
 

@@ -31,30 +31,18 @@
   <div><b>{mastery}%</b><span>mastery</span></div>
 </div>
 <section>
-  <h2>Recommended path</h2>
+  <h2>Available lessons</h2>
   <div class="lessons">
-    {#each data.subject.lessons as lesson, i}
-      {#if lesson.status === 'live'}
-        <a class="lesson panel" href={`/lesson/${data.id}/${lesson.slug}`}>
-          <span class="number">{String(i + 1).padStart(2, '0')}</span>
-          <div>
-            <span class="pill">{lesson.status}</span>
-            <h3>{lesson.title}</h3>
-            <p>{lesson.detail}</p>
-          </div>
-          <span class="go">Trace →</span>
-        </a>
-      {:else}
-        <article class="lesson panel locked">
-          <span class="number">{String(i + 1).padStart(2, '0')}</span>
-          <div>
-            <span class="pill">{lesson.status}</span>
-            <h3>{lesson.title}</h3>
-            <p>{lesson.detail}</p>
-          </div>
-          <span class="go">Coming soon</span>
-        </article>
-      {/if}
+    {#each liveLessons as lesson, i}
+      <a class="lesson panel" href={lesson.href}>
+        <span class="number">{String(i + 1).padStart(2, '0')}</span>
+        <div>
+          <span class="pill">live</span>
+          <h3>{lesson.title}</h3>
+          <p>{lesson.detail}</p>
+        </div>
+        <span class="go">Trace →</span>
+      </a>
     {/each}
   </div>
 </section>
@@ -97,10 +85,6 @@
     grid-template-columns: 60px 1fr auto;
     align-items: center;
     padding: 1.2rem;
-  }
-  .lesson.locked {
-    opacity: 0.65;
-    cursor: default;
   }
   .number {
     font-family: var(--mono);
