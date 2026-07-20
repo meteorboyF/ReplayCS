@@ -137,7 +137,7 @@ function masteryForLesson(progress: Progress, lesson: LiveLesson): number {
   const value = Number.isFinite(recorded)
     ? recorded
     : progress.completed.includes(lesson.completionId)
-      ? 75
+      ? 50
       : 0;
   return Math.min(100, Math.max(0, value));
 }
