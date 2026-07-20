@@ -32,6 +32,7 @@ describe('adaptive recommendations', () => {
       'graph-explorer',
       'binary-search',
       'sorting-arena',
+      'linked-list-lab',
       'cpu-scheduling',
       'packet-journey'
     ]);
@@ -65,9 +66,21 @@ describe('adaptive recommendations', () => {
     expect(
       recommendNext({
         ...createEmptyProgress(),
-        completed: ['binary-search', 'sorting-arena', 'graph-explorer']
+        completed: ['binary-search', 'sorting-arena', 'linked-list-lab', 'graph-explorer']
       }).href
     ).toBe('/lesson/dbms/query-pipeline');
+  });
+
+  it('recommends the Linked List Lab after the earlier DSA I lessons', () => {
+    expect(
+      recommendNext({
+        ...createEmptyProgress(),
+        completed: ['binary-search', 'sorting-arena']
+      })
+    ).toMatchObject({
+      title: 'Linked List Lab',
+      href: '/lesson/dsa-1/linked-list'
+    });
   });
 
   it('offers an interest-aligned mastery replay after all live lessons are complete', () => {

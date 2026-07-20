@@ -11,6 +11,10 @@
     ><span class="pill">Live</span>
     <h2>Binary Search</h2>
     <p class="muted">Per-line, multi-language manual trace.</p></a
+  ><a class="panel card" href="/lesson/dsa-1/linked-list"
+    ><span class="pill">Live</span>
+    <h2>Linked List Lab</h2>
+    <p class="muted">Trace 14 pointer algorithms, exact work, and tail-pointer tradeoffs.</p></a
   ><a class="panel card" href="/lesson/dsa-1/sorting-arena"
     ><span class="pill">Live</span>
     <h2>Sorting Arena</h2>

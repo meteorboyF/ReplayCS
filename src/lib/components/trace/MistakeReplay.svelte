@@ -10,6 +10,10 @@
     actual: string;
     explanation: string;
     tag: MisconceptionTag;
+    variableLabel?: string;
+    stateKey?: string;
+    recoveryPrompt?: string;
+    recoveryError?: string;
   }
 
   let {
@@ -33,8 +37,13 @@
       recovered = true;
       recoveryError = '';
       onrecover();
-    } else recoveryError = 'Trace the midpoint formula once more before retrying.';
+    } else
+      recoveryError =
+        attempt.recoveryError ?? 'Replay the highlighted transition once more before retrying.';
   }
+
+  let variableLabel = $derived(attempt.variableLabel ?? 'mid');
+  let stateKey = $derived(attempt.stateKey ?? 'mid');
 </script>
 
 <section class="replay" aria-labelledby="replay-title">
@@ -48,12 +57,12 @@
   <p>{attempt.prompt}</p>
   <div class="compare">
     <div class="predicted">
-      <small>Your predicted state</small><strong>mid = {attempt.predicted}</strong><span
+      <small>Your predicted state</small><strong>{variableLabel} = {attempt.predicted}</strong><span
         >Different here</span
       >
     </div>
     <div class="actual">
-      <small>Actual trace state</small><strong>mid = {attempt.actual}</strong><span
+      <small>Actual trace state</small><strong>{variableLabel} = {attempt.actual}</strong><span
         >Deterministic result</span
       >
     </div>
@@ -66,17 +75,21 @@
     >{replayed ? 'Hide transition' : 'Replay correct transition'}</button
   >
   {#if replayed}<div class="transition" aria-live="polite">
-      <code>before: mid = {String(stateBefore.mid)}</code><span>→ execute midpoint line →</span
-      ><code>after: mid = {String(stateAfter.mid)}</code>
+      <code>before: {variableLabel} = {String(stateBefore[stateKey])}</code><span
+        >→ execute highlighted line →</span
+      ><code>after: {variableLabel} = {String(stateAfter[stateKey])}</code>
     </div>{/if}
   <div class="recovery">
-    <label for="recovery-answer">Recovery challenge: calculate <code>mid</code> again.</label>
+    <label for="recovery-answer"
+      >{attempt.recoveryPrompt ??
+        'Recovery challenge: enter the correct state after this line.'}</label
+    >
     <div>
       <input
         id="recovery-answer"
         bind:value={recoveryAnswer}
         disabled={recovered}
-        inputmode="numeric"
+        inputmode={/^-?\d+$/.test(attempt.actual) ? 'numeric' : 'text'}
       /><button class="primary" onclick={checkRecovery} disabled={recovered || !recoveryAnswer}
         >Check recovery</button
       >

@@ -65,7 +65,11 @@
   );
 
   const subjectMastery = [
-    { label: 'DSA I', prefixes: ['binary-search', 'sorting-arena'], accent: 'cyan' },
+    {
+      label: 'DSA I',
+      prefixes: ['binary-search', 'sorting-arena', 'linked-list-lab'],
+      accent: 'cyan'
+    },
     { label: 'DSA II', prefixes: ['graph-explorer'], accent: 'violet' },
     { label: 'DBMS', prefixes: ['query-pipeline'], accent: 'amber' },
     { label: 'Operating Systems', prefixes: ['cpu-scheduling'], accent: 'green' },
@@ -113,6 +117,7 @@
     const labels: Record<string, string> = {
       'binary-search': 'Binary Search',
       'sorting-arena': 'Sorting Arena',
+      'linked-list-lab': 'Linked List Lab',
       'graph-explorer': 'Graph Explorer',
       'query-pipeline': 'Query Pipeline',
       'cpu-scheduling': 'CPU Scheduling',
