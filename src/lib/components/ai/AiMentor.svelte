@@ -4,12 +4,21 @@
   let { context }: { context: StepContext } = $props();
   let level = $state<StepContext['explanationLevel']>('standard');
   let language = $state<StepContext['explanationLanguage']>('en');
+  let preferencesInitialized = $state(false);
   let question = $state('');
   let loading = $state(false);
   let error = $state('');
   let explanation = $state<AiStepExplanation | null>(null);
   let source = $state<'ai' | 'fallback' | null>(null);
   let statusMessage = $state('');
+
+  $effect(() => {
+    if (!preferencesInitialized) {
+      level = context.explanationLevel;
+      language = context.explanationLanguage;
+      preferencesInitialized = true;
+    }
+  });
 
   async function request(interaction: StepContext['interaction']) {
     loading = true;
@@ -69,7 +78,7 @@
       ></label
     >
     <label
-      >Language<select bind:value={language}
+      >Explanation language<select bind:value={language}
         ><option value="en">English</option><option value="bn">বাংলা</option></select
       ></label
     >

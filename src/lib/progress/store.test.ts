@@ -3,20 +3,13 @@ import {
   awardPrediction,
   awardRecovery,
   completeLesson,
+  createEmptyProgress,
+  levelFromXp,
   recordMisconception,
-  type Progress
+  accuracy
 } from './store';
 
-const base: Progress = {
-  version: 2,
-  xp: 0,
-  streak: 0,
-  completed: [],
-  awardedPredictions: [],
-  misconceptionCounts: {},
-  mistakeEvidence: [],
-  recoveredMistakes: []
-};
+const base = createEmptyProgress();
 
 describe('progress', () => {
   it('prevents XP farming', () => {
@@ -36,5 +29,9 @@ describe('progress', () => {
   it('awards a recovery challenge once', () => {
     const once = awardRecovery(base, 'mid-1');
     expect(awardRecovery(once, 'mid-1').xp).toBe(6);
+  });
+  it('calculates transparent levels and accuracy', () => {
+    expect(levelFromXp(240)).toBe(3);
+    expect(accuracy({ ...base, predictionAttempts: 4, correctPredictions: 3 })).toBe(75);
   });
 });

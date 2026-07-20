@@ -28,6 +28,7 @@
   let step = $derived(lesson.steps[index]);
   onMount(() => {
     progress = loadProgress();
+    language = progress.preferredLanguage;
     const params = new URLSearchParams(location.search);
     index = Math.min(Number(params.get('step') ?? 0) || 0, lesson.steps.length - 1);
     return () => clearInterval(timer);
@@ -91,11 +92,11 @@
       mutation: step.mutations,
       stateAfter: step.stateAfter,
       deterministicExplanation: step.deterministicExplanation,
-      learnerLevel: 'beginner',
+      learnerLevel: progress.learnerLevel,
       misconceptionTags: mistake?.stepId === step.id ? [mistake.tag] : [],
       interaction: 'explain',
-      explanationLevel: 'standard',
-      explanationLanguage: 'en',
+      explanationLevel: progress.explanationLevel,
+      explanationLanguage: progress.explanationLanguage,
       currentPrediction: step.prediction
         ? {
             prompt: step.prediction.prompt,
