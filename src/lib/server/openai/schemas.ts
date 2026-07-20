@@ -10,15 +10,29 @@ export const stepContextSchema = z.object({
   stateAfter: z.record(z.unknown()),
   deterministicExplanation: z.string().min(1).max(1500),
   learnerLevel: z.enum(['beginner', 'intermediate', 'advanced']).default('beginner'),
-  misconceptionTags: z.array(z.string().max(60)).max(10).default([])
+  misconceptionTags: z.array(z.string().max(60)).max(10).default([]),
+  interaction: z.enum(['explain', 'why', 'hint', 'simplify', 'mistake']).default('explain'),
+  explanationLevel: z.enum(['beginner', 'standard', 'exam-ready', 'technical']).default('standard'),
+  explanationLanguage: z.enum(['en', 'bn']).default('en'),
+  learnerQuestion: z.string().max(300).optional(),
+  currentPrediction: z
+    .object({
+      prompt: z.string().max(400),
+      learnerAnswer: z.string().max(300).optional(),
+      correctAnswer: z.string().max(300)
+    })
+    .optional()
 });
 export const explanationSchema = z.object({
+  language: z.enum(['en', 'bn']),
   summary: z.string(),
   whyNow: z.string(),
   stateChange: z.string(),
   unchangedState: z.array(z.string()),
   commonMistake: z.string().optional(),
   analogy: z.string().optional(),
+  groundingNote: z.string(),
+  recoveryChallenge: z.string().optional(),
   checkQuestion: z.object({ prompt: z.string(), expectedConcept: z.string() })
 });
 export type StepContext = z.infer<typeof stepContextSchema>;

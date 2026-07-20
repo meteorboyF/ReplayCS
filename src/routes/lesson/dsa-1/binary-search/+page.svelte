@@ -4,8 +4,18 @@
   import ArrayVisualizer from '$lib/components/visualizers/ArrayVisualizer.svelte';
   import TraceControls from '$lib/components/trace/TraceControls.svelte';
   import PredictionCheckpoint from '$lib/components/trace/PredictionCheckpoint.svelte';
+  import MistakeReplay, { type MistakeAttempt } from '$lib/components/trace/MistakeReplay.svelte';
+  import AiMentor from '$lib/components/ai/AiMentor.svelte';
   import { createBinarySearchLesson } from '$lib/engines/dsa/binarySearch';
-  import { awardPrediction, completeLesson, loadProgress, saveProgress } from '$lib/progress/store';
+  import {
+    awardPrediction,
+    awardRecovery,
+    completeLesson,
+    loadProgress,
+    recordMisconception,
+    saveProgress
+  } from '$lib/progress/store';
+  import type { StepContext } from '$lib/server/openai/schemas';
   import type { SupportedLanguage } from '$lib/trace/types';
   const lesson = createBinarySearchLesson();
   let index = $state(0),
@@ -13,6 +23,7 @@
     playing = $state(false),
     progress = $state(loadProgress()),
     submitted = $state<string[]>([]),
+    mistake = $state<MistakeAttempt | null>(null),
     timer: ReturnType<typeof setInterval> | undefined;
   let step = $derived(lesson.steps[index]);
   onMount(() => {
@@ -40,13 +51,59 @@
         } else jump(index + 1);
       }, 1000);
   }
-  function predict(correct: boolean) {
+  function predict(correct: boolean, answer: string) {
     if (!step.prediction) return;
     submitted = [...submitted, step.prediction.id];
     if (correct) {
       progress = awardPrediction(progress, step.prediction.id, step.prediction.xpReward);
       saveProgress(progress);
+    } else {
+      const evidenceId = `${lesson.id}:${step.id}:${step.prediction.id}`;
+      mistake = {
+        evidenceId,
+        stepId: step.id,
+        prompt: step.prediction.prompt,
+        predicted: answer,
+        actual: String(step.prediction.correctAnswer),
+        explanation: step.prediction.explanation,
+        tag: 'index-vs-value'
+      };
+      progress = recordMisconception(progress, evidenceId, mistake.tag);
+      saveProgress(progress);
     }
+  }
+  function recoverMistake() {
+    if (!mistake) return;
+    progress = awardRecovery(progress, mistake.evidenceId);
+    saveProgress(progress);
+  }
+  function mentorContext(): StepContext {
+    const activeSourceLines = lesson.sourceByLanguage[language]
+      .filter((line) => line.semanticOperationId === step.semanticOperationId)
+      .map((line) => line.text);
+    return {
+      subject: lesson.subject,
+      lesson: lesson.id,
+      learningObjective: lesson.learningObjectives[0],
+      selectedLanguage: language,
+      activeSourceLines,
+      stateBefore: step.stateBefore,
+      mutation: step.mutations,
+      stateAfter: step.stateAfter,
+      deterministicExplanation: step.deterministicExplanation,
+      learnerLevel: 'beginner',
+      misconceptionTags: mistake?.stepId === step.id ? [mistake.tag] : [],
+      interaction: 'explain',
+      explanationLevel: 'standard',
+      explanationLanguage: 'en',
+      currentPrediction: step.prediction
+        ? {
+            prompt: step.prediction.prompt,
+            learnerAnswer: mistake?.stepId === step.id ? mistake.predicted : undefined,
+            correctAnswer: String(step.prediction.correctAnswer)
+          }
+        : undefined
+    };
   }
 </script>
 
@@ -103,13 +160,16 @@
         challenge={step.prediction}
         submitted={submitted.includes(step.prediction.id)}
         onsubmit={predict}
-      />{/if}<button
-      class="ai"
-      onclick={() =>
-        alert(
-          'Connect OPENAI_API_KEY to enable personalized explanations. The deterministic explanation remains available.'
-        )}>✦ Ask AI mentor</button
-    >
+      />{/if}
+    {#if mistake?.stepId === step.id}
+      <MistakeReplay
+        attempt={mistake}
+        stateBefore={step.stateBefore}
+        stateAfter={step.stateAfter}
+        onrecover={recoverMistake}
+      />
+    {/if}
+    {#key step.id}<AiMentor context={mentorContext()} />{/key}
   </aside>
 </div>
 
@@ -177,11 +237,6 @@
   }
   .state b {
     color: var(--primary);
-  }
-  .ai {
-    width: 100%;
-    margin-top: 1rem;
-    color: var(--secondary);
   }
   @media (max-width: 1000px) {
     .lab {
