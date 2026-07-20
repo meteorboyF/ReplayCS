@@ -17,9 +17,9 @@ personalized **Continue · [recommended lesson]** link derived from that same pr
 3. Use a private window, or reset existing progress from `/progress`, if you want a clean run.
 4. Keep JavaScript and browser local storage enabled. No personal data is requested.
 
-At the 2026-07-20 documentation audit, production reported `aiConfigured: false`. That is an
-expected supported mode: the mentor visibly labels and returns a deterministic fallback. If the
-field is `true`, the same panel identifies a structured GPT-5.6 response instead.
+Production currently reports `aiConfigured: true`, so the mentor should identify a structured
+GPT-5.6 response. `false` remains an expected supported mode after configuration removal: the same
+panel visibly labels and returns a deterministic fallback.
 
 ## Curated under-three-minute path
 

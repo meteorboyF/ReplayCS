@@ -82,7 +82,8 @@ at beginner, standard, exam-ready, or technical depth in English or Bangla. Scor
 state remain local and deterministic. If no key is configured, model output fails schema validation,
 a call times out, or the upstream request fails, the same UI labels and displays a deterministic
 fallback rather than breaking the lesson. `/api/health` reports configuration status without
-exposing a secret; at the 2026-07-20 audit, production truthfully reported `aiConfigured: false`.
+exposing a secret. Production now reports `aiConfigured: true`, and its structured GPT-5.6 mentor
+response has been verified without exposing the key.
 
 ## How Codex was used
 

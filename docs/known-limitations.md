@@ -11,12 +11,12 @@ complete CS curriculum. This document keeps those boundaries explicit.
 
 - The stable public URL is <https://replaycs.vercel.app>; `/api/health` and the production learner
   smoke path have been verified.
-- At this audit the health endpoint reported `aiConfigured: false`. Production therefore uses the
-  visible deterministic mentor fallback. The server-side GPT-5.6 path requires the project owner to
-  add `OPENAI_API_KEY` in Vercel and create a new deployment.
-- GitHub Actions is configured for pull requests and `main`, but a newly added workflow is not proven
-  green until GitHub runs it after push. Final release must confirm that remote result rather than
-  relying only on local checks.
+- The health endpoint reports `aiConfigured: true`, and the production mentor has returned a
+  structured `source: "ai"` response from GPT-5.6. Missing configuration or upstream failure still
+  degrades visibly to the deterministic mentor fallback.
+- GitHub Actions is configured for pull requests and `main`; both the final release and live-mentor
+  fix completed the remote check. Future changes still require the remote result rather than only
+  local checks.
 - Git-based automatic Preview/Production deployment depends on the one-time Vercel dashboard
   repository connection. CLI deployment is documented and verified; dashboard connection status
   should be confirmed separately.

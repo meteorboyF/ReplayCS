@@ -85,10 +85,10 @@ never comes from the model.
 The mentor supports step explanations, “why,” hints, simplification, mistake explanation, four depth
 levels, and English or Bangla teaching text. Without `OPENAI_API_KEY`, when an upstream call fails,
 or when model output misses the structured schema, the same UI shows a deterministic grounded
-explanation. The public deployment currently operates in this no-key fallback mode; `/api/health`
-reports that state without exposing configuration values. Hint requests are recorded as learning
-evidence; deterministic hints reason from the current operation without revealing the resulting
-state.
+explanation. The public deployment currently runs the configured GPT-5.6 path; `/api/health`
+reports `aiConfigured: true` without exposing configuration values, and the no-key/upstream fallback
+remains supported. Hint requests are recorded as learning evidence; deterministic hints reason from
+the current operation without revealing the resulting state.
 
 See [OpenAI integration](docs/openai-integration.md) for the trust boundary and production behavior.
 
