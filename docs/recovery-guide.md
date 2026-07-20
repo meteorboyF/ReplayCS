@@ -5,6 +5,27 @@ This guide restores ReplayCS without rewriting published history. The canonical 
 foundation is the annotated tag `replaycs-foundation-baseline` at commit
 `c137a5eeb27709b715bab26617755381dd27a3a3`.
 
+## Published recovery points
+
+These annotated tags are immutable checkpoints already published on `origin`. The SHA shown is the
+peeled commit, not the annotated tag object's own SHA.
+
+| Recovery point                 | Peeled commit                              |
+| ------------------------------ | ------------------------------------------ |
+| `replaycs-foundation-baseline` | `c137a5eeb27709b715bab26617755381dd27a3a3` |
+| `replaycs-production-baseline` | `6d41e5456c3c1cd08aca1ab8d917538926671d55` |
+| `replaycs-dsa-curriculum`      | `e202f2154ddae2bcbf12299b48d91d56d5de26c5` |
+| `replaycs-os-curriculum`       | `64e7dd7f118a43c6fad0389c15894b457750155b` |
+| `replaycs-networks-curriculum` | `b659e7bd5657e222fef4dfd148113a5c079397af` |
+| `replaycs-dbms-curriculum`     | `48a3ee1e7afc2a82dcf0ed5a1c29e78778f0c4be` |
+| `replaycs-judge-demo`          | `5ee81e0724c299db346ec2ff0ccbcace65471848` |
+| `replaycs-challenge-arena`     | `1487f955029613e5c53bd6e016ef31f22619c749` |
+| `replaycs-lesson-cohesion`     | `fefd039f9b99ba6965439ef01975d8661ab1488e` |
+
+Prefer the newest checkpoint known to be healthy for the incident. The foundation tag is the
+minimal product baseline, not automatically the best rollback target. Never create a new tag with
+one of these names or move a published tag.
+
 ## Safety rules
 
 - Fetch and inspect before changing a branch.
@@ -28,6 +49,7 @@ git fetch origin --prune --tags
 git log --oneline --decorate --graph -20
 git rev-parse HEAD
 git rev-parse origin/main
+git for-each-ref --format='%(refname:short) %(objectname) %(*objectname)' 'refs/tags/replaycs*'
 git show --no-patch --decorate replaycs-foundation-baseline
 git rev-parse replaycs-foundation-baseline^{}
 ```
@@ -80,6 +102,7 @@ npm ci
 npm run check
 npm run lint
 npm run test
+npx playwright install --with-deps chromium
 npm run test:e2e
 npm run build
 ```
@@ -87,18 +110,22 @@ npm run build
 ## Revert a feature commit safely
 
 Reverting adds a new commit that undoes an earlier commit. It preserves the audit trail and leaves
-the original commit reachable. Replace the two bracketed values; do not include the brackets.
+the original commit reachable. Replace `FEATURE_NAME`, `SHORT_SHA`, and
+`FULL_FEATURE_COMMIT_SHA` below with inspected literal values before running anything.
 
 ```bash
 git fetch origin --prune
 git switch main
 git pull --ff-only origin main
-git switch -c revert/[feature-name]-[short-sha]
-git show --stat [full-feature-commit-sha]
-git revert --no-edit [full-feature-commit-sha]
+git merge-base --is-ancestor FULL_FEATURE_COMMIT_SHA origin/main
+git show --stat FULL_FEATURE_COMMIT_SHA
+git switch -c revert/FEATURE_NAME-SHORT_SHA
+git revert --no-edit FULL_FEATURE_COMMIT_SHA
+npm ci
 npm run check
 npm run lint
 npm run test
+npx playwright install --with-deps chromium
 npm run test:e2e
 npm run build
 git diff --check HEAD^ HEAD
@@ -107,10 +134,10 @@ git push -u origin HEAD
 
 Open a pull request from the revert branch into `main`, wait for checks, then merge it normally. If
 the commit being reverted is a merge commit, first inspect its parents with
-`git show --no-patch --pretty=raw [merge-commit-sha]`, then use:
+`git show --no-patch --pretty=raw FULL_MERGE_COMMIT_SHA`, then use:
 
 ```bash
-git revert -m 1 [merge-commit-sha]
+git revert -m 1 FULL_MERGE_COMMIT_SHA
 ```
 
 Do not guess the mainline parent of a complex merge. Ask for review when parent `1` is not clearly
@@ -151,7 +178,7 @@ An instant rollback routes traffic to an existing build; it does not rebuild it 
 environment variables. Validate the restored release immediately:
 
 ```bash
-curl --fail --silent --show-error https://[production-domain]/api/health
+curl --fail --silent --show-error https://replaycs.vercel.app/api/health
 ```
 
 Then test the landing page, a DSA trace in both directions, a prediction, the DBMS pipeline,
@@ -164,12 +191,22 @@ create the revert branch described above, merge the verified revert, and let `ma
 production deployment. This prevents the next ordinary deployment from silently restoring the
 faulty code.
 
-To undo an accidental Vercel rollback without rebuilding, promote the intended deployment:
+Important: Vercel disables automatic production-domain assignment after an Instant Rollback. A
+subsequent `main` deployment can finish successfully without becoming the live stable domain. Find
+the deployment built from the tested revert merge, inspect its Git SHA, and only then promote it:
 
 ```bash
-npx vercel@latest promote [deployment-id-or-url]
+npx vercel@latest list --prod
+npx vercel@latest inspect FIXED_MAIN_DEPLOYMENT_URL
+npx vercel@latest promote FIXED_MAIN_DEPLOYMENT_URL
 npx vercel@latest promote status
+curl --fail --silent --show-error https://replaycs.vercel.app/api/health
 ```
+
+Promotion both makes that deployment current and restores normal automatic domain assignment. Do
+not promote a deployment until its metadata, checks, and smoke tests establish that it is the
+intended fixed `main` revision. Promoting a Preview build is possible but creates a Production
+deployment and must not be used as an unreviewed shortcut.
 
 See the [deployment guide](deployment.md) for the complete preview, production, smoke-test, and
 rollback workflow.

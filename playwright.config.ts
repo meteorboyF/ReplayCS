@@ -4,7 +4,7 @@ const remoteBaseUrl = process.env.REPLAYCS_BASE_URL;
 
 export default defineConfig({
   testDir: 'e2e',
-  use: { baseURL: remoteBaseUrl ?? 'http://127.0.0.1:4173', trace: 'on-first-retry' },
+  use: { baseURL: remoteBaseUrl ?? 'http://127.0.0.1:4173', trace: 'retain-on-failure' },
   webServer: remoteBaseUrl
     ? undefined
     : {

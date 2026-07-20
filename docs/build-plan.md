@@ -1,13 +1,25 @@
-# Build plan
+# Build and release plan
 
-- [x] **M0 Audit:** repositories, SHA, frameworks, source candidates, license and exclusions documented.
-- [x] **M1 Foundation:** SvelteKit shell, brand, routes, responsive tokens, error route, test scripts.
-- [x] **M2 Trace engine:** typed snapshots, semantic lines, deterministic navigation and unit tests.
-- [x] **M3 Core primitives:** code pane, language selector, array view, controls, prediction, state inspector.
-- [x] **M4 DSA flagship:** binary-search success/missing traces, four languages, complexity, prediction.
-- [x] **M5 DBMS flagship:** compound logical query pipeline with validated intermediate rows.
-- [x] **M6 AI foundation:** Responses API module, structured schema, validation, timeout and fallback endpoints.
-- [x] **M7 Gamification:** idempotent XP, streak, completion, badge, versioned persistence and reset.
-- [ ] **M8 Polish:** connect mentor UI, add bubble sort and BFS, component tests, Playwright browsers/screenshots.
+- [x] **Audit:** repositories, source SHA, frameworks, provenance, exclusions, and license gap.
+- [x] **Foundation:** SvelteKit shell, brand, responsive tokens, subject routes, error route, tests.
+- [x] **Trace core:** serializable snapshots, deterministic navigation, source mappings, predictions.
+- [x] **Learning core:** custom Binary Search, Replay My Mistake, grounded mentor, onboarding,
+      returning CTA, versioned evidence, transparent mastery, and live-lesson recommendations.
+- [x] **DSA breadth:** three sorting algorithms plus BFS and iterative/recursive DFS.
+- [x] **DBMS flagship:** two SQL scenarios with INNER/LEFT JOIN, NULLs, WHERE/GROUP/HAVING,
+      before/after tables, recovery, completion, and mentor.
+- [x] **OS flagship:** five-policy CPU Scheduling with validated workload/quantum, Gantt, metrics,
+      prediction gating, and comparison.
+- [x] **Networks flagship:** bounded cold/warm Packet Journey with protocol/layer/address state.
+- [x] **Cross-product loop:** Binary Bounds, BFS Frontier, SQL Pipeline, Round Robin, and Packet Route
+      bosses plus the real-link Judge Demo.
+- [x] **Operations:** Vercel Node deployment, health endpoint, production smoke, rollback/recovery.
+- [x] **Submission P0:** GitHub Actions, README, judge guide, Devpost draft, 2:55 demo script,
+      provenance/Codex/new-work docs, reproducible screenshots.
+- [ ] **Release close:** final integrated gate, remote CI, production deploy/smoke, regenerated assets,
+      user-supplied Codex feedback ID, annotated submission tag.
 
-Acceptance for unfinished work: each new engine must produce exact tested intermediate states, render in the shared player, include predictions, and remain usable without AI.
+Next depth work should extend the complete side-by-side mistake-recovery component to shipped
+Sorting, Graph, CPU, and Packet labs before adding superficial roadmap breadth. Planned topic order:
+linked structures/trees, DBMS normalization/index/concurrency, OS paging/deadlock, and Network TCP/
+subnet/routing.

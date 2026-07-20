@@ -1,0 +1,40 @@
+# ReplayCS under-three-minute demo
+
+Target runtime: **2:55**. Use the public site at <https://replaycs.vercel.app>, a 1440 × 900 capture,
+100% zoom, and real product routes. Prepare the browser only by completing onboarding once through
+the UI, with no lesson or boss evidence, so the truthful returning-learner CTA is visible. Rehearse
+once after the final deployment. Do not edit local storage, mock API output, or use developer tools
+in the video.
+
+## Exact shot list and narration
+
+| Time      | Page and exact interaction                                                                                                                                            | Required on-screen proof                                                                                          | Narration                                                                                                                                                                                              |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0:00–0:12 | `/` — show **Continue · [lesson]**, the unrevealed midpoint preview, and the **Judge demo · 3 min** action; open Judge Demo.                                          | Personalized returning CTA, `mid ?`, and “Pause computer science. Trace every state.”                             | “ReplayCS welcomes a returning learner with a real next lesson, but it still asks for a prediction before it reveals the computer’s state.”                                                            |
+| 0:12–0:38 | Judge stop 1 → Binary Search at step 2. Enter `4`, lock, open **Replay correct transition**, recover with `3`.                                                        | Predicted `mid = 4`, actual `mid = 3`, first divergence, and `Recovered · +6 XP`.                                 | “The learner commits first. Deterministic trace truth preserves the wrong midpoint, finds the first divergence, and turns it into a rewarded recovery.”                                                |
+| 0:38–0:56 | Switch **PYTHON → C++ → PYTHON**, then choose **Explain my mistake**.                                                                                                 | Step 3 remains selected; source syntax changes; mentor shows **GPT-5.6** or **Deterministic**.                    | “The semantic step survives language changes. GPT-5.6 can explain only the supplied trace and mistake; when no key is configured, ReplayCS labels and serves deterministic teaching text.”             |
+| 0:56–1:13 | SQL Judge stop — show the logical/physical warning; at **WHERE or HAVING?**, choose **HAVING**.                                                                       | Intermediate relation, hidden aggregate filter before commitment, and **Correct prediction**.                     | “SQL becomes a sequence of relations. The answer-bearing HAVING stage stays hidden until the learner predicts where aggregate filtering belongs.”                                                      |
+| 1:13–1:30 | CPU Judge stop — try **Next**, enter `P1`, lock, then advance once and show the policy comparison.                                                                    | First dispatch is gated; a deterministic Gantt state and five scheduler cards appear after prediction.            | “The same loop drives scheduling. FCFS, SJF, SRTF, Priority, and Round Robin share a workload and produce reproducible timing metrics.”                                                                |
+| 1:30–1:47 | Packet Judge stop — choose **Warm · fresh response**, build, select **Hand cached bytes to the renderer**, lock, then advance.                                        | Answer-bearing packet panels stay hidden until commitment; the warm route has three deterministic events.         | “A warm cache compresses the journey to three events. The cold engine still models DNS, ARP, TCP, TLS, HTTP, and hop-local versus end-to-end addressing.”                                              |
+| 1:47–2:13 | `/challenges` — keep **Binary Bounds Boss**; answer `low = 4, high = 6`, continue, answer `31 at index 5`, then complete.                                             | Five-boss map, two checked predictions, and `Boss cleared. +30 XP`.                                               | “The Arena ships Binary Bounds, BFS Frontier, SQL Pipeline, Round Robin, and Packet Route bosses. Each has two deterministic checkpoints, and each reward is earned once.”                             |
+| 2:13–2:36 | Reload `/progress`; sweep first-attempt accuracy, average attempts, hints, boss progress, language activity, recent activity, mastery, misconceptions, and next step. | Panels show only evidence produced in this browser, including `1/5` boss progress and activity from the live run. | “Progress exposes its evidence: attempts, hints, language use, recent rewards, boss clears, and lesson mastery. The score is deterministic—completion, demonstrated prediction, and recovery quality.” |
+| 2:36–2:45 | Reload `/`; point to the personalized **Continue** action.                                                                                                            | Home and Progress recommend the same real route.                                                                  | “That evidence closes the loop: returning learners continue into a live lesson selected from interests, unfinished work, and recovery needs.”                                                          |
+| 2:45–2:52 | Prepared GitHub `commits/main` and `docs/architecture.md` tabs.                                                                                                       | Recoverable commit history and deterministic-engine → snapshot → optional-mentor boundary.                        | “Codex helped audit, build, test, and document this through recoverable pushes, while execution truth stayed separate from AI wording.”                                                                |
+| 2:52–2:55 | Return to the hero.                                                                                                                                                   | ReplayCS mark and closing promise.                                                                                | “Predict the next state. Then make the machine make sense.”                                                                                                                                            |
+
+## Recording checklist
+
+- Confirm <https://replaycs.vercel.app/api/health> is healthy immediately before recording.
+- Check whether the mentor source will be `GPT-5.6` or `Deterministic`, and use the matching truthful
+  narration; never imply a fallback response came from the model.
+- Prepare the profile only through ReplayCS onboarding; do not complete a lesson or boss before the
+  take. Use only the recorded interactions to create lesson and boss evidence.
+- Pre-open the Judge Demo stops, Challenge Arena, Progress, the public commit history, and the
+  repository architecture document in shot order. Reload Progress and the final landing tab before
+  showing them so they read the latest browser-local evidence.
+- Keep the pointer still during narration and avoid scrolling past planned cards.
+- Retake if a toast, prediction, XP value, or model-source badge is not readable.
+- Export at 1080p and verify the final file is strictly shorter than three minutes.
+
+For reproducible expected results, see [judge-testing-guide.md](judge-testing-guide.md). Generate the
+real screenshot set with `npm run screenshots`; do not substitute mockups for application output.
