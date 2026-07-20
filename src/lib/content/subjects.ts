@@ -1,0 +1,111 @@
+export const subjects = {
+  'dsa-1': {
+    title: 'Data Structures & Algorithms I',
+    description:
+      'Trace the fundamentals: arrays, linked structures, searching, sorting, stacks, queues and recursion.',
+    lessons: [
+      {
+        title: 'Binary Search',
+        slug: 'binary-search',
+        status: 'live',
+        detail: 'Shrink a sorted search range and predict every midpoint.'
+      },
+      {
+        title: 'Bubble Sort',
+        slug: 'bubble-sort',
+        status: 'next',
+        detail: 'Watch comparisons and swaps settle each suffix.'
+      },
+      {
+        title: 'Linked-list insertion',
+        slug: 'linked-list-insertion',
+        status: 'planned',
+        detail: 'Follow pointer rewiring without losing the list.'
+      }
+    ]
+  },
+  'dsa-2': {
+    title: 'Data Structures & Algorithms II',
+    description: 'Move into trees, graph traversal, heaps, greedy methods and dynamic programming.',
+    lessons: [
+      {
+        title: 'Breadth-first search',
+        slug: 'bfs',
+        status: 'next',
+        detail: 'Trace the frontier, queue, visited set and traversal order.'
+      },
+      {
+        title: 'Tree traversal',
+        slug: 'tree-traversal',
+        status: 'planned',
+        detail: 'Reveal recursive frames and return paths.'
+      },
+      {
+        title: 'Dynamic programming',
+        slug: 'dynamic-programming',
+        status: 'planned',
+        detail: 'Build a recurrence table one dependency at a time.'
+      }
+    ]
+  },
+  dbms: {
+    title: 'Database Management Systems',
+    description: 'See the logical stages between a SQL query and its result.',
+    lessons: [
+      {
+        title: 'Compound query pipeline',
+        slug: 'query-pipeline',
+        status: 'next',
+        detail: 'JOIN, filter, group, aggregate, sort, and limit.'
+      },
+      {
+        title: 'Normalization',
+        slug: 'normalization',
+        status: 'planned',
+        detail: 'Split dependencies and prevent update anomalies.'
+      },
+      {
+        title: 'Transactions',
+        slug: 'transactions',
+        status: 'planned',
+        detail: 'Trace locks, anomalies, commit and rollback.'
+      }
+    ]
+  },
+  'operating-systems': {
+    title: 'Operating Systems',
+    description: 'Foundation prepared for process, scheduling, memory and concurrency traces.',
+    lessons: [
+      {
+        title: 'Process state transitions',
+        slug: 'process-states',
+        status: 'planned',
+        detail: 'Follow a process through ready, running, blocked and terminated.'
+      },
+      {
+        title: 'Round Robin',
+        slug: 'round-robin',
+        status: 'planned',
+        detail: 'Trace the ready queue and context switches.'
+      }
+    ]
+  },
+  'computer-networks': {
+    title: 'Computer Networks',
+    description: 'Foundation prepared for packets, layers, protocols and routing traces.',
+    lessons: [
+      {
+        title: 'TCP handshake',
+        slug: 'tcp-handshake',
+        status: 'planned',
+        detail: 'Predict SYN, SYN-ACK, ACK and connection state.'
+      },
+      {
+        title: 'DNS resolution',
+        slug: 'dns',
+        status: 'planned',
+        detail: 'Trace caches, recursive queries and responses.'
+      }
+    ]
+  }
+} as const;
