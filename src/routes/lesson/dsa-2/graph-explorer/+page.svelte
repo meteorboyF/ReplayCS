@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/state';
   import { onMount } from 'svelte';
   import AiMentor from '$lib/components/ai/AiMentor.svelte';
   import CodePane from '$lib/components/code/CodePane.svelte';
@@ -28,6 +29,14 @@
 
   type InputMode = 'preset' | 'custom';
   type Point = { x: number; y: number };
+  const supportedLanguages: readonly SupportedLanguage[] = ['c', 'cpp', 'java', 'python'];
+
+  function requestedLanguage() {
+    const candidate = page.url.searchParams.get('lang');
+    return supportedLanguages.includes(candidate as SupportedLanguage)
+      ? (candidate as SupportedLanguage)
+      : null;
+  }
 
   const initialPreset = getGraphPreset('learning-tree');
   const initialLesson = createGraphTraversalLesson({
@@ -45,7 +54,7 @@
   let graph = $state<GraphDefinition>(initialPreset.graph);
   let lesson = $state(initialLesson);
   let index = $state(0);
-  let language = $state<SupportedLanguage>('python');
+  let language = $state<SupportedLanguage>(requestedLanguage() ?? 'python');
   let playing = $state(false);
   let error = $state('');
   let submitted = $state<string[]>([]);
@@ -65,7 +74,7 @@
 
   onMount(() => {
     progress = loadProgress();
-    language = progress.preferredLanguage;
+    language = requestedLanguage() ?? progress.preferredLanguage;
     return () => clearInterval(timer);
   });
 
