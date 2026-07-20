@@ -64,8 +64,9 @@ If `OPENAI_API_KEY` is absent, `getOpenAI()` returns no client and the route imm
 the route responds with the same validated deterministic explanation and `reason: "upstream-error"`.
 If a model response fails the structured schema, the same path returns `reason: "invalid-output"`.
 The UI labels all three cases as **Deterministic**, states the actual fallback reason, and keeps the
-lesson interactive. The public deployment currently reports `aiConfigured: false`, so its mentor
-uses the visible no-key fallback.
+lesson interactive. The public deployment currently reports `aiConfigured: true`; a production
+request has been verified to return `available: true` and `source: "ai"`. The visible deterministic
+fallback remains the supported behavior when configuration or upstream service is unavailable.
 
 The route rejects request bodies over 20 KB, rejects invalid trace context, omits stack traces, and
 applies an in-memory 12-requests-per-minute client-address limit. The UI handles loading, retry, and
