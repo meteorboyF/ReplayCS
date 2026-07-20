@@ -2,11 +2,14 @@
   import { onMount } from 'svelte';
   import { loadProgress, type Progress } from '$lib/progress/store';
   let progress = $state<Progress>({
-    version: 1,
+    version: 2,
     xp: 0,
     streak: 0,
     completed: [],
-    awardedPredictions: []
+    awardedPredictions: [],
+    misconceptionCounts: {},
+    mistakeEvidence: [],
+    recoveredMistakes: []
   });
   onMount(() => (progress = loadProgress()));
   function reset() {
