@@ -7,9 +7,9 @@ configured as a static-only site because `/api/ai/*` and `/api/health` execute o
 
 | Item                       | Value                                                                         |
 | -------------------------- | ----------------------------------------------------------------------------- |
-| Production URL             | **PENDING — Vercel authentication and project linking are required**          |
-| Vercel account/team        | **PENDING**                                                                   |
-| Vercel project name and ID | **PENDING**                                                                   |
+| Production URL             | `https://replaycs.vercel.app`                                                 |
+| Vercel account/team        | `meteorboy-f`                                                                 |
+| Vercel project name and ID | `replaycs` / `prj_krxZW0eGkuFVme30ZAx2AG6OWFU7`                               |
 | Git repository             | `https://github.com/meteorboyF/ReplayCS.git`                                  |
 | Production branch          | `main`                                                                        |
 | Framework                  | SvelteKit                                                                     |
@@ -20,8 +20,8 @@ configured as a static-only site because `/api/ai/*` and `/api/health` execute o
 | Output directory           | Managed by the SvelteKit Vercel adapter; do not set a static output directory |
 | Health endpoint            | `/api/health`                                                                 |
 
-Do not replace `PENDING` with a guessed `*.vercel.app` address. Record the stable production domain,
-Vercel scope, project name, and project ID here after a verified production deployment.
+The first verified CLI production deployment completed on 2026-07-20. Its stable alias is the URL
+above; deployment-specific URLs remain visible in the Vercel dashboard for rollback and audit.
 
 ## One-time Vercel setup
 
@@ -191,10 +191,16 @@ After every production deployment:
 }
 ```
 
-Check it after deployment (replace the placeholder only after the production URL exists):
+Check it after deployment:
 
 ```bash
-curl --fail --silent --show-error https://[production-domain]/api/health
+curl --fail --silent --show-error https://replaycs.vercel.app/api/health
+```
+
+Run the browser production smoke suite without launching a local server:
+
+```bash
+REPLAYCS_BASE_URL=https://replaycs.vercel.app npx playwright test e2e/production-smoke.spec.ts
 ```
 
 Expected behavior:
