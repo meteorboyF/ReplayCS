@@ -7,10 +7,10 @@ async function finishTrace(page: Page) {
   await timeline.fill(lastStep);
 }
 
-async function expectMastery(page: Page, subject: string) {
+async function expectMastery(page: Page, subject: string, score: number) {
   await page.goto('/progress');
   const row = page.locator('.mastery-row').filter({ hasText: subject });
-  await expect(row.getByText('75%')).toBeVisible();
+  await expect(row.getByText(`${score}%`)).toBeVisible();
 }
 
 test.describe('shared lesson systems', () => {
@@ -24,7 +24,7 @@ test.describe('shared lesson systems', () => {
 
     await finishTrace(page);
     await expect(page.getByText('Sort complete · mastery saved')).toBeVisible();
-    await expectMastery(page, 'DSA I');
+    await expectMastery(page, 'DSA I', 100);
   });
 
   test('Graph Explorer records prediction, completion, mentor fallback, and DSA II mastery', async ({
@@ -44,7 +44,7 @@ test.describe('shared lesson systems', () => {
 
     await finishTrace(page);
     await expect(page.getByText('Traversal complete · mastery saved')).toBeVisible();
-    await expectMastery(page, 'DSA II');
+    await expectMastery(page, 'DSA II', 100);
   });
 
   test('CPU Scheduling turns a wrong dispatch into grounded misconception evidence', async ({
@@ -61,7 +61,7 @@ test.describe('shared lesson systems', () => {
 
     await finishTrace(page);
     await expect(page.getByText('Schedule complete · mastery saved')).toBeVisible();
-    await expectMastery(page, 'Operating Systems');
+    await expectMastery(page, 'Operating Systems', 50);
     await expect(page.getByText('scheduler-tie-break')).toBeVisible();
   });
 
@@ -77,6 +77,6 @@ test.describe('shared lesson systems', () => {
 
     await finishTrace(page);
     await expect(page.getByText('Journey complete · mastery saved')).toBeVisible();
-    await expectMastery(page, 'Networks');
+    await expectMastery(page, 'Networks', 100);
   });
 });

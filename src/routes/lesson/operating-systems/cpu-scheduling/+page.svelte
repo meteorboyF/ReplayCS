@@ -19,6 +19,7 @@
     awardPrediction,
     completeLesson,
     loadProgress,
+    recordHint,
     recordMisconception,
     saveProgress
   } from '$lib/progress/store';
@@ -201,10 +202,15 @@ Gamma, 0, 3, 1`,
     predictionAnswer = answer;
     predictionNudge = '';
     if (!step.prediction) return;
-    const evidenceId = `${lessonId}:${step.prediction.id}`;
+    const evidenceId = `${lessonId}:first-dispatch`;
     progress = correct
       ? awardPrediction(progress, `${lessonId}:first-dispatch`, step.prediction.xpReward)
       : recordMisconception(progress, evidenceId, 'scheduler-tie-break');
+    saveProgress(progress);
+  }
+
+  function recordMentorHint() {
+    progress = recordHint(progress, 'cpu-scheduling');
     saveProgress(progress);
   }
 
@@ -639,7 +645,10 @@ Gamma, 0, 3, 1`,
   {#if step.prediction && !predictionSubmitted}
     <p class="mentor-locked" role="note">Lock the dispatch prediction before asking the mentor.</p>
   {:else}
-    {#key `${lessonId}:${step.id}`}<AiMentor context={mentorContext()} />{/key}
+    {#key `${lessonId}:${step.id}`}<AiMentor
+        context={mentorContext()}
+        onhint={recordMentorHint}
+      />{/key}
   {/if}
 </section>
 

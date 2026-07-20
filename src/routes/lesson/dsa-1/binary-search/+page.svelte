@@ -12,6 +12,8 @@
     awardRecovery,
     completeLesson,
     loadProgress,
+    recordHint,
+    recordLanguageUse,
     recordMisconception,
     saveProgress
   } from '$lib/progress/store';
@@ -86,6 +88,8 @@
   }
   function selectLanguage(next: SupportedLanguage) {
     language = next;
+    progress = recordLanguageUse(progress, next);
+    saveProgress(progress);
     syncUrl();
   }
   function applyInput(updateUrl = true) {
@@ -173,7 +177,7 @@
       );
       saveProgress(progress);
     } else {
-      const evidenceId = `${lesson.id}:${step.id}:${step.prediction.id}`;
+      const evidenceId = `${lesson.id}:${step.prediction.id}`;
       mistake = {
         evidenceId,
         stepId: step.id,
@@ -190,6 +194,10 @@
   function recoverMistake() {
     if (!mistake) return;
     progress = awardRecovery(progress, mistake.evidenceId);
+    saveProgress(progress);
+  }
+  function recordMentorHint() {
+    progress = recordHint(progress, lesson.id);
     saveProgress(progress);
   }
   function mentorContext(): StepContext {
@@ -340,7 +348,7 @@
       />
     {/if}
     {#if predictionResolved}
-      {#key step.id}<AiMentor context={mentorContext()} />{/key}
+      {#key step.id}<AiMentor context={mentorContext()} onhint={recordMentorHint} />{/key}
     {:else}
       <div class="mentor-locked" role="note">
         Lock your prediction to unlock the grounded explanation for this transition.

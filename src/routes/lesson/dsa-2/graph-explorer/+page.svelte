@@ -18,6 +18,8 @@
     awardPrediction,
     completeLesson,
     loadProgress,
+    recordHint,
+    recordLanguageUse,
     recordMisconception,
     saveProgress
   } from '$lib/progress/store';
@@ -63,6 +65,7 @@
 
   onMount(() => {
     progress = loadProgress();
+    language = progress.preferredLanguage;
     return () => clearInterval(timer);
   });
 
@@ -159,7 +162,7 @@
     predictionCorrect = correct;
     predictionAnswer = answer;
     predictionNudge = '';
-    const evidenceId = `graph-explorer:${algorithm}:${step.prediction.id}`;
+    const evidenceId = `graph-explorer:${algorithm}:frontier-prediction`;
     progress = correct
       ? awardPrediction(
           progress,
@@ -167,6 +170,17 @@
           step.prediction.xpReward
         )
       : recordMisconception(progress, evidenceId, 'stack-vs-queue');
+    saveProgress(progress);
+  }
+
+  function selectLanguage(next: SupportedLanguage) {
+    language = next;
+    progress = recordLanguageUse(progress, next);
+    saveProgress(progress);
+  }
+
+  function recordMentorHint() {
+    progress = recordHint(progress, 'graph-explorer');
     saveProgress(progress);
   }
 
@@ -488,7 +502,7 @@
     source={lesson.sourceByLanguage}
     {language}
     activeSemantic={step.semanticOperationId}
-    onlanguage={(next) => (language = next)}
+    onlanguage={selectLanguage}
   />
 </section>
 
@@ -497,7 +511,10 @@
   {#if !predictionResolved}
     <p class="mentor-locked" role="note">Lock the prediction before asking the mentor.</p>
   {:else}
-    {#key `${lesson.id}:${step.id}`}<AiMentor context={mentorContext()} />{/key}
+    {#key `${lesson.id}:${step.id}`}<AiMentor
+        context={mentorContext()}
+        onhint={recordMentorHint}
+      />{/key}
   {/if}
 </section>
 

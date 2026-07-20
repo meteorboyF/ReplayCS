@@ -16,6 +16,7 @@
     awardRecovery,
     completeLesson,
     loadProgress,
+    recordHint,
     recordMisconception,
     saveProgress
   } from '$lib/progress/store';
@@ -140,7 +141,7 @@
     if (predictionResult) return;
     predictionResult = evaluateClausePrediction(answer);
     checkpointNudge = false;
-    const evidenceId = `query-pipeline:${scenario.id}:${scenario.prediction.id}`;
+    const evidenceId = 'query-pipeline:where-vs-having';
     if (predictionResult.correct) {
       progress = awardPrediction(
         progress,
@@ -151,6 +152,11 @@
       progress = recordMisconception(progress, evidenceId, 'where-vs-having');
       replayOpen = true;
     }
+    saveProgress(progress);
+  }
+
+  function recordMentorHint() {
+    progress = recordHint(progress, 'query-pipeline');
     saveProgress(progress);
   }
 
@@ -566,7 +572,10 @@
         <p>Choose WHERE or HAVING first so the explanation cannot reveal your prediction.</p>
       </div>
     {:else}
-      {#key `${scenario.id}:${currentStage.id}`}<AiMentor context={mentorContext()} />{/key}
+      {#key `${scenario.id}:${currentStage.id}`}<AiMentor
+          context={mentorContext()}
+          onhint={recordMentorHint}
+        />{/key}
     {/if}
   </aside>
 </div>

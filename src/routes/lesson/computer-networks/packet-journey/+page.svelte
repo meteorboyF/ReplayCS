@@ -13,6 +13,7 @@
     awardPrediction,
     completeLesson,
     loadProgress,
+    recordHint,
     recordMisconception,
     saveProgress
   } from '$lib/progress/store';
@@ -144,7 +145,7 @@
     predictionAnswer = selectedPrediction;
     predictionSubmitted = true;
     predictionNudge = '';
-    const evidenceId = `packet-journey:${scenarioId}:${trace.cacheMode}:${step.prediction.id}`;
+    const evidenceId = `packet-journey:${trace.cacheMode}:checkpoint`;
     progress = predictionCorrect
       ? awardPrediction(
           progress,
@@ -156,6 +157,11 @@
           evidenceId,
           trace.cacheMode === 'warm' ? 'cache-vs-network' : 'ip-vs-mac'
         );
+    saveProgress(progress);
+  }
+
+  function recordMentorHint() {
+    progress = recordHint(progress, 'packet-journey');
     saveProgress(progress);
   }
 
@@ -526,7 +532,10 @@
   {#if checkpointLocked}
     <p class="mentor-locked" role="note">Lock the packet prediction before asking the mentor.</p>
   {:else}
-    {#key `${lessonId}:${step.id}`}<AiMentor context={mentorContext()} />{/key}
+    {#key `${lessonId}:${step.id}`}<AiMentor
+        context={mentorContext()}
+        onhint={recordMentorHint}
+      />{/key}
   {/if}
 </section>
 

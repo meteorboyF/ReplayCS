@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { AiStepExplanation, StepContext } from '$lib/server/openai/schemas';
 
-  let { context }: { context: StepContext } = $props();
+  let { context, onhint = () => {} }: { context: StepContext; onhint?: () => void } = $props();
   let level = $state<StepContext['explanationLevel']>('standard');
   let language = $state<StepContext['explanationLanguage']>('en');
   let preferencesInitialized = $state(false);
@@ -23,6 +23,7 @@
 
   async function request(interaction: StepContext['interaction']) {
     lastInteraction = interaction;
+    if (interaction === 'hint') onhint();
     loading = true;
     error = '';
     statusMessage = '';

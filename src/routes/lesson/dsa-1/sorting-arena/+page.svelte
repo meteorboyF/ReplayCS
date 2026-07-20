@@ -14,6 +14,7 @@
     awardPrediction,
     completeLesson,
     loadProgress,
+    recordHint,
     recordMisconception,
     saveProgress
   } from '$lib/progress/store';
@@ -138,7 +139,12 @@
           : 'comparison-direction';
     progress = correct
       ? awardPrediction(progress, `${lessonId}:first-prediction`, step.prediction.xpReward)
-      : recordMisconception(progress, `${lessonId}:${step.prediction.id}`, misconception);
+      : recordMisconception(progress, `${lessonId}:first-prediction`, misconception);
+    saveProgress(progress);
+  }
+
+  function recordMentorHint() {
+    progress = recordHint(progress, 'sorting-arena');
     saveProgress(progress);
   }
 
@@ -344,7 +350,10 @@
   {#if step.prediction && !predictionSubmitted}
     <p class="mentor-locked" role="note">Lock the prediction before asking the mentor.</p>
   {:else}
-    {#key `${lessonId}:${step.id}`}<AiMentor context={mentorContext()} />{/key}
+    {#key `${lessonId}:${step.id}`}<AiMentor
+        context={mentorContext()}
+        onhint={recordMentorHint}
+      />{/key}
   {/if}
 </section>
 
