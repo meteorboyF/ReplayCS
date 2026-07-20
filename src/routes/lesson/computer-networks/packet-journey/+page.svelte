@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import AiMentor from '$lib/components/ai/AiMentor.svelte';
   import TraceControls from '$lib/components/trace/TraceControls.svelte';
   import {
     PACKET_JOURNEY_SCENARIOS,
@@ -8,6 +9,15 @@
     type PacketJourneyNode,
     type PacketJourneyScenarioId
   } from '$lib/engines/networks/packetJourney';
+  import {
+    awardPrediction,
+    completeLesson,
+    loadProgress,
+    recordHint,
+    recordMisconception,
+    saveProgress
+  } from '$lib/progress/store';
+  import type { StepContext } from '$lib/server/openai/schemas';
 
   const topologyNodes: Array<{
     id: PacketJourneyNode;
@@ -32,17 +42,28 @@
   let selectedPrediction = $state('');
   let predictionSubmitted = $state(false);
   let predictionCorrect = $state<boolean | null>(null);
+  let predictionAnswer = $state('');
   let predictionNudge = $state('');
+  let progress = $state(loadProgress());
   let timer: ReturnType<typeof setInterval> | undefined;
 
   let step = $derived(trace.steps[index]);
+  let lessonId = $derived(trace.id);
+  let completed = $derived(progress.completed.includes('packet-journey'));
   let checkpointIndex = $derived(trace.steps.findIndex((candidate) => candidate.prediction));
+  let checkpointLocked = $derived(Boolean(step.prediction && !predictionSubmitted));
   let completion = $derived(Math.round(((index + 1) / trace.steps.length) * 100));
 
   onMount(() => {
+    progress = loadProgress();
     function handleKeydown(event: KeyboardEvent) {
-      const target = event.target as HTMLElement | null;
-      if (target?.matches('input, select, textarea, button')) return;
+      const target = event.target instanceof Element ? event.target : null;
+      if (
+        target?.closest(
+          'a, button, input, select, textarea, summary, [role="button"], [contenteditable="true"]'
+        )
+      )
+        return;
       if (event.key === 'ArrowLeft') jump(index - 1);
       if (event.key === 'ArrowRight') jump(index + 1);
       if (event.key === ' ') {
@@ -69,6 +90,7 @@
     selectedPrediction = '';
     predictionSubmitted = false;
     predictionCorrect = null;
+    predictionAnswer = '';
     predictionNudge = '';
   }
 
@@ -88,7 +110,11 @@
     }
     predictionNudge = '';
     index = bounded;
-    if (index === trace.steps.length - 1) stopPlayback();
+    if (index === trace.steps.length - 1) {
+      stopPlayback();
+      progress = completeLesson(progress, 'packet-journey');
+      saveProgress(progress);
+    }
   }
 
   function restart() {
@@ -116,12 +142,77 @@
     event.preventDefault();
     if (!step.prediction || !selectedPrediction) return;
     predictionCorrect = String(step.prediction.correctAnswer) === selectedPrediction;
+    predictionAnswer = selectedPrediction;
     predictionSubmitted = true;
     predictionNudge = '';
+    const evidenceId = `packet-journey:${trace.cacheMode}:checkpoint`;
+    progress = predictionCorrect
+      ? awardPrediction(
+          progress,
+          `packet-journey:${trace.cacheMode}:checkpoint`,
+          step.prediction.xpReward
+        )
+      : recordMisconception(
+          progress,
+          evidenceId,
+          trace.cacheMode === 'warm' ? 'cache-vs-network' : 'ip-vs-mac'
+        );
+    saveProgress(progress);
+  }
+
+  function recordMentorHint() {
+    progress = recordHint(progress, 'packet-journey');
+    saveProgress(progress);
   }
 
   function isActive(node: PacketJourneyNode): boolean {
     return step.activeNodes.includes(node);
+  }
+
+  function mentorContext(): StepContext {
+    const previous = trace.steps[Math.max(0, index - 1)];
+    return {
+      subject: 'computer-networks',
+      lesson: lessonId,
+      learningObjective:
+        'Explain how a browser request moves through cache, DNS, local networking, transport security, HTTP, and rendering.',
+      activeSourceLines: [],
+      stateBefore: {
+        phase: index === 0 ? 'navigation-start' : previous.phase,
+        protocol: index === 0 ? 'Browser' : previous.protocol,
+        activeNodes: index === 0 ? ['browser'] : previous.activeNodes
+      },
+      mutation: [
+        {
+          direction: step.encapsulation.direction,
+          addedHeaders: step.encapsulation.addedHeaders,
+          removedHeaders: step.encapsulation.removedHeaders
+        }
+      ],
+      stateAfter: {
+        phase: step.phase,
+        protocol: step.protocol,
+        tcpIpLayer: step.tcpIpLayer,
+        addressing: step.addressing,
+        activeNodes: step.activeNodes
+      },
+      deterministicExplanation: `${step.summary} ${step.explanation}`,
+      learnerLevel: progress.learnerLevel,
+      misconceptionTags:
+        predictionCorrect === false
+          ? [trace.cacheMode === 'warm' ? 'cache-vs-network' : 'ip-vs-mac']
+          : [],
+      interaction: 'explain',
+      explanationLevel: progress.explanationLevel,
+      explanationLanguage: progress.explanationLanguage,
+      currentPrediction: step.prediction
+        ? {
+            prompt: step.prediction.prompt,
+            learnerAnswer: predictionAnswer || undefined,
+            correctAnswer: String(step.prediction.correctAnswer)
+          }
+        : undefined
+    };
   }
 </script>
 
@@ -147,7 +238,7 @@
     <span class="live-dot" aria-hidden="true"></span>
     <div>
       <strong>{trace.cacheMode === 'cold' ? 'Full network path' : 'Fresh cache path'}</strong>
-      <span>{trace.steps.length} deterministic events · no live traffic</span>
+      <span>{trace.steps.length} deterministic events · no live traffic · ⚡ {progress.xp} XP</span>
     </div>
   </div>
 </div>
@@ -257,172 +348,195 @@
   </form>
 {/if}
 
-<section class="topology panel" aria-labelledby="topology-heading">
-  <div class="panel-title">
-    <div>
-      <span class="eyebrow">Where the event happens</span>
-      <h2 id="topology-heading">Illustrated topology</h2>
+{#if checkpointLocked}
+  <section class="checkpoint-lock panel" role="note">
+    <strong>Prediction first</strong>
+    <p>Commit to the next network event before ReplayCS reveals this event’s packet state.</p>
+  </section>
+{:else}
+  <section class="topology panel" aria-labelledby="topology-heading">
+    <div class="panel-title">
+      <div>
+        <span class="eyebrow">Where the event happens</span>
+        <h2 id="topology-heading">Illustrated topology</h2>
+      </div>
+      <span class="protocol-pill">{step.protocol}</span>
     </div>
-    <span class="protocol-pill">{step.protocol}</span>
-  </div>
-  <div class="topology-scroll">
-    <div class="main-path" aria-label="Browser, client, LAN, gateway, routed path, and web origin">
-      {#each topologyNodes as node, nodeIndex}
-        <article class:active={isActive(node.id)}>
-          <span class="node-symbol" aria-hidden="true">{node.symbol}</span>
-          <strong>{node.label}</strong>
-          <small>{node.detail}</small>
+    <div class="topology-scroll">
+      <div
+        class="main-path"
+        aria-label="Browser, client, LAN, gateway, routed path, and web origin"
+      >
+        {#each topologyNodes as node, nodeIndex}
+          <article class:active={isActive(node.id)}>
+            <span class="node-symbol" aria-hidden="true">{node.symbol}</span>
+            <strong>{node.label}</strong>
+            <small>{node.detail}</small>
+          </article>
+          {#if nodeIndex < topologyNodes.length - 1}
+            <span
+              class:active-link={isActive(node.id) && isActive(topologyNodes[nodeIndex + 1].id)}
+              class="arrow"
+              aria-hidden="true">⇄</span
+            >
+          {/if}
+        {/each}
+      </div>
+      <div class="branch-paths">
+        <article class:active={isActive('dns-resolver')}>
+          <span class="node-symbol" aria-hidden="true">D</span>
+          <div><strong>DNS resolver</strong><small>198.51.100.53 · routed branch</small></div>
         </article>
-        {#if nodeIndex < topologyNodes.length - 1}
-          <span
-            class:active-link={isActive(node.id) && isActive(topologyNodes[nodeIndex + 1].id)}
-            class="arrow"
-            aria-hidden="true">⇄</span
-          >
-        {/if}
-      {/each}
-    </div>
-    <div class="branch-paths">
-      <article class:active={isActive('dns-resolver')}>
-        <span class="node-symbol" aria-hidden="true">D</span>
-        <div><strong>DNS resolver</strong><small>198.51.100.53 · routed branch</small></div>
-      </article>
-      <article class:active={isActive('renderer')}>
-        <span class="node-symbol" aria-hidden="true">▦</span>
-        <div><strong>Renderer</strong><small>local browser handoff</small></div>
-      </article>
-    </div>
-  </div>
-  <p class="sr-only" aria-live="polite">
-    Active at step {index + 1}: {step.activeNodes.join(', ')}.
-  </p>
-</section>
-
-<div class="step-grid" aria-live="polite">
-  <section class="event-detail panel" aria-labelledby="event-heading">
-    <div class="step-count">Event {index + 1} of {trace.steps.length}</div>
-    <span class="eyebrow">{step.phase.replace('-', ' ')}</span>
-    <h2 id="event-heading">{step.title}</h2>
-    <p class="summary">{step.summary}</p>
-    <p>{step.explanation}</p>
-    {#if step.simplification}
-      <div class="step-simplification">
-        <strong>What this step compresses</strong>
-        <span>{step.simplification}</span>
+        <article class:active={isActive('renderer')}>
+          <span class="node-symbol" aria-hidden="true">▦</span>
+          <div><strong>Renderer</strong><small>local browser handoff</small></div>
+        </article>
       </div>
-    {/if}
+    </div>
+    <p class="sr-only" aria-live="polite">
+      Active at step {index + 1}: {step.activeNodes.join(', ')}.
+    </p>
   </section>
 
-  <section class="layer-panel panel" aria-labelledby="layer-heading">
-    <span class="eyebrow">Layer lens</span>
-    <h2 id="layer-heading">Where it fits</h2>
-    <dl>
+  <div class="step-grid" aria-live="polite">
+    <section class="event-detail panel" aria-labelledby="event-heading">
+      <div class="step-count">Event {index + 1} of {trace.steps.length}</div>
+      <span class="eyebrow">{step.phase.replace('-', ' ')}</span>
+      <h2 id="event-heading">{step.title}</h2>
+      <p class="summary">{step.summary}</p>
+      <p>{step.explanation}</p>
+      {#if step.simplification}
+        <div class="step-simplification">
+          <strong>What this step compresses</strong>
+          <span>{step.simplification}</span>
+        </div>
+      {/if}
+    </section>
+
+    <section class="layer-panel panel" aria-labelledby="layer-heading">
+      <span class="eyebrow">Layer lens</span>
+      <h2 id="layer-heading">Where it fits</h2>
+      <dl>
+        <div>
+          <dt>TCP/IP model</dt>
+          <dd>{step.tcpIpLayer}</dd>
+        </div>
+        <div>
+          <dt>OSI teaching map</dt>
+          <dd>{step.osiLayer}</dd>
+        </div>
+      </dl>
+      <div class="layer-chips" aria-label="Layers and protocols touched">
+        {#each step.layersTouched as layer}<span>{layer}</span>{/each}
+      </div>
+    </section>
+  </div>
+
+  <section class="envelope panel" aria-labelledby="envelope-heading">
+    <div class="panel-title">
       <div>
-        <dt>TCP/IP model</dt>
-        <dd>{step.tcpIpLayer}</dd>
+        <span class="eyebrow">Frame / packet / segment</span>
+        <h2 id="envelope-heading">Current envelopes</h2>
+      </div>
+      <span class={`direction ${step.encapsulation.direction}`}>{step.encapsulation.direction}</span
+      >
+    </div>
+    <p class="envelope-explanation">{step.encapsulation.label}</p>
+    <div class="unit-stack">
+      <article class:empty={!step.units.link} class="link-unit">
+        <span>Link · Ethernet frame</span>
+        <code>{step.units.link ?? 'No link frame at this local step'}</code>
+      </article>
+      <article class:empty={!step.units.network} class="network-unit">
+        <span>Internet · IP packet</span>
+        <code>{step.units.network ?? 'No IP packet'}</code>
+      </article>
+      <article class:empty={!step.units.transport} class="transport-unit">
+        <span>Transport · segment / datagram</span>
+        <code>{step.units.transport ?? 'No transport unit'}</code>
+      </article>
+      <article class:empty={!step.units.application} class="application-unit">
+        <span>Application data</span>
+        <code>{step.units.application ?? 'No application payload in this control event'}</code>
+      </article>
+    </div>
+    <div class="header-delta">
+      <div>
+        <strong>Added here</strong>
+        <span>{step.encapsulation.addedHeaders.join(' · ') || 'none'}</span>
       </div>
       <div>
-        <dt>OSI teaching map</dt>
-        <dd>{step.osiLayer}</dd>
+        <strong>Removed here</strong>
+        <span>{step.encapsulation.removedHeaders.join(' · ') || 'none'}</span>
       </div>
-    </dl>
-    <div class="layer-chips" aria-label="Layers and protocols touched">
-      {#each step.layersTouched as layer}<span>{layer}</span>{/each}
     </div>
   </section>
-</div>
 
-<section class="envelope panel" aria-labelledby="envelope-heading">
-  <div class="panel-title">
-    <div>
-      <span class="eyebrow">Frame / packet / segment</span>
-      <h2 id="envelope-heading">Current envelopes</h2>
+  <section class="addressing panel" aria-labelledby="address-heading">
+    <div class="panel-title">
+      <div>
+        <span class="eyebrow">Address inspection</span>
+        <h2 id="address-heading">Source → destination</h2>
+      </div>
+      <span class="scope-pill">MAC = this hop only</span>
     </div>
-    <span class={`direction ${step.encapsulation.direction}`}>{step.encapsulation.direction}</span>
-  </div>
-  <p class="envelope-explanation">{step.encapsulation.label}</p>
-  <div class="unit-stack">
-    <article class:empty={!step.units.link} class="link-unit">
-      <span>Link · Ethernet frame</span>
-      <code>{step.units.link ?? 'No link frame at this local step'}</code>
-    </article>
-    <article class:empty={!step.units.network} class="network-unit">
-      <span>Internet · IP packet</span>
-      <code>{step.units.network ?? 'No IP packet'}</code>
-    </article>
-    <article class:empty={!step.units.transport} class="transport-unit">
-      <span>Transport · segment / datagram</span>
-      <code>{step.units.transport ?? 'No transport unit'}</code>
-    </article>
-    <article class:empty={!step.units.application} class="application-unit">
-      <span>Application data</span>
-      <code>{step.units.application ?? 'No application payload in this control event'}</code>
-    </article>
-  </div>
-  <div class="header-delta">
-    <div>
-      <strong>Added here</strong>
-      <span>{step.encapsulation.addedHeaders.join(' · ') || 'none'}</span>
+    <div class="address-grid">
+      <article>
+        <h3>Link hop · MAC</h3>
+        <dl>
+          <div>
+            <dt>Source</dt>
+            <dd><code>{step.addressing.sourceMac}</code></dd>
+          </div>
+          <div>
+            <dt>Destination</dt>
+            <dd><code>{step.addressing.destinationMac}</code></dd>
+          </div>
+        </dl>
+        <p>{step.addressing.macHop}</p>
+      </article>
+      <article>
+        <h3>Network · IPv4</h3>
+        <dl>
+          <div>
+            <dt>Source</dt>
+            <dd><code>{step.addressing.sourceIp}</code></dd>
+          </div>
+          <div>
+            <dt>Destination</dt>
+            <dd><code>{step.addressing.destinationIp}</code></dd>
+          </div>
+        </dl>
+        <p>IP identifies the illustrated end hosts; routers forward between links.</p>
+      </article>
+      <article>
+        <h3>Transport · port</h3>
+        <dl>
+          <div>
+            <dt>Source</dt>
+            <dd><code>{step.addressing.sourcePort}</code></dd>
+          </div>
+          <div>
+            <dt>Destination</dt>
+            <dd><code>{step.addressing.destinationPort}</code></dd>
+          </div>
+        </dl>
+        <p>Ports select the endpoint service or client socket when transport is in use.</p>
+      </article>
     </div>
-    <div>
-      <strong>Removed here</strong>
-      <span>{step.encapsulation.removedHeaders.join(' · ') || 'none'}</span>
-    </div>
-  </div>
-</section>
+  </section>
+{/if}
 
-<section class="addressing panel" aria-labelledby="address-heading">
-  <div class="panel-title">
-    <div>
-      <span class="eyebrow">Address inspection</span>
-      <h2 id="address-heading">Source → destination</h2>
-    </div>
-    <span class="scope-pill">MAC = this hop only</span>
-  </div>
-  <div class="address-grid">
-    <article>
-      <h3>Link hop · MAC</h3>
-      <dl>
-        <div>
-          <dt>Source</dt>
-          <dd><code>{step.addressing.sourceMac}</code></dd>
-        </div>
-        <div>
-          <dt>Destination</dt>
-          <dd><code>{step.addressing.destinationMac}</code></dd>
-        </div>
-      </dl>
-      <p>{step.addressing.macHop}</p>
-    </article>
-    <article>
-      <h3>Network · IPv4</h3>
-      <dl>
-        <div>
-          <dt>Source</dt>
-          <dd><code>{step.addressing.sourceIp}</code></dd>
-        </div>
-        <div>
-          <dt>Destination</dt>
-          <dd><code>{step.addressing.destinationIp}</code></dd>
-        </div>
-      </dl>
-      <p>IP identifies the illustrated end hosts; routers forward between links.</p>
-    </article>
-    <article>
-      <h3>Transport · port</h3>
-      <dl>
-        <div>
-          <dt>Source</dt>
-          <dd><code>{step.addressing.sourcePort}</code></dd>
-        </div>
-        <div>
-          <dt>Destination</dt>
-          <dd><code>{step.addressing.destinationPort}</code></dd>
-        </div>
-      </dl>
-      <p>Ports select the endpoint service or client socket when transport is in use.</p>
-    </article>
-  </div>
+<section class="panel mentor-panel" aria-label="Grounded packet mentor">
+  {#if completed}<p class="completion" role="status">✓ Journey complete · mastery saved</p>{/if}
+  {#if checkpointLocked}
+    <p class="mentor-locked" role="note">Lock the packet prediction before asking the mentor.</p>
+  {:else}
+    {#key `${lessonId}:${step.id}`}<AiMentor
+        context={mentorContext()}
+        onhint={recordMentorHint}
+      />{/key}
+  {/if}
 </section>
 
 <details class="assumptions panel">
@@ -445,6 +559,35 @@
     align-items: end;
     gap: 2rem;
     margin-bottom: 1.2rem;
+  }
+  .mentor-panel {
+    margin-top: 1rem;
+    padding: 1rem;
+  }
+  .completion {
+    margin: 0;
+    color: var(--success);
+    font-size: 0.8rem;
+    font-weight: 750;
+  }
+  .checkpoint-lock {
+    display: grid;
+    min-height: 12rem;
+    place-content: center;
+    margin-top: 1rem;
+    padding: 1rem;
+    border-style: dashed;
+    text-align: center;
+  }
+  .checkpoint-lock strong,
+  .mentor-locked {
+    color: var(--warning);
+  }
+  .checkpoint-lock p,
+  .mentor-locked {
+    margin: 0.35rem 0 0;
+    color: var(--muted);
+    font-size: 0.78rem;
   }
 
   .lesson-head > div:first-child {

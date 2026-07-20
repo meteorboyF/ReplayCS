@@ -11,8 +11,25 @@
   } = $props();
   let answer = $state('');
   let correct = $state<boolean | null>(null);
+  function answerIsCorrect() {
+    const expected = String(challenge.correctAnswer).trim();
+    const provided = answer.trim();
+    if (challenge.type === 'numeric') {
+      const expectedNumber = Number(expected);
+      const providedNumber = Number(provided);
+      return (
+        Number.isFinite(expectedNumber) &&
+        Number.isFinite(providedNumber) &&
+        providedNumber === expectedNumber
+      );
+    }
+    if (challenge.type === 'boolean') {
+      return provided.toLowerCase() === expected.toLowerCase();
+    }
+    return provided === expected;
+  }
   function submit() {
-    correct = String(challenge.correctAnswer) === answer.trim();
+    correct = answerIsCorrect();
     onsubmit(correct, answer.trim());
   }
 </script>
@@ -31,7 +48,7 @@
       >Lock prediction</button
     >
   </div>
-  {#if correct !== null}<p class:good={correct}>
+  {#if correct !== null}<p class:good={correct} role="status" aria-live="polite">
       {correct ? 'Correct — nice trace.' : `Not quite. ${challenge.explanation}`}
     </p>{/if}
 </div>

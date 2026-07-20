@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { deterministicFallback, explainStep } from './tutor';
+import { deterministicFallback, explainStep, parsedExplanationOrFallback } from './tutor';
 import { stepContextSchema } from './schemas';
 
 const context = stepContextSchema.parse({
@@ -32,5 +32,47 @@ describe('AI tutor fallback', () => {
     expect(result.language).toBe('bn');
     expect(result.summary).toContain('midpoint');
     expect(result.groundingNote).toContain('deterministic trace');
+  });
+
+  it('keeps deterministic hints staged without exposing stateAfter', () => {
+    const result = deterministicFallback({
+      ...context,
+      interaction: 'hint',
+      currentPrediction: {
+        prompt: 'Which midpoint comes next?',
+        correctAnswer: '3'
+      }
+    });
+
+    expect(result.summary).toContain('Hint:');
+    expect(result.stateChange).toContain('stays hidden');
+    expect(JSON.stringify(result)).not.toContain('"mid":3');
+  });
+
+  it('labels invalid structured model output as deterministic fallback', () => {
+    const result = parsedExplanationOrFallback(context, null);
+
+    expect(result).toMatchObject({
+      available: false,
+      source: 'fallback',
+      reason: 'invalid-output'
+    });
+  });
+
+  it('uses recorded prediction evidence for mistake recovery', () => {
+    const result = deterministicFallback({
+      ...context,
+      interaction: 'mistake',
+      misconceptionTags: ['index-vs-value'],
+      currentPrediction: {
+        prompt: 'Which midpoint comes next?',
+        learnerAnswer: '4',
+        correctAnswer: '3'
+      }
+    });
+
+    expect(result.summary).toContain('(4)');
+    expect(result.summary).toContain('(3)');
+    expect(result.recoveryChallenge).toBeTruthy();
   });
 });

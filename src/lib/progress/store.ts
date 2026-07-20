@@ -39,6 +39,7 @@ export interface Progress extends OnboardingPreferences {
   correctPredictions: number;
   firstAttemptCorrect: number;
   hintsUsed: number;
+  hintEvidence: string[];
   recentActivity: Activity[];
   languageUsage: Partial<Record<SupportedLanguage, number>>;
   badges: string[];
@@ -160,6 +161,7 @@ export function createEmptyProgress(): Progress {
     correctPredictions: 0,
     firstAttemptCorrect: 0,
     hintsUsed: 0,
+    hintEvidence: [],
     recentActivity: [],
     languageUsage: {},
     badges: [],
@@ -233,6 +235,7 @@ export function sanitizeProgress(value: unknown): Progress {
     correctPredictions,
     firstAttemptCorrect,
     hintsUsed: boundedInteger(value.hintsUsed, empty.hintsUsed, 0, 1_000_000_000),
+    hintEvidence: uniqueStrings(value.hintEvidence),
     recentActivity: activities(value.recentActivity),
     languageUsage,
     badges: uniqueStrings(value.badges, 100),
@@ -270,19 +273,98 @@ export function saveProgress(value: Progress): boolean {
 }
 
 export function configureProfile(progress: Progress, preferences: OnboardingPreferences) {
-  return { ...progress, ...preferences, onboardingComplete: true };
+  const configured = { ...progress, ...preferences, onboardingComplete: true };
+  return (configured.languageUsage[preferences.preferredLanguage] ?? 0) > 0
+    ? configured
+    : recordLanguageUse(configured, preferences.preferredLanguage);
+}
+
+function evidenceBelongsToLesson(evidenceId: string, lessonId: string) {
+  return evidenceId === lessonId || evidenceId.startsWith(`${lessonId}:`);
+}
+
+function lessonIdFromEvidence(evidenceId: string) {
+  return evidenceId.split(':', 1)[0];
+}
+
+/**
+ * Lesson mastery is derived from visible learner evidence rather than an opaque average:
+ * 50 points for completing the trace, 30 for a correct prediction or recovery, and
+ * 20 for either a first-try answer without a hint or fully recovering every recorded mistake.
+ */
+export function lessonMasteryScore(progress: Progress, id: string) {
+  if (progress.completedBossChallenges.includes(id)) return 100;
+
+  const completed = progress.completed.includes(id);
+  const correctPredictions = progress.awardedPredictions.filter((evidenceId) =>
+    evidenceBelongsToLesson(evidenceId, id)
+  );
+  const mistakes = progress.mistakeEvidence.filter((evidenceId) =>
+    evidenceBelongsToLesson(evidenceId, id)
+  );
+  const recoveredMistakes = new Set(
+    progress.recoveredMistakes.filter((evidenceId) => evidenceBelongsToLesson(evidenceId, id))
+  );
+  const demonstrated = correctPredictions.length > 0 || recoveredMistakes.size > 0;
+  const unresolvedMistake = mistakes.some((evidenceId) => !recoveredMistakes.has(evidenceId));
+  const firstTryWithoutHint =
+    correctPredictions.some((evidenceId) => !progress.mistakeEvidence.includes(evidenceId)) &&
+    !progress.hintEvidence.includes(id) &&
+    !unresolvedMistake;
+  const fullyRecovered =
+    mistakes.length > 0 && mistakes.every((evidenceId) => recoveredMistakes.has(evidenceId));
+
+  return (
+    (completed ? 50 : 0) +
+    (demonstrated ? 30 : 0) +
+    (demonstrated && (firstTryWithoutHint || fullyRecovered) ? 20 : 0)
+  );
+}
+
+function syncLessonMastery(progress: Progress, id: string) {
+  const score = lessonMasteryScore(progress, id);
+  if (progress.lessonMastery[id] === score) return progress;
+  return {
+    ...progress,
+    lessonMastery: {
+      ...progress.lessonMastery,
+      [id]: score
+    }
+  };
+}
+
+export function recordHint(progress: Progress, canonicalLessonId: string) {
+  const next = {
+    ...progress,
+    hintsUsed: Math.min(1_000_000_000, progress.hintsUsed + 1),
+    hintEvidence: progress.hintEvidence.includes(canonicalLessonId)
+      ? progress.hintEvidence
+      : [...progress.hintEvidence, canonicalLessonId]
+  };
+  return syncLessonMastery(next, canonicalLessonId);
+}
+
+export function recordLanguageUse(progress: Progress, language: SupportedLanguage) {
+  return {
+    ...progress,
+    languageUsage: {
+      ...progress.languageUsage,
+      [language]: Math.min(1_000_000, (progress.languageUsage[language] ?? 0) + 1)
+    }
+  };
 }
 
 export function awardPrediction(progress: Progress, id: string, xp: number) {
   if (progress.awardedPredictions.includes(id)) return progress;
   const firstBadge = progress.xp + xp >= 10 ? 'First Prediction' : undefined;
-  return {
+  const next = {
     ...progress,
     xp: progress.xp + xp,
     streak: progress.streak + 1,
     predictionAttempts: progress.predictionAttempts + 1,
     correctPredictions: progress.correctPredictions + 1,
-    firstAttemptCorrect: progress.firstAttemptCorrect + 1,
+    firstAttemptCorrect:
+      progress.firstAttemptCorrect + (progress.mistakeEvidence.includes(id) ? 0 : 1),
     awardedPredictions: [...progress.awardedPredictions, id],
     badges:
       firstBadge && !progress.badges.includes(firstBadge)
@@ -296,18 +378,15 @@ export function awardPrediction(progress: Progress, id: string, xp: number) {
       at: new Date().toISOString()
     })
   };
+  return syncLessonMastery(next, lessonIdFromEvidence(id));
 }
 
 export function completeLesson(progress: Progress, id: string) {
-  if (progress.completed.includes(id)) return progress;
-  return {
+  if (progress.completed.includes(id)) return syncLessonMastery(progress, id);
+  const next = {
     ...progress,
     xp: progress.xp + 25,
     completed: [...progress.completed, id],
-    lessonMastery: {
-      ...progress.lessonMastery,
-      [id]: Math.max(progress.lessonMastery[id] ?? 0, 75)
-    },
     recentActivity: activity(progress, {
       type: 'completion',
       lessonId: id,
@@ -315,6 +394,7 @@ export function completeLesson(progress: Progress, id: string) {
       at: new Date().toISOString()
     })
   };
+  return syncLessonMastery(next, id);
 }
 
 export function completeBossChallenge(progress: Progress, id: string, xp: number) {
@@ -343,7 +423,7 @@ export function completeBossChallenge(progress: Progress, id: string, xp: number
 
 export function recordMisconception(progress: Progress, evidenceId: string, tag: MisconceptionTag) {
   if (progress.mistakeEvidence.includes(evidenceId)) return progress;
-  return {
+  const next = {
     ...progress,
     streak: 0,
     hearts: Math.max(0, progress.hearts - 1),
@@ -354,12 +434,13 @@ export function recordMisconception(progress: Progress, evidenceId: string, tag:
     },
     mistakeEvidence: [...progress.mistakeEvidence, evidenceId]
   };
+  return syncLessonMastery(next, lessonIdFromEvidence(evidenceId));
 }
 
 export function awardRecovery(progress: Progress, evidenceId: string) {
   if (progress.recoveredMistakes.includes(evidenceId)) return progress;
   const badge = 'State Detective';
-  return {
+  const next = {
     ...progress,
     xp: progress.xp + 6,
     recoveredMistakes: [...progress.recoveredMistakes, evidenceId],
@@ -372,6 +453,7 @@ export function awardRecovery(progress: Progress, evidenceId: string) {
       at: new Date().toISOString()
     })
   };
+  return syncLessonMastery(next, lessonIdFromEvidence(evidenceId));
 }
 
 export function levelFromXp(xp: number) {

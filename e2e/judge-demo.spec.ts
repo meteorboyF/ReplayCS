@@ -69,6 +69,9 @@ test('every guided link resolves to a real product screen without an API key', a
   }
 
   await page.goto(stages[0].href);
+  await expect(page.getByText(/Lock your prediction to unlock/)).toBeVisible();
+  await page.getByLabel('Your prediction').fill('3');
+  await page.getByRole('button', { name: 'Lock prediction' }).click();
   await page.getByRole('button', { name: 'Explain this step' }).click();
   await expect(page.getByText('Deterministic', { exact: true })).toBeVisible();
   await expect(
