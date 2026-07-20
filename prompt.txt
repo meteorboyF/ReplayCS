@@ -1,0 +1,697 @@
+You are continuing the existing ReplayCS project.
+
+Repository:
+
+`https://github.com/meteorboyF/ReplayCS.git`
+
+Production:
+
+`https://replaycs.vercel.app`
+
+This is not a request for planning, documentation, topic cards, placeholders, architecture diagrams, or “coming soon” pages.
+
+The previous Codex session failed to implement the requested curriculum. It mainly improved infrastructure while leaving the requested topics unbuilt.
+
+Your task is to implement the actual interactive lessons.
+
+# Non-negotiable product requirement
+
+Every topic must be an interactive visual execution laboratory.
+
+For every important operation, ReplayCS must show:
+
+1. Complete curated source code
+2. C, C++, Java, and Python versions where applicable
+3. One active source line at a time
+4. Variables before executing that line
+5. Variables after executing that line
+6. Data-structure state before and after
+7. Pointer or reference changes
+8. Reads, writes, comparisons, swaps, allocations, and traversals
+9. Exact operation count
+10. Time complexity
+11. Auxiliary-space complexity
+12. Assumptions that affect the complexity
+13. Best, average, worst, expected, or amortized cases where meaningful
+14. A visual explanation of why the complexity has that value
+15. Prediction checkpoints
+16. Immediate deterministic feedback
+17. Replay My Mistake
+18. Previous, Next, Play, Pause, Restart, and Timeline controls
+19. Persistent completion and mastery
+20. Grounded AI explanation of the current deterministic state
+
+A text card that says “Insert at head is O(1)” is not acceptable.
+
+A chart without an operation trace is not acceptable.
+
+A topic page without implemented operations is not acceptable.
+
+A “coming soon” card is not acceptable.
+
+# First action: audit what actually exists
+
+Before editing, inspect the current repository and produce a short implementation audit in the terminal response.
+
+Identify:
+
+* Fully functional lessons
+* Partial lessons
+* Placeholder routes
+* Planned cards
+* Missing requested topics
+* Reusable trace components
+* Existing complexity components
+* Existing tests
+* Current Git status
+* Current remote `main`
+* Current production deployment
+
+Do not spend more than a small portion of the session on this audit.
+
+After the audit, begin implementation immediately.
+
+# Git requirements
+
+Every completed feature must be committed and pushed.
+
+Before work:
+
+```bash
+git status
+git branch --show-current
+git remote -v
+git fetch origin --prune
+git log --oneline --decorate -15
+```
+
+Create a recovery tag from the current stable state:
+
+```bash
+git tag -a replaycs-before-real-topic-build -m "Stable ReplayCS before complete topic implementation"
+git push origin replaycs-before-real-topic-build
+```
+
+If it already exists, do not overwrite it.
+
+For every topic:
+
+1. Create a feature branch.
+2. Implement one complete topic.
+3. Add tests.
+4. Run checks.
+5. Commit.
+6. Push the branch.
+7. Deploy a preview.
+8. Verify the preview.
+9. Merge into `main`.
+10. Push `main`.
+11. Verify production.
+
+Never use force-push.
+
+Do not commit `.env` or API keys.
+
+# Stop building placeholders
+
+Delete or hide public “planned” and “coming soon” entries until the corresponding interactive lesson is functional.
+
+The public curriculum must reflect real functionality.
+
+Do not mark a topic complete unless all required operations are implemented and tested.
+
+# Immediate implementation order
+
+Implement the following topics in this exact order.
+
+Do not skip ahead to documentation or cosmetic polish.
+
+# Phase 1: Linked List Lab
+
+This is the first required implementation and the reference design for every later topic.
+
+Create a fully interactive Linked List Lab.
+
+## Singly linked list operations
+
+Implement:
+
+* Access by position
+* Traverse
+* Search
+* Insert at head
+* Insert at tail without a tail pointer
+* Insert at tail with a tail pointer
+* Insert after a known node
+* Insert at a position
+* Delete head
+* Delete tail
+* Delete by value
+* Delete after a known predecessor
+* Reverse iteratively
+* Reverse recursively
+* Detect cycle using Floyd’s algorithm
+
+## Required complexity cases
+
+Show visually:
+
+| Operation               | Case                   | Time | Space |
+| ----------------------- | ---------------------- | ---: | ----: |
+| Access head             | Direct                 | O(1) |  O(1) |
+| Access position         | Traversal              | O(n) |  O(1) |
+| Search                  | Best                   | O(1) |  O(1) |
+| Search                  | Average                | O(n) |  O(1) |
+| Search                  | Worst                  | O(n) |  O(1) |
+| Insert head             | All cases              | O(1) |  O(1) |
+| Insert tail             | Without tail pointer   | O(n) |  O(1) |
+| Insert tail             | With tail pointer      | O(1) |  O(1) |
+| Insert after known node | Direct node reference  | O(1) |  O(1) |
+| Insert at position      | Position must be found | O(n) |  O(1) |
+| Delete head             | All cases              | O(1) |  O(1) |
+| Delete tail             | Singly linked list     | O(n) |  O(1) |
+| Delete known successor  | Predecessor known      | O(1) |  O(1) |
+| Delete by value         | Search required        | O(n) |  O(1) |
+| Reverse iterative       | All nodes              | O(n) |  O(1) |
+| Reverse recursive       | All nodes              | O(n) |  O(n) |
+| Cycle detection         | Floyd                  | O(n) |  O(1) |
+
+## Critical comparison experience
+
+The learner must be able to toggle:
+
+```text
+Maintain tail pointer: OFF
+```
+
+and see:
+
+```text
+Insert at tail → traversal through n nodes → O(n)
+```
+
+Then toggle:
+
+```text
+Maintain tail pointer: ON
+```
+
+and see:
+
+```text
+Insert at tail → constant pointer updates → O(1)
+```
+
+The code, active lines, trace path, operation count, animation, derivation, and complexity must change visibly.
+
+This is the required flagship experience.
+
+## Visual state
+
+Show:
+
+* `head`
+* `tail`
+* `current`
+* `previous`
+* `next`
+* `newNode`
+* Node IDs
+* Node values
+* Null references
+* Traversed nodes
+* Detached nodes
+* Reconnected nodes
+* Allocated nodes
+* Deleted nodes
+
+## Code mappings
+
+Provide curated equivalent code for:
+
+* C
+* C++
+* Java
+* Python
+
+Switching language must preserve:
+
+* Current operation
+* Current trace step
+* Input list
+* Pointer/reference state
+* Prediction state
+
+Explain language differences accurately.
+
+## Replay My Mistake
+
+Support mistakes such as:
+
+* Updating `head` too early
+* Losing the remaining list
+* Forgetting to update `tail`
+* Confusing a node with its value
+* Incorrect predecessor
+* Wrong pointer update order
+* Incorrect recursive base case
+* Fast and slow pointer confusion
+
+Commit, push, preview, merge, and deploy this topic before beginning the next one.
+
+# Phase 2: Arrays and Dynamic Arrays
+
+Implement:
+
+* Access
+* Update
+* Search
+* Insert beginning
+* Insert middle
+* Insert end with capacity
+* Insert end requiring resize
+* Delete beginning
+* Delete middle
+* Delete end
+* Copy
+* Dynamic append sequence
+
+Show:
+
+* Index calculation
+* Shifts
+* Capacity
+* Size
+* Allocation
+* Copy operations
+* Exact writes
+* Exact comparisons
+
+Required complexity differences:
+
+* Access: `O(1)`
+* Search: best `O(1)`, average/worst `O(n)`
+* Insert beginning: `O(n)`
+* Insert middle: `O(n)`
+* Append with capacity: `O(1)`
+* Resize append: `O(n)`
+* Amortized append: `O(1)`
+* Delete beginning/middle: `O(n)`
+* Delete end: `O(1)`
+
+Show fixed arrays versus:
+
+* C array
+* C++ vector
+* Java ArrayList
+* Python list
+
+# Phase 3: Stack, Queue, and Deque
+
+## Stack
+
+Implement:
+
+* Push
+* Pop
+* Peek
+* Search
+* Overflow
+* Underflow
+* Array-backed
+* Dynamic-array-backed
+* Linked-list-backed
+
+Show:
+
+* Normal push: `O(1)`
+* Resize push: `O(n)`
+* Amortized push: `O(1)`
+* Pop: `O(1)`
+* Peek: `O(1)`
+* Search: `O(n)`
+
+## Queue
+
+Implement:
+
+* Enqueue
+* Dequeue
+* Front
+* Rear
+* Overflow
+* Underflow
+* Naive array
+* Circular array
+* Linked queue
+
+Show:
+
+* Naive array dequeue with shifting: `O(n)`
+* Circular-array dequeue: `O(1)`
+* Linked queue enqueue with rear: `O(1)`
+* Linked queue enqueue without rear: `O(n)`
+
+## Deque
+
+Implement:
+
+* Push front
+* Push back
+* Pop front
+* Pop back
+* Peek front
+* Peek back
+
+# Phase 4: Hash Table
+
+Implement:
+
+* Hash calculation
+* Bucket selection
+* Insert
+* Search
+* Delete
+* Collision
+* Separate chaining
+* Linear probing
+* Tombstones
+* Load factor
+* Resize
+* Rehash
+
+Show:
+
+* Expected lookup: `O(1)`
+* Worst lookup: `O(n)`
+* Expected insertion: `O(1)`
+* Resize insertion: `O(n)`
+* Amortized insertion: `O(1)`
+* Expected deletion: `O(1)`
+* Worst deletion: `O(n)`
+
+The learner must be able to compare:
+
+* Good hash distribution
+* Collision-heavy distribution
+* Low load factor
+* High load factor
+
+# Phase 5: Searching and Sorting
+
+Keep and improve existing Binary Search and Sorting Arena.
+
+## Searching
+
+Complete:
+
+* Linear Search
+* Binary Search iterative
+* Binary Search recursive
+* BST Search
+* Hash Lookup comparison
+
+## Sorting
+
+Complete:
+
+* Bubble Sort
+* Selection Sort
+* Insertion Sort
+* Merge Sort
+* Quick Sort
+* Heap Sort
+* Counting Sort
+* Radix Sort
+
+Every sorting algorithm must show:
+
+* Best case
+* Average case
+* Worst case
+* Auxiliary space
+* Stability
+* In-place status
+* Comparisons
+* Writes
+* Swaps
+* Active region
+* Sorted region
+* Code trace
+
+# Phase 6: Trees, BST, and Heap
+
+## Trees and BST
+
+Implement:
+
+* Search
+* Insert
+* Delete
+* Inorder
+* Preorder
+* Postorder
+* Level order
+* Height
+* Balanced versus skewed comparison
+
+Show:
+
+* Balanced search: `O(log n)`
+* Degenerate search: `O(n)`
+* Traversal: `O(n)`
+* Recursive DFS space: `O(h)`
+* BFS space: `O(w)`
+
+## Heap
+
+Implement:
+
+* Min heap
+* Max heap
+* Peek
+* Insert
+* Extract root
+* Heapify
+* Build heap
+
+Show:
+
+* Peek: `O(1)`
+* Insert: `O(log n)`
+* Extract: `O(log n)`
+* Search arbitrary item: `O(n)`
+* Build heap: `O(n)`
+
+The `O(n)` build-heap explanation must be visual.
+
+# Phase 7: Recursion and Dynamic Programming
+
+## Recursion Lab
+
+Visualize:
+
+* Linear recursion
+* Halving recursion
+* Binary recursion
+* Divide and conquer
+* Recursion depth
+* Call-stack space
+* Recursion trees
+
+Include:
+
+```text
+T(n) = T(n - 1) + O(1)
+T(n) = T(n / 2) + O(1)
+T(n) = 2T(n / 2) + O(n)
+T(n) = 2T(n - 1) + O(1)
+```
+
+## Dynamic Programming Lab
+
+Implement:
+
+* Fibonacci recursion
+* Fibonacci memoization
+* Fibonacci tabulation
+* Fibonacci space optimization
+* 0/1 Knapsack or Longest Common Subsequence
+
+Show the same problem changing from exponential recursion to polynomial dynamic programming.
+
+# Phase 8: Graphs
+
+Expand Graph Explorer with:
+
+* Adjacency list
+* Adjacency matrix
+* BFS
+* Iterative DFS
+* Recursive DFS
+* Topological Sort
+* Dijkstra
+* Bellman-Ford
+* Floyd-Warshall
+* Kruskal
+* Prim
+
+Required representation comparison:
+
+* Adjacency list space: `O(V + E)`
+* Adjacency matrix space: `O(V²)`
+* Edge existence in matrix: `O(1)`
+* Neighbor traversal in list: `O(deg(v))`
+* BFS/DFS list: `O(V + E)`
+* BFS/DFS matrix: `O(V²)`
+
+# Phase 9: Complete Complexity Lab
+
+After the actual data-structure operations exist, build a central Complexity Lab using those real engines.
+
+Visualize:
+
+* `O(1)`
+* `O(log n)`
+* `O(√n)`
+* `O(n)`
+* `O(n log n)`
+* `O(n²)`
+* `O(n³)`
+* `O(2ⁿ)`
+* `O(n!)`
+* `O(n + m)`
+* `O(nm)`
+* `O(V + E)`
+* `O((V + E) log V)`
+* `O(log n + k)`
+* Amortized `O(1)`
+
+Use real scenarios from the implemented lessons.
+
+Do not create disconnected fake animations.
+
+# Phase 10: DBMS
+
+Expand beyond the existing SQL Pipeline.
+
+Implement:
+
+* Logical SQL processing
+* Full scan
+* Index lookup
+* B-tree traversal
+* Composite index
+* Leftmost-prefix rule
+* Nested-loop join
+* Indexed nested-loop join
+* Hash join
+* Sort-merge join
+* GROUP BY
+* Hash aggregation
+* Sort aggregation
+* Subqueries
+* Normalization
+* Functional dependencies
+* Candidate keys
+* 1NF, 2NF, 3NF, BCNF
+* Transactions
+* Dirty read
+* Non-repeatable read
+* Phantom read
+* Lost update
+* Locks
+* Deadlock
+
+Complexity displays must be labeled as educational models where appropriate.
+
+# Phase 11: Operating Systems
+
+Expand beyond CPU Scheduling.
+
+Implement:
+
+* Page Replacement: FIFO, LRU, Optimal
+* Belady’s anomaly
+* Banker’s algorithm
+* Deadlock detection
+* Resource-allocation graph
+* Race condition
+* Semaphore
+* Producer-consumer
+* Page tables
+* Address translation
+
+Every algorithm must have exact deterministic traces and predictions.
+
+# Phase 12: Computer Networks
+
+Expand beyond Packet Journey.
+
+Implement:
+
+* TCP three-way handshake
+* TCP sequence and acknowledgement
+* Packet loss
+* Retransmission
+* Connection termination
+* IPv4 subnetting
+* CIDR
+* Network address
+* Broadcast address
+* Host range
+* Routing-table lookup
+* Dijkstra routing
+* DNS
+* ARP
+* Encapsulation
+* Decapsulation
+
+Explain where Big-O is meaningful and where latency, hops, throughput, or queueing are more appropriate.
+
+# Do not move to a later phase prematurely
+
+A phase is complete only when:
+
+* The actual operations exist
+* Visual trace works
+* Code trace works
+* Complexity cases work
+* Predictions work
+* Replay My Mistake works
+* Tests pass
+* Feature is committed and pushed
+* Preview is verified
+* Production is stable
+
+Do not create cards for future phases before implementing them.
+
+# Immediate scope for this session
+
+Begin with only:
+
+1. Repository audit
+2. Linked List Lab
+3. Arrays and Dynamic Arrays
+4. Stack, Queue, and Deque
+
+Do not begin later phases until these three topic groups are complete, tested, pushed, and deployed.
+
+# Required reporting
+
+After each completed topic, report:
+
+* Operations implemented
+* Complexity cases implemented
+* Languages implemented
+* Tests added
+* Test results
+* Branch
+* Commit SHA
+* Preview URL
+* Production URL
+* Remaining limitations
+
+Do not describe a topic as completed if any required operation is still missing.
+
+Begin now with the repository audit, then immediately implement the Linked List Lab.
