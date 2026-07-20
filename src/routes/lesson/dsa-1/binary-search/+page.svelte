@@ -17,7 +17,11 @@
   } from '$lib/progress/store';
   import type { StepContext } from '$lib/server/openai/schemas';
   import type { SupportedLanguage } from '$lib/trace/types';
-  const lesson = createBinarySearchLesson();
+  let lesson = $state(createBinarySearchLesson());
+  let inputText = $state('2, 5, 8, 12, 16, 23, 38, 56');
+  let targetText = $state('23');
+  let inputError = $state('');
+  let shareStatus = $state('');
   let index = $state(0),
     language = $state<SupportedLanguage>('cpp'),
     playing = $state(false),
@@ -29,15 +33,93 @@
   onMount(() => {
     progress = loadProgress();
     const params = new URLSearchParams(location.search);
+    const urlLanguage = params.get('lang');
+    language = ['c', 'cpp', 'java', 'python'].includes(urlLanguage ?? '')
+      ? (urlLanguage as SupportedLanguage)
+      : progress.preferredLanguage;
+    const urlValues = params.get('values');
+    const urlTarget = params.get('target');
+    if (urlValues && urlTarget) {
+      inputText = urlValues;
+      targetText = urlTarget;
+      applyInput(false);
+    }
     index = Math.min(Number(params.get('step') ?? 0) || 0, lesson.steps.length - 1);
     return () => clearInterval(timer);
   });
+  function syncUrl() {
+    const params = new URLSearchParams({
+      values: inputText.replace(/\s+/g, ''),
+      target: targetText.trim(),
+      lang: language,
+      step: String(index)
+    });
+    history.replaceState({}, '', `?${params}`);
+  }
   function jump(n: number) {
     index = Math.max(0, Math.min(n, lesson.steps.length - 1));
-    history.replaceState({}, '', `?step=${index}`);
+    syncUrl();
     if (index === lesson.steps.length - 1) {
       progress = completeLesson(progress, lesson.id);
       saveProgress(progress);
+    }
+  }
+  function selectLanguage(next: SupportedLanguage) {
+    language = next;
+    syncUrl();
+  }
+  function applyInput(updateUrl = true) {
+    const pieces = inputText.split(',').map((value) => value.trim());
+    if (pieces.some((value) => value === '' || !/^-?\d+$/.test(value))) {
+      inputError = 'Use comma-separated whole numbers, for example: 2, 5, 8, 12.';
+      return;
+    }
+    const values = pieces.map(Number);
+    const target = Number(targetText);
+    if (values.length < 2 || values.length > 16) {
+      inputError = 'Choose between 2 and 16 values so every state remains readable.';
+      return;
+    }
+    if (!Number.isInteger(target)) {
+      inputError = 'Target must be a whole number.';
+      return;
+    }
+    if (values.some((value, position) => position > 0 && value < values[position - 1])) {
+      inputError = 'Binary search needs ascending sorted input. Reorder the values and try again.';
+      return;
+    }
+    inputError = '';
+    lesson = createBinarySearchLesson(values, target);
+    index = 0;
+    submitted = [];
+    mistake = null;
+    playing = false;
+    clearInterval(timer);
+    if (updateUrl) syncUrl();
+  }
+  function usePreset(values: number[], target: number) {
+    inputText = values.join(', ');
+    targetText = String(target);
+    applyInput();
+  }
+  async function shareTrace() {
+    syncUrl();
+    try {
+      await navigator.clipboard.writeText(location.href);
+      shareStatus = 'Trace link copied.';
+    } catch {
+      window.prompt('Copy this trace URL:', location.href);
+      shareStatus = 'Trace link ready to copy.';
+    }
+  }
+  function handleKeydown(event: KeyboardEvent) {
+    const target = event.target;
+    if (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) return;
+    if (event.key === 'ArrowRight') jump(index + 1);
+    if (event.key === 'ArrowLeft') jump(index - 1);
+    if (event.key === ' ') {
+      event.preventDefault();
+      play();
     }
   }
   function play() {
@@ -91,11 +173,11 @@
       mutation: step.mutations,
       stateAfter: step.stateAfter,
       deterministicExplanation: step.deterministicExplanation,
-      learnerLevel: 'beginner',
+      learnerLevel: progress.learnerLevel,
       misconceptionTags: mistake?.stepId === step.id ? [mistake.tag] : [],
       interaction: 'explain',
-      explanationLevel: 'standard',
-      explanationLanguage: 'en',
+      explanationLevel: progress.explanationLevel,
+      explanationLanguage: progress.explanationLanguage,
       currentPrediction: step.prediction
         ? {
             prompt: step.prediction.prompt,
@@ -107,20 +189,65 @@
   }
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 <div class="lesson-head">
   <div>
     <a href="/learn/dsa-1" class="back">← DSA I</a>
     <h1>{lesson.title}</h1>
     <p>{lesson.description}</p>
   </div>
-  <div class="score"><span>⚡ {progress.xp} XP</span><span>🔥 {progress.streak}</span></div>
+  <div class="score">
+    <button onclick={shareTrace}>Share this trace</button><span>⚡ {progress.xp} XP</span><span
+      >🔥 {progress.streak}</span
+    >
+  </div>
 </div>
+{#if shareStatus}<p class="share-status" role="status">{shareStatus}</p>{/if}
+<form
+  class="input-panel panel"
+  onsubmit={(event) => {
+    event.preventDefault();
+    applyInput();
+  }}
+>
+  <div>
+    <label for="search-values">Sorted values</label><input
+      id="search-values"
+      bind:value={inputText}
+      aria-describedby="input-help input-error"
+    />
+  </div>
+  <div class="target-field">
+    <label for="search-target">Target</label><input
+      id="search-target"
+      bind:value={targetText}
+      inputmode="numeric"
+    />
+  </div>
+  <button class="primary" type="submit">Build trace</button>
+  <div class="presets">
+    <span>Presets</span><button
+      type="button"
+      onclick={() => usePreset([2, 5, 8, 12, 16, 23, 38, 56], 23)}>Found</button
+    ><button type="button" onclick={() => usePreset([1, 3, 5, 7, 9, 11], 8)}>Not found</button
+    ><button type="button" onclick={() => usePreset([1, 2, 2, 2, 5, 8], 2)}>Duplicates</button>
+  </div>
+  <p id="input-help">2–16 sorted integers. Duplicate values are allowed.</p>
+  {#if inputError}<p id="input-error" class="input-error" role="alert">{inputError}</p>{/if}
+</form>
+{#if new Set(step.stateAfter.values as (string | number)[]).size < (step.stateAfter.values as (string | number)[]).length}<p
+    class="duplicate-note"
+  >
+    <strong>Duplicate note:</strong> Standard binary search returns one matching index, not necessarily
+    the first duplicate.
+  </p>{/if}
 <div class="lab">
   <CodePane
     source={lesson.sourceByLanguage}
     {language}
     activeSemantic={step.semanticOperationId}
-    onlanguage={(l) => (language = l)}
+    onlanguage={selectLanguage}
   />
   <div class="center">
     <ArrayVisualizer
@@ -141,6 +268,12 @@
       onplay={play}
       onjump={jump}
     />
+    <div class="complexity panel" aria-label="Complexity counter">
+      <span><b>{String(step.stateAfter.comparisons)}</b> comparisons</span><span
+        ><b>{Math.max(0, Math.ceil(Math.log2((step.stateAfter.values as unknown[]).length)))}</b> max
+        halving rounds</span
+      ><span><b>O(log n)</b> time</span><span><b>O(1)</b> space</span>
+    </div>
   </div>
   <aside class="panel">
     <span class="eyebrow">Step {index + 1}</span>
@@ -201,6 +334,64 @@
     border: 1px solid var(--border);
     border-radius: 9px;
   }
+  .score button {
+    color: var(--primary);
+  }
+  .share-status {
+    color: var(--success);
+    text-align: right;
+    font-size: 0.78rem;
+  }
+  .input-panel {
+    display: grid;
+    grid-template-columns: minmax(240px, 1fr) 100px auto auto;
+    gap: 0.65rem;
+    align-items: end;
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+  .input-panel > div:not(.presets) {
+    display: grid;
+    gap: 0.25rem;
+  }
+  .input-panel label,
+  .presets > span {
+    color: var(--muted);
+    font-size: 0.7rem;
+  }
+  .input-panel input {
+    min-width: 0;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    padding: 0.62rem;
+  }
+  .presets {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .presets button {
+    font-size: 0.68rem;
+    padding: 0.48rem;
+  }
+  .input-panel > p {
+    grid-column: 1/-1;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.67rem;
+  }
+  .input-panel > p.input-error {
+    color: var(--danger);
+  }
+  .duplicate-note {
+    border-left: 3px solid var(--warning);
+    padding: 0.55rem 0.8rem;
+    background: #fbbf240c;
+    font-size: 0.76rem;
+  }
   .lab {
     display: grid;
     grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.3fr) minmax(270px, 0.9fr);
@@ -210,6 +401,20 @@
     display: flex;
     flex-direction: column;
     gap: 0.8rem;
+  }
+  .complexity {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+    padding: 0.65rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.65rem;
+  }
+  .complexity b {
+    display: block;
+    color: var(--primary);
+    font-size: 0.9rem;
   }
   .lab aside {
     padding: 1rem;
@@ -239,6 +444,12 @@
     color: var(--primary);
   }
   @media (max-width: 1000px) {
+    .input-panel {
+      grid-template-columns: 1fr 100px auto;
+    }
+    .presets {
+      grid-column: 1/-1;
+    }
     .lab {
       grid-template-columns: 1fr 1.2fr;
     }
@@ -247,6 +458,15 @@
     }
   }
   @media (max-width: 700px) {
+    .input-panel {
+      grid-template-columns: 1fr 80px;
+    }
+    .input-panel > button {
+      grid-column: 1/-1;
+    }
+    .complexity {
+      grid-template-columns: 1fr 1fr;
+    }
     .lab {
       grid-template-columns: 1fr;
     }

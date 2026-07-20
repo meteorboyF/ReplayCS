@@ -1,0 +1,575 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import PredictionCheckpoint from '$lib/components/trace/PredictionCheckpoint.svelte';
+  import TraceControls from '$lib/components/trace/TraceControls.svelte';
+  import {
+    SORTING_ALGORITHMS,
+    createSortingTrace,
+    validateSortingInput,
+    type SortingAlgorithm,
+    type SortingTrace
+  } from '$lib/engines/dsa/sorting';
+
+  const algorithmOrder: SortingAlgorithm[] = ['bubble', 'selection', 'insertion'];
+  const initialValues = [7, 3, 5, 2, 9, 1];
+
+  let algorithm = $state<SortingAlgorithm>('bubble');
+  let input = $state(initialValues.join(', '));
+  let inputError = $state('');
+  let trace = $state<SortingTrace>(createSortingTrace('bubble', initialValues));
+  let index = $state(0);
+  let playing = $state(false);
+  let predictionSubmitted = $state(false);
+  let traceRevision = $state(0);
+  let timer: ReturnType<typeof setInterval> | undefined;
+
+  let step = $derived(trace.steps[index]);
+  let info = $derived(SORTING_ALGORITHMS[algorithm]);
+
+  onMount(() => () => clearInterval(timer));
+
+  function stopPlayback() {
+    playing = false;
+    clearInterval(timer);
+  }
+
+  function resetCheckpoint() {
+    predictionSubmitted = false;
+    traceRevision++;
+  }
+
+  function rebuild(nextAlgorithm: SortingAlgorithm, values: readonly number[]) {
+    stopPlayback();
+    algorithm = nextAlgorithm;
+    trace = createSortingTrace(nextAlgorithm, values);
+    index = 0;
+    resetCheckpoint();
+  }
+
+  function chooseAlgorithm(nextAlgorithm: SortingAlgorithm) {
+    if (nextAlgorithm === algorithm) return;
+    rebuild(nextAlgorithm, trace.input);
+  }
+
+  function applyInput(event: SubmitEvent) {
+    event.preventDefault();
+    const result = validateSortingInput(input);
+    if (!result.valid) {
+      inputError = result.error;
+      return;
+    }
+    inputError = '';
+    input = result.values.join(', ');
+    rebuild(algorithm, result.values);
+  }
+
+  function jump(nextIndex: number) {
+    index = Math.max(0, Math.min(nextIndex, trace.steps.length - 1));
+    if (index === trace.steps.length - 1) stopPlayback();
+  }
+
+  function restart() {
+    stopPlayback();
+    index = 0;
+    resetCheckpoint();
+  }
+
+  function togglePlayback() {
+    if (playing) {
+      stopPlayback();
+      return;
+    }
+    if (index === trace.steps.length - 1) index = 0;
+    playing = true;
+    timer = setInterval(() => {
+      if (index >= trace.steps.length - 1) stopPlayback();
+      else jump(index + 1);
+    }, 900);
+  }
+
+  function submitPrediction() {
+    predictionSubmitted = true;
+  }
+</script>
+
+<svelte:head>
+  <title>Sorting Arena · ReplayCS</title>
+  <meta
+    name="description"
+    content="Compare Bubble, Selection, and Insertion Sort with deterministic step-by-step traces."
+  />
+</svelte:head>
+
+<div class="lesson-head">
+  <div>
+    <a href="/learn/dsa-1" class="back">← DSA I</a>
+    <span class="eyebrow">Interactive execution lab</span>
+    <h1>Sorting <span class="gradient">Arena</span></h1>
+    <p>Run the same values through three classic algorithms and inspect every operation.</p>
+  </div>
+  <div class="status-pill"><span class="status-dot"></span> Deterministic trace</div>
+</div>
+
+<section class="setup panel" aria-labelledby="algorithm-heading">
+  <div>
+    <span class="eyebrow" id="algorithm-heading">Choose an algorithm</span>
+    <div class="algorithm-tabs" role="tablist" aria-label="Sorting algorithm">
+      {#each algorithmOrder as option}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={algorithm === option}
+          class:selected={algorithm === option}
+          onclick={() => chooseAlgorithm(option)}
+        >
+          {SORTING_ALGORITHMS[option].shortName}
+        </button>
+      {/each}
+    </div>
+  </div>
+  <form onsubmit={applyInput} novalidate>
+    <label for="sorting-values">Values <span>2–10 integers</span></label>
+    <div class="input-row">
+      <input
+        id="sorting-values"
+        bind:value={input}
+        aria-invalid={inputError ? 'true' : 'false'}
+        aria-describedby={inputError ? 'input-error' : 'input-hint'}
+        oninput={() => (inputError = '')}
+      />
+      <button class="primary" type="submit">Build trace</button>
+    </div>
+    {#if inputError}
+      <p class="error" id="input-error" role="alert">{inputError}</p>
+    {:else}
+      <p class="hint" id="input-hint">Try negatives and duplicate values too.</p>
+    {/if}
+  </form>
+</section>
+
+<div class="arena-grid">
+  <section class="stage panel" aria-labelledby="stage-title">
+    <div class="stage-head">
+      <div>
+        <span class="event">{step.event.replace('-', ' ')}</span>
+        <h2 id="stage-title">{step.title}</h2>
+      </div>
+      <span class="step-count">Step {index + 1} of {trace.steps.length}</span>
+    </div>
+
+    <div class="array" role="list" aria-label={`Current ${info.name} array state`}>
+      {#each step.values as value, cellIndex}
+        <div
+          class="cell"
+          class:active={step.activeIndices.includes(cellIndex)}
+          class:sorted={step.sortedIndices.includes(cellIndex)}
+          role="listitem"
+          aria-label={`Index ${cellIndex}: ${value}${step.activeIndices.includes(cellIndex) ? ', active' : ''}${step.sortedIndices.includes(cellIndex) ? ', sorted region' : ''}`}
+        >
+          <span class="value">{value}</span>
+          <span class="cell-index">[{cellIndex}]</span>
+        </div>
+      {/each}
+    </div>
+
+    <div class="legend" aria-label="Visualization legend">
+      <span><i class="active-key"></i> Active indices</span>
+      <span><i class="sorted-key"></i> Sorted region</span>
+    </div>
+
+    <div class="metrics" aria-label="Operation counters">
+      <div><span>Pass</span><strong>{step.metrics.pass}</strong></div>
+      <div><span>Comparisons</span><strong>{step.metrics.comparisons}</strong></div>
+      <div><span>Writes</span><strong>{step.metrics.writes}</strong></div>
+      <div><span>Swaps</span><strong>{step.metrics.swaps}</strong></div>
+    </div>
+
+    <TraceControls
+      {index}
+      total={trace.steps.length}
+      {playing}
+      onprevious={() => jump(index - 1)}
+      onnext={() => jump(index + 1)}
+      onrestart={restart}
+      onplay={togglePlayback}
+      onjump={jump}
+    />
+  </section>
+
+  <aside class="side-column">
+    <section class="explanation panel">
+      <span class="eyebrow">What just happened?</span>
+      <p>{step.explanation}</p>
+      <dl>
+        <div>
+          <dt>Active</dt>
+          <dd>{step.activeIndices.length ? step.activeIndices.join(', ') : 'None'}</dd>
+        </div>
+        <div>
+          <dt>Sorted</dt>
+          <dd>{step.sortedIndices.length} / {step.values.length}</dd>
+        </div>
+      </dl>
+    </section>
+
+    {#if step.prediction}
+      {#key `${step.prediction.id}-${traceRevision}`}
+        <PredictionCheckpoint
+          challenge={step.prediction}
+          submitted={predictionSubmitted}
+          onsubmit={submitPrediction}
+        />
+      {/key}
+    {/if}
+
+    <section class="facts panel">
+      <div class="facts-title">
+        <div>
+          <span class="eyebrow">Algorithm profile</span>
+          <h3>{info.name}</h3>
+        </div>
+        <span class:stable={info.stable} class:unstable={!info.stable}>
+          {info.stable ? 'Stable' : 'Unstable'}
+        </span>
+      </div>
+      <p>{info.description}</p>
+      <p class="stability-note">{info.stabilityReason}</p>
+      <div class="complexity">
+        <div><span>Best</span><code>{info.complexity.best}</code></div>
+        <div><span>Average</span><code>{info.complexity.average}</code></div>
+        <div><span>Worst</span><code>{info.complexity.worst}</code></div>
+        <div><span>Space</span><code>{info.complexity.space}</code></div>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<style>
+  .lesson-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .lesson-head > div:first-child {
+    display: grid;
+    gap: 0.35rem;
+  }
+  .lesson-head h1 {
+    margin: 0.15rem 0;
+    font-size: clamp(2.6rem, 6vw, 4.8rem);
+  }
+  .lesson-head p,
+  .facts p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+  .back {
+    color: var(--primary);
+    font-size: 0.85rem;
+    width: fit-content;
+  }
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    white-space: nowrap;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .status-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 12px var(--success);
+  }
+  .setup {
+    display: grid;
+    grid-template-columns: auto minmax(300px, 1fr);
+    align-items: end;
+    gap: 2rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  .algorithm-tabs,
+  .input-row {
+    display: flex;
+    gap: 0.45rem;
+  }
+  .algorithm-tabs {
+    margin-top: 0.55rem;
+  }
+  .algorithm-tabs button {
+    padding-inline: 1.1rem;
+  }
+  .algorithm-tabs button.selected {
+    color: #04231f;
+    border-color: var(--primary);
+    background: var(--primary);
+    font-weight: 800;
+  }
+  form label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  form label span,
+  .hint {
+    color: var(--muted);
+    font-weight: 400;
+  }
+  .input-row input {
+    min-width: 0;
+    flex: 1;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+    font: 0.9rem var(--mono);
+  }
+  .input-row input[aria-invalid='true'] {
+    border-color: var(--danger);
+  }
+  .hint,
+  .error {
+    margin: 0.35rem 0 0;
+    font-size: 0.75rem;
+  }
+  .error {
+    color: var(--danger);
+  }
+  .arena-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(270px, 0.75fr);
+    gap: 1rem;
+    align-items: start;
+  }
+  .stage {
+    min-width: 0;
+    padding: 1.2rem;
+  }
+  .stage-head,
+  .facts-title {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .stage h2 {
+    margin: 0.35rem 0 0;
+    font-size: clamp(1.35rem, 3vw, 2rem);
+  }
+  .event {
+    display: inline-flex;
+    color: var(--accent);
+    font: 700 0.7rem var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .step-count {
+    color: var(--muted);
+    font: 0.75rem var(--mono);
+    white-space: nowrap;
+  }
+  .array {
+    display: flex;
+    justify-content: center;
+    gap: clamp(0.25rem, 1vw, 0.6rem);
+    margin: 3rem 0 1.2rem;
+    min-height: 92px;
+  }
+  .cell {
+    flex: 1 1 54px;
+    max-width: 82px;
+    min-width: 42px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 0.35rem;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    background: var(--bg);
+    transition:
+      transform 180ms ease,
+      border-color 180ms ease,
+      background 180ms ease;
+  }
+  .cell.sorted {
+    border-color: #4ade8077;
+    background: #4ade8012;
+  }
+  .cell.active {
+    z-index: 1;
+    border-color: var(--warning);
+    background: #fbbf2417;
+    box-shadow: 0 0 0 3px #fbbf241a;
+    transform: translateY(-8px);
+  }
+  .value {
+    font: 800 clamp(1rem, 3vw, 1.55rem) var(--mono);
+  }
+  .cell-index {
+    color: var(--muted);
+    font: 0.68rem var(--mono);
+  }
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    color: var(--muted);
+    font-size: 0.72rem;
+  }
+  .legend span {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .legend i {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 3px;
+  }
+  .active-key {
+    background: var(--warning);
+  }
+  .sorted-key {
+    background: var(--success);
+  }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.55rem;
+    margin: 1.5rem 0 0.8rem;
+  }
+  .metrics div {
+    padding: 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: #07111f66;
+  }
+  .metrics span,
+  .complexity span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .metrics strong {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--primary);
+    font: 800 1.25rem var(--mono);
+  }
+  .side-column {
+    display: grid;
+    gap: 1rem;
+  }
+  .explanation,
+  .facts {
+    padding: 1rem;
+  }
+  .explanation > p {
+    margin: 0.65rem 0 1rem;
+    color: #dce7f5;
+    line-height: 1.6;
+  }
+  dl {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin: 0;
+  }
+  dl div {
+    padding: 0.65rem;
+    border-radius: 9px;
+    background: #07111f88;
+  }
+  dt {
+    color: var(--muted);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+  }
+  dd {
+    margin: 0.2rem 0 0;
+    font: 700 0.85rem var(--mono);
+  }
+  .facts h3 {
+    margin: 0.35rem 0 0;
+  }
+  .stable,
+  .unstable {
+    padding: 0.3rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+  .stable {
+    color: var(--success);
+    background: #4ade8014;
+  }
+  .unstable {
+    color: var(--warning);
+    background: #fbbf2414;
+  }
+  .stability-note {
+    padding: 0.8rem 0;
+    font-size: 0.78rem;
+  }
+  .complexity {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+  }
+  .complexity div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.55rem;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+  }
+  .complexity code {
+    color: var(--primary);
+  }
+  @media (max-width: 900px) {
+    .setup,
+    .arena-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 600px) {
+    .lesson-head {
+      align-items: start;
+      flex-direction: column;
+    }
+    .algorithm-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .input-row {
+      flex-direction: column;
+    }
+    .array {
+      justify-content: start;
+      overflow-x: auto;
+      padding: 0.75rem 0;
+    }
+    .cell {
+      flex-basis: 54px;
+      min-width: 54px;
+    }
+    .metrics {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

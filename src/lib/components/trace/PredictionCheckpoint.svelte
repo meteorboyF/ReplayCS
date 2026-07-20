@@ -25,7 +25,7 @@
       aria-label="Your prediction"
       bind:value={answer}
       disabled={submitted}
-      inputmode="numeric"
+      inputmode={challenge.type === 'numeric' ? 'numeric' : 'text'}
       placeholder="Type your answer"
     /><button class="primary" onclick={submit} disabled={submitted || !answer}
       >Lock prediction</button
