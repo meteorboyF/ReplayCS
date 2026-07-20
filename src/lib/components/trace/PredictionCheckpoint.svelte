@@ -7,13 +7,13 @@
   }: {
     challenge: PredictionChallenge;
     submitted?: boolean;
-    onsubmit: (correct: boolean) => void;
+    onsubmit: (correct: boolean, answer: string) => void;
   } = $props();
   let answer = $state('');
   let correct = $state<boolean | null>(null);
   function submit() {
     correct = String(challenge.correctAnswer) === answer.trim();
-    onsubmit(correct);
+    onsubmit(correct, answer.trim());
   }
 </script>
 
