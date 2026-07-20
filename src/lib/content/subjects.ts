@@ -29,10 +29,10 @@ export const subjects = {
     description: 'Move into trees, graph traversal, heaps, greedy methods and dynamic programming.',
     lessons: [
       {
-        title: 'Breadth-first search',
-        slug: 'bfs',
-        status: 'next',
-        detail: 'Trace the frontier, queue, visited set and traversal order.'
+        title: 'Graph Explorer',
+        slug: 'graph-explorer',
+        status: 'live',
+        detail: 'Compare BFS and DFS through queues, stacks, call frames and traversal trees.'
       },
       {
         title: 'Tree traversal',
