@@ -33,6 +33,7 @@ describe('adaptive recommendations', () => {
       'binary-search',
       'sorting-arena',
       'linked-list-lab',
+      'array-lab',
       'cpu-scheduling',
       'packet-journey'
     ]);
@@ -66,7 +67,13 @@ describe('adaptive recommendations', () => {
     expect(
       recommendNext({
         ...createEmptyProgress(),
-        completed: ['binary-search', 'sorting-arena', 'linked-list-lab', 'graph-explorer']
+        completed: [
+          'binary-search',
+          'sorting-arena',
+          'linked-list-lab',
+          'array-lab',
+          'graph-explorer'
+        ]
       }).href
     ).toBe('/lesson/dbms/query-pipeline');
   });

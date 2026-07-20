@@ -14,6 +14,9 @@
     stateKey?: string;
     recoveryPrompt?: string;
     recoveryError?: string;
+    transitionBefore?: string;
+    transitionAfter?: string;
+    transitionLabel?: string;
   }
 
   let {
@@ -75,9 +78,13 @@
     >{replayed ? 'Hide transition' : 'Replay correct transition'}</button
   >
   {#if replayed}<div class="transition" aria-live="polite">
-      <code>before: {variableLabel} = {String(stateBefore[stateKey])}</code><span
-        >→ execute highlighted line →</span
-      ><code>after: {variableLabel} = {String(stateAfter[stateKey])}</code>
+      <code
+        >before: {attempt.transitionLabel ?? variableLabel} = {attempt.transitionBefore ??
+          String(stateBefore[stateKey])}</code
+      ><span>→ execute highlighted line →</span><code
+        >after: {attempt.transitionLabel ?? variableLabel} = {attempt.transitionAfter ??
+          String(stateAfter[stateKey])}</code
+      >
     </div>{/if}
   <div class="recovery">
     <label for="recovery-answer"

@@ -15,6 +15,10 @@
     ><span class="pill">Live</span>
     <h2>Linked List Lab</h2>
     <p class="muted">Trace 14 pointer algorithms, exact work, and tail-pointer tradeoffs.</p></a
+  ><a class="panel card" href="/lesson/dsa-1/arrays"
+    ><span class="pill">Live</span>
+    <h2>Array & Dynamic Array Lab</h2>
+    <p class="muted">Trace indexed access, shifts, resizing, copying, and amortized append.</p></a
   ><a class="panel card" href="/lesson/dsa-1/sorting-arena"
     ><span class="pill">Live</span>
     <h2>Sorting Arena</h2>

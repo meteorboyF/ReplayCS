@@ -22,8 +22,31 @@ describe('live lesson registry', () => {
 
   it('derives remaining completion XP from live metadata and completion state', () => {
     const progress = { ...createEmptyProgress(), completed: ['binary-search'] };
-    expect(liveLessonsForSubject('dsa-1')).toHaveLength(3);
-    expect(remainingCompletionXp(progress, 'dsa-1')).toBe(60);
+    expect(liveLessonsForSubject('dsa-1')).toHaveLength(4);
+    expect(remainingCompletionXp(progress, 'dsa-1')).toBe(95);
+  });
+
+  it('registers the complete Array Lab route, reward, and recovery evidence', () => {
+    const arrayLab = LIVE_LESSONS.find((lesson) => lesson.completionId === 'array-lab');
+
+    expect(arrayLab).toMatchObject({
+      subject: 'dsa-1',
+      slug: 'arrays',
+      title: 'Array & Dynamic Array Lab',
+      href: '/lesson/dsa-1/arrays',
+      completionXp: 35,
+      recovery: {
+        title: 'Array Lab Recovery',
+        href: '/lesson/dsa-1/arrays'
+      }
+    });
+    expect(arrayLab?.recovery.misconceptionTags).toEqual([
+      'index-vs-value',
+      'off-by-one',
+      'loop-boundary',
+      'capacity-vs-size',
+      'amortized-vs-worst'
+    ]);
   });
 
   it('registers the complete Linked List Lab route, reward, and recovery evidence', () => {
@@ -58,7 +81,12 @@ describe('live lesson registry', () => {
   it('averages recorded live-lesson mastery and clamps unsafe stored values', () => {
     const progress = {
       ...createEmptyProgress(),
-      lessonMastery: { 'binary-search': 80, 'sorting-arena': 140, 'linked-list-lab': 90 }
+      lessonMastery: {
+        'binary-search': 80,
+        'sorting-arena': 140,
+        'linked-list-lab': 90,
+        'array-lab': 90
+      }
     };
     expect(subjectMastery(progress, 'dsa-1')).toBe(90);
   });

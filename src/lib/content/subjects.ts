@@ -22,6 +22,12 @@ export const subjects = {
         status: 'live',
         detail:
           'Trace access, insertion, deletion, reversal, and cycle detection pointer by pointer.'
+      },
+      {
+        title: 'Array & Dynamic Array Lab',
+        slug: 'arrays',
+        status: 'live',
+        detail: 'Trace index arithmetic, shifting, resizing, and amortized growth slot by slot.'
       }
     ]
   },

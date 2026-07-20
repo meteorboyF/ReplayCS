@@ -13,6 +13,7 @@
     ['allocation', 'allocations'],
     ['deallocation', 'deallocations'],
     ['node-inspection', 'node visits'],
+    ['loop-iteration', 'iterations'],
     ['call', 'calls'],
     ['return', 'returns']
   ] as const;
@@ -29,6 +30,14 @@
 
   function stateRows(state: Record<string, TraceValue>) {
     return [
+      'size',
+      'capacity',
+      'oldCapacity',
+      'i',
+      'readIndex',
+      'writeIndex',
+      'appendsCompleted',
+      'totalElementCopies',
       'head',
       'tail',
       'current',
@@ -45,14 +54,30 @@
       .filter(([, value]) => value !== undefined);
   }
 
-  function structure(state: Record<string, TraceValue>) {
-    if (!Array.isArray(state.nodes)) return '—';
-    return (state.nodes as Array<Record<string, TraceValue>>)
-      .map(
-        (node) =>
-          `${String(node.id)}(${String(node.value)})→${node.next === null ? 'null' : String(node.next)}`
-      )
+  function arraySlots(value: TraceValue[] | undefined) {
+    return value
+      ?.map((slot, index) => `[${index}]=${slot === null ? '·' : display(slot)}`)
       .join(' · ');
+  }
+
+  function structureRows(state: Record<string, TraceValue>) {
+    const rows: Array<[string, string]> = [];
+    if (Array.isArray(state.nodes)) {
+      rows.push([
+        'nodes',
+        (state.nodes as Array<Record<string, TraceValue>>)
+          .map(
+            (node) =>
+              `${String(node.id)}(${String(node.value)})→${node.next === null ? 'null' : String(node.next)}`
+          )
+          .join(' · ')
+      ]);
+    }
+    if (Array.isArray(state.slots)) rows.push(['slots', arraySlots(state.slots) ?? '—']);
+    if (Array.isArray(state.oldSlots)) rows.push(['old buffer', arraySlots(state.oldSlots) ?? '—']);
+    if (Array.isArray(state.copySlots))
+      rows.push(['copy buffer', arraySlots(state.copySlots) ?? '—']);
+    return rows;
   }
 </script>
 
@@ -61,10 +86,17 @@
     <div>
       <span class="eyebrow">Exact work through this line</span>
       <strong>{revealed ? (evidence?.cumulativeOperationCount ?? 0) : '?'}</strong>
+      <small
+        >{revealed ? `+${evidence?.exactOperationCount ?? 0} on this line` : 'line hidden'}</small
+      >
     </div>
     <div class="bounds">
       <span><b>{evidence?.timeComplexity ?? '—'}</b> time</span>
       <span><b>{evidence?.auxiliarySpace ?? '—'}</b> auxiliary space</span>
+      <span
+        ><b>{evidence?.space.output.peak ?? 0}</b> peak {evidence?.space.output.unit ??
+          'output'}</span
+      >
     </div>
   </div>
 
@@ -81,7 +113,9 @@
       {#each stateRows(before) as [name, value]}
         <p><code>{name}</code><b>{display(value)}</b></p>
       {/each}
-      <p class="structure"><code>nodes</code><b>{structure(before)}</b></p>
+      {#each structureRows(before) as [name, value]}
+        <p class="structure"><code>{name}</code><b>{value}</b></p>
+      {/each}
     </div>
     <div class="execute" aria-hidden="true"><i></i><span>execute</span><i></i></div>
     <div class:masked={!revealed}>
@@ -89,12 +123,14 @@
       {#each stateRows(after) as [name, value]}
         <p><code>{name}</code><b>{revealed ? display(value) : '?'}</b></p>
       {/each}
-      <p class="structure"><code>nodes</code><b>{revealed ? structure(after) : '?'}</b></p>
+      {#each structureRows(after) as [name, value]}
+        <p class="structure"><code>{name}</code><b>{revealed ? value : '?'}</b></p>
+      {/each}
     </div>
   </div>
 
   <div class="mutations">
-    <span>Reads, writes, and reference changes on this line</span>
+    <span>Reads, writes, and state changes on this line</span>
     {#if revealed && step.mutations.length}
       {#each step.mutations as mutation}
         <p>
@@ -131,6 +167,10 @@
     color: var(--primary);
     font: 1.55rem var(--mono);
   }
+  .topline small {
+    color: var(--muted);
+    font-size: 0.58rem;
+  }
   .bounds span {
     display: grid;
     min-width: 100px;
@@ -146,7 +186,7 @@
   }
   .counts {
     display: grid;
-    grid-template-columns: repeat(11, minmax(52px, 1fr));
+    grid-template-columns: repeat(12, minmax(52px, 1fr));
     gap: 0.25rem;
     margin: 0.8rem 0;
   }
