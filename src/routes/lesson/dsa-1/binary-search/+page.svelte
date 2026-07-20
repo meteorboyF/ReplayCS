@@ -30,6 +30,10 @@
     mistake = $state<MistakeAttempt | null>(null),
     timer: ReturnType<typeof setInterval> | undefined;
   let step = $derived(lesson.steps[index]);
+  let predictionResolved = $derived(!step.prediction || submitted.includes(step.prediction.id));
+  let visibleState = $derived(
+    step.prediction && !predictionResolved ? step.stateBefore : step.stateAfter
+  );
   onMount(() => {
     progress = loadProgress();
     const params = new URLSearchParams(location.search);
@@ -44,7 +48,8 @@
       targetText = urlTarget;
       applyInput(false);
     }
-    index = Math.min(Number(params.get('step') ?? 0) || 0, lesson.steps.length - 1);
+    const requestedStep = Number(params.get('step') ?? 0);
+    index = gatedIndex(Number.isSafeInteger(requestedStep) ? requestedStep : 0);
     return () => clearInterval(timer);
   });
   function syncUrl() {
@@ -56,8 +61,23 @@
     });
     history.replaceState({}, '', `?${params}`);
   }
+  function gatedIndex(requested: number) {
+    const bounded = Math.max(0, Math.min(requested, lesson.steps.length - 1));
+    const unresolved = lesson.steps.findIndex(
+      (candidate, candidateIndex) =>
+        candidateIndex < bounded &&
+        candidate.prediction &&
+        !submitted.includes(candidate.prediction.id)
+    );
+    return unresolved >= 0 ? unresolved : bounded;
+  }
   function jump(n: number) {
-    index = Math.max(0, Math.min(n, lesson.steps.length - 1));
+    const bounded = Math.max(0, Math.min(n, lesson.steps.length - 1));
+    index = gatedIndex(bounded);
+    if (index < bounded) {
+      playing = false;
+      clearInterval(timer);
+    }
     syncUrl();
     if (index === lesson.steps.length - 1) {
       progress = completeLesson(progress, lesson.id);
@@ -80,8 +100,12 @@
       inputError = 'Choose between 2 and 16 values so every state remains readable.';
       return;
     }
-    if (!Number.isInteger(target)) {
-      inputError = 'Target must be a whole number.';
+    if (values.some((value) => !Number.isSafeInteger(value))) {
+      inputError = 'Every value must be a safe whole number.';
+      return;
+    }
+    if (!Number.isSafeInteger(target)) {
+      inputError = 'Target must be a safe whole number.';
       return;
     }
     if (values.some((value, position) => position > 0 && value < values[position - 1])) {
@@ -113,8 +137,13 @@
     }
   }
   function handleKeydown(event: KeyboardEvent) {
-    const target = event.target;
-    if (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (
+      target?.closest(
+        'a, button, input, select, textarea, summary, [role="button"], [contenteditable="true"]'
+      )
+    )
+      return;
     if (event.key === 'ArrowRight') jump(index + 1);
     if (event.key === 'ArrowLeft') jump(index - 1);
     if (event.key === ' ') {
@@ -137,7 +166,11 @@
     if (!step.prediction) return;
     submitted = [...submitted, step.prediction.id];
     if (correct) {
-      progress = awardPrediction(progress, step.prediction.id, step.prediction.xpReward);
+      progress = awardPrediction(
+        progress,
+        `${lesson.id}:${step.prediction.id}`,
+        step.prediction.xpReward
+      );
       saveProgress(progress);
     } else {
       const evidenceId = `${lesson.id}:${step.id}:${step.prediction.id}`;
@@ -236,7 +269,7 @@
   <p id="input-help">2–16 sorted integers. Duplicate values are allowed.</p>
   {#if inputError}<p id="input-error" class="input-error" role="alert">{inputError}</p>{/if}
 </form>
-{#if new Set(step.stateAfter.values as (string | number)[]).size < (step.stateAfter.values as (string | number)[]).length}<p
+{#if new Set(visibleState.values as (string | number)[]).size < (visibleState.values as (string | number)[]).length}<p
     class="duplicate-note"
   >
     <strong>Duplicate note:</strong> Standard binary search returns one matching index, not necessarily
@@ -252,11 +285,11 @@
   <div class="center">
     <ArrayVisualizer
       state={{
-        values: step.stateAfter.values as (string | number)[],
-        target: step.stateAfter.target as string | number,
-        left: step.stateAfter.left as number,
-        right: step.stateAfter.right as number,
-        mid: step.stateAfter.mid as number | null
+        values: visibleState.values as (string | number)[],
+        target: visibleState.target as string | number,
+        left: visibleState.left as number,
+        right: visibleState.right as number,
+        mid: visibleState.mid as number | null
       }}
     /><TraceControls
       {index}
@@ -269,19 +302,23 @@
       onjump={jump}
     />
     <div class="complexity panel" aria-label="Complexity counter">
-      <span><b>{String(step.stateAfter.comparisons)}</b> comparisons</span><span
-        ><b>{Math.max(0, Math.ceil(Math.log2((step.stateAfter.values as unknown[]).length)))}</b> max
-        halving rounds</span
+      <span><b>{String(visibleState.comparisons)}</b> comparisons</span><span
+        ><b>{Math.max(0, Math.ceil(Math.log2((visibleState.values as unknown[]).length)))}</b> max halving
+        rounds</span
       ><span><b>O(log n)</b> time</span><span><b>O(1)</b> space</span>
     </div>
   </div>
   <aside class="panel">
     <span class="eyebrow">Step {index + 1}</span>
     <h2>{step.title}</h2>
-    <p class="explain">{step.deterministicExplanation}</p>
+    <p class="explain">
+      {predictionResolved
+        ? step.deterministicExplanation
+        : 'Predict the operation result before ReplayCS reveals this transition.'}
+    </p>
     <div class="state">
       <h3>State mutation</h3>
-      {#if step.mutations.length}{#each step.mutations as mutation}<div>
+      {#if predictionResolved && step.mutations.length}{#each step.mutations as mutation}<div>
             <code>{mutation.entityId}</code><span
               >{String(mutation.previousValue)} → <b>{String(mutation.nextValue)}</b></span
             >
@@ -302,7 +339,13 @@
         onrecover={recoverMistake}
       />
     {/if}
-    {#key step.id}<AiMentor context={mentorContext()} />{/key}
+    {#if predictionResolved}
+      {#key step.id}<AiMentor context={mentorContext()} />{/key}
+    {:else}
+      <div class="mentor-locked" role="note">
+        Lock your prediction to unlock the grounded explanation for this transition.
+      </div>
+    {/if}
   </aside>
 </div>
 
@@ -442,6 +485,15 @@
   }
   .state b {
     color: var(--primary);
+  }
+  .mentor-locked {
+    margin-top: 1rem;
+    padding: 0.8rem;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.5;
   }
   @media (max-width: 1000px) {
     .input-panel {

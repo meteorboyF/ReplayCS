@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import AiMentor from '$lib/components/ai/AiMentor.svelte';
   import PredictionCheckpoint from '$lib/components/trace/PredictionCheckpoint.svelte';
   import TraceControls from '$lib/components/trace/TraceControls.svelte';
   import {
@@ -14,6 +15,14 @@
     type CpuScheduleTrace,
     type CpuSchedulingAlgorithm
   } from '$lib/engines/os/cpuScheduling';
+  import {
+    awardPrediction,
+    completeLesson,
+    loadProgress,
+    recordMisconception,
+    saveProgress
+  } from '$lib/progress/store';
+  import type { StepContext } from '$lib/server/openai/schemas';
 
   const defaultInput = `P1, 0, 5, 2
 P2, 1, 3, 1
@@ -35,12 +44,17 @@ P4, 4, 2, 3`;
   let index = $state(0);
   let playing = $state(false);
   let predictionSubmitted = $state(false);
+  let predictionCorrect = $state<boolean | null>(null);
+  let predictionAnswer = $state('');
   let predictionNudge = $state('');
+  let progress = $state(loadProgress());
   let traceRevision = $state(0);
   let timer: ReturnType<typeof setInterval> | undefined;
 
   let step = $derived(trace.steps[index]);
   let algorithmInfo = $derived(CPU_ALGORITHMS[algorithm]);
+  let lessonId = $derived(`cpu-scheduling:${algorithm}`);
+  let completed = $derived(progress.completed.includes('cpu-scheduling'));
   let revealClock = $derived(
     step.event === 'initialize'
       ? 0
@@ -54,7 +68,10 @@ P4, 4, 2, 3`;
       .map((segment) => ({ ...segment, end: Math.min(segment.end, revealClock) }))
   );
 
-  onMount(() => () => clearInterval(timer));
+  onMount(() => {
+    progress = loadProgress();
+    return () => clearInterval(timer);
+  });
 
   function stopPlayback() {
     playing = false;
@@ -65,6 +82,8 @@ P4, 4, 2, 3`;
     stopPlayback();
     index = 0;
     predictionSubmitted = false;
+    predictionCorrect = null;
+    predictionAnswer = '';
     predictionNudge = '';
     traceRevision++;
   }
@@ -144,7 +163,11 @@ Gamma, 0, 3, 1`,
       return;
     }
     index = Math.max(0, Math.min(nextIndex, trace.steps.length - 1));
-    if (index === trace.steps.length - 1) stopPlayback();
+    if (index === trace.steps.length - 1) {
+      stopPlayback();
+      progress = completeLesson(progress, 'cpu-scheduling');
+      saveProgress(progress);
+    }
   }
 
   function restart() {
@@ -172,9 +195,57 @@ Gamma, 0, 3, 1`,
     }, 850);
   }
 
-  function submitPrediction() {
+  function submitPrediction(correct: boolean, answer: string) {
     predictionSubmitted = true;
+    predictionCorrect = correct;
+    predictionAnswer = answer;
     predictionNudge = '';
+    if (!step.prediction) return;
+    const evidenceId = `${lessonId}:${step.prediction.id}`;
+    progress = correct
+      ? awardPrediction(progress, `${lessonId}:first-dispatch`, step.prediction.xpReward)
+      : recordMisconception(progress, evidenceId, 'scheduler-tie-break');
+    saveProgress(progress);
+  }
+
+  function mentorContext(): StepContext {
+    return {
+      subject: 'operating-systems',
+      lesson: lessonId,
+      learningObjective: `Explain how ${algorithmInfo.name} chooses work and produces waiting, turnaround, and response metrics.`,
+      activeSourceLines: [],
+      stateBefore: {
+        clock: step.clock,
+        readyQueue: step.readyProcessIds,
+        runningProcessId: step.runningProcessId,
+        remainingBurst: step.remainingBurst
+      },
+      mutation: [
+        {
+          event: step.event,
+          nextClock: step.nextClock,
+          contextSwitches: step.contextSwitches
+        }
+      ],
+      stateAfter: {
+        clock: step.nextClock,
+        completedProcessIds: step.completedProcessIds,
+        remainingBurst: step.remainingBurst
+      },
+      deterministicExplanation: step.explanation,
+      learnerLevel: progress.learnerLevel,
+      misconceptionTags: predictionCorrect === false ? ['scheduler-tie-break'] : [],
+      interaction: 'explain',
+      explanationLevel: progress.explanationLevel,
+      explanationLanguage: progress.explanationLanguage,
+      currentPrediction: step.prediction
+        ? {
+            prompt: step.prediction.prompt,
+            learnerAnswer: predictionAnswer || undefined,
+            correctAnswer: String(step.prediction.correctAnswer)
+          }
+        : undefined
+    };
   }
 
   function processStatus(
@@ -207,7 +278,9 @@ Gamma, 0, 3, 1`,
     <h1>CPU Scheduling <span class="gradient">Arena</span></h1>
     <p>Predict the next dispatch, replay every clock tick, and compare five schedulers fairly.</p>
   </div>
-  <div class="deterministic-badge"><span aria-hidden="true"></span> Deterministic simulation</div>
+  <div class="deterministic-badge">
+    <span aria-hidden="true"></span> Deterministic simulation · ⚡ {progress.xp} XP
+  </div>
 </div>
 
 <section class="setup panel" aria-labelledby="setup-heading">
@@ -561,6 +634,15 @@ Gamma, 0, 3, 1`,
   </div>
 </section>
 
+<section class="panel mentor-panel" aria-label="Grounded scheduling mentor">
+  {#if completed}<p class="completion" role="status">✓ Schedule complete · mastery saved</p>{/if}
+  {#if step.prediction && !predictionSubmitted}
+    <p class="mentor-locked" role="note">Lock the dispatch prediction before asking the mentor.</p>
+  {:else}
+    {#key `${lessonId}:${step.id}`}<AiMentor context={mentorContext()} />{/key}
+  {/if}
+</section>
+
 <style>
   .lesson-head {
     display: flex;
@@ -568,6 +650,20 @@ Gamma, 0, 3, 1`,
     justify-content: space-between;
     gap: 2rem;
     margin-bottom: 1.5rem;
+  }
+  .mentor-panel {
+    margin-top: 1rem;
+    padding: 1rem;
+  }
+  .completion {
+    margin: 0;
+    color: var(--success);
+    font-size: 0.8rem;
+    font-weight: 750;
+  }
+  .mentor-locked {
+    color: var(--warning);
+    font-size: 0.78rem;
   }
   .lesson-head > div:first-child {
     display: grid;

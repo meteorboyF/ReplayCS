@@ -1,6 +1,8 @@
 export type MisconceptionTag =
   | 'off-by-one'
   | 'index-vs-value'
+  | 'comparison-direction'
+  | 'key-vs-index'
   | 'loop-boundary'
   | 'pointer-update-order'
   | 'stack-vs-queue'
@@ -12,9 +14,11 @@ export type MisconceptionTag =
   | 'normalization-partial-dependency'
   | 'dirty-read'
   | 'lost-update'
+  | 'scheduler-tie-break'
   | 'waiting-vs-turnaround'
   | 'page-hit-vs-page-fault'
   | 'safe-vs-unsafe-state'
+  | 'cache-vs-network'
   | 'ip-vs-mac'
   | 'network-vs-broadcast-address'
   | 'sequence-vs-acknowledgement';

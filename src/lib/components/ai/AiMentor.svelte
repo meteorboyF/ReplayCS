@@ -11,6 +11,7 @@
   let explanation = $state<AiStepExplanation | null>(null);
   let source = $state<'ai' | 'fallback' | null>(null);
   let statusMessage = $state('');
+  let lastInteraction = $state<StepContext['interaction']>('explain');
 
   $effect(() => {
     if (!preferencesInitialized) {
@@ -21,6 +22,7 @@
   });
 
   async function request(interaction: StepContext['interaction']) {
+    lastInteraction = interaction;
     loading = true;
     error = '';
     statusMessage = '';
@@ -47,9 +49,11 @@
       statusMessage =
         body.reason === 'not-configured'
           ? 'AI is not configured, so ReplayCS used its deterministic explanation.'
-          : body.reason === 'upstream-error'
-            ? 'The AI request failed safely. Showing the deterministic fallback.'
-            : 'Grounded by GPT-5.6 using this exact trace step.';
+          : body.reason === 'invalid-output'
+            ? 'The AI response did not match the grounded schema. Showing the deterministic fallback.'
+            : body.reason === 'upstream-error'
+              ? 'The AI request failed safely. Showing the deterministic fallback.'
+              : 'Grounded by GPT-5.6 using this exact trace step.';
     } catch (cause) {
       error = cause instanceof Error ? cause.message : 'The mentor could not answer right now.';
     } finally {
@@ -96,12 +100,15 @@
     <button onclick={() => request('why')} disabled={loading}>Why now?</button>
     <button onclick={() => request('hint')} disabled={loading}>Give me a hint</button>
     <button onclick={() => request('simplify')} disabled={loading}>Simplify</button>
+    {#if context.misconceptionTags.length && context.currentPrediction?.learnerAnswer}
+      <button onclick={() => request('mistake')} disabled={loading}>Explain my mistake</button>
+    {/if}
   </div>
 
   {#if loading}<div class="loading" role="status"><span></span>Tracing the explanation…</div>{/if}
   {#if error}<div class="error" role="alert">
       <p>{error}</p>
-      <button onclick={() => request('explain')}>Retry</button>
+      <button onclick={() => request(lastInteraction)}>Retry</button>
     </div>{/if}
   {#if explanation}
     <article class="response" aria-live="polite">
@@ -113,9 +120,25 @@
         <dt>What changed?</dt>
         <dd>{explanation.stateChange}</dd>
       </dl>
+      {#if explanation.unchangedState.length}
+        <div class="unchanged">
+          <strong>What stayed the same?</strong>
+          <ul>
+            {#each explanation.unchangedState as item}<li>{item}</li>{/each}
+          </ul>
+        </div>
+      {/if}
+      {#if explanation.analogy}<p class="analogy">
+          <strong>Analogy:</strong>
+          {explanation.analogy}
+        </p>{/if}
       {#if explanation.commonMistake}<p class="mistake">
           <strong>Watch out:</strong>
           {explanation.commonMistake}
+        </p>{/if}
+      {#if explanation.recoveryChallenge}<p class="recovery">
+          <strong>Recovery challenge:</strong>
+          {explanation.recoveryChallenge}
         </p>{/if}
       <p class="check"><strong>Check yourself:</strong> {explanation.checkQuestion.prompt}</p>
       <small>{explanation.groundingNote}</small>
@@ -238,11 +261,25 @@
     font-size: 0.7rem;
   }
   .mistake,
-  .check {
+  .check,
+  .analogy,
+  .recovery,
+  .unchanged {
     font-size: 0.8rem;
     padding: 0.55rem;
     border-radius: 8px;
     background: #fbbf2410;
+  }
+  .unchanged strong {
+    color: var(--secondary);
+  }
+  .unchanged ul {
+    margin: 0.35rem 0 0;
+    padding-left: 1.1rem;
+  }
+  .recovery {
+    border-left: 3px solid var(--success);
+    background: #4ade800d;
   }
   @keyframes pulse {
     to {

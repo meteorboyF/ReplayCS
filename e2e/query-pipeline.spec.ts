@@ -13,6 +13,9 @@ test.describe('SQL Query Pipeline', () => {
     await expect(page.getByRole('heading', { name: /employees/ })).toBeVisible();
 
     const stageNavigation = page.getByRole('navigation', { name: 'Logical query stages' });
+    await expect(page.locator('section.query pre')).not.toContainText('HAVING COUNT');
+    await expect(stageNavigation.getByRole('button', { name: /PREDICT/ })).toBeVisible();
+    await expect(page.locator('section.final-result')).toContainText('Prediction first');
     await stageNavigation.getByRole('button', { name: /GROUP BY/ }).click();
     await expect(page.getByRole('heading', { name: /Build department buckets/ })).toBeVisible();
 
@@ -20,9 +23,12 @@ test.describe('SQL Query Pipeline', () => {
     await expect(
       page.getByText('Lock a prediction before revealing the aggregate filter.')
     ).toBeVisible();
+    await expect(page.getByText('Mentor locked for this checkpoint')).toBeVisible();
 
     const checkpoint = page.locator('section.checkpoint');
     await checkpoint.getByRole('button', { name: /^WHERE/ }).click();
+    await expect(page.locator('section.query pre')).toContainText('HAVING COUNT');
+    await expect(stageNavigation.getByRole('button', { name: /HAVING/ })).toBeVisible();
     await expect(page.getByText('First divergence found.')).toBeVisible();
     await expect(
       page.getByRole('heading', { name: 'Find the first clause divergence' })

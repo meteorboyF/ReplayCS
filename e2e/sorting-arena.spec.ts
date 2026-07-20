@@ -24,6 +24,10 @@ test.describe('Sorting Arena', () => {
 
     await expect(page.getByText('Step 1 of')).toBeVisible();
     await page.getByRole('button', { name: 'Next' }).click();
+    await expect(page.getByText(/Lock the opening prediction/)).toBeVisible();
+    await page.getByLabel('Your prediction').fill('7');
+    await page.getByRole('button', { name: 'Lock prediction' }).click();
+    await page.getByRole('button', { name: 'Next' }).click();
     await expect(page.getByText('Step 2 of')).toBeVisible();
     await page.getByRole('button', { name: 'Previous' }).click();
     await expect(page.getByText('Step 1 of')).toBeVisible();

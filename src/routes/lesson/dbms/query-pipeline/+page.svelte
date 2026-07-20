@@ -29,6 +29,7 @@
   let predictionResult = $state<ClausePredictionResult | null>(null);
   let checkpointNudge = $state(false);
   let replayOpen = $state(false);
+  let scenarioFinished = $state(false);
   let recoveryAnswer = $state('');
   let recoveryFeedback = $state('');
   let recovered = $state(false);
@@ -37,8 +38,9 @@
   let currentStage = $derived(scenario.stages[index]);
   let finalStage = $derived(scenario.stages.at(-1)!);
   let lessonId = $derived(`dbms-query-pipeline:${scenario.id}`);
-  let completed = $derived(progress.completed.includes(lessonId));
   let rowsDelta = $derived(currentStage.rows.length - currentStage.rowsBefore.length);
+  let checkpointLocked = $derived(!predictionResult && index >= scenario.predictionAfterStage);
+  let labComplete = $derived(progress.completed.includes('query-pipeline'));
 
   onMount(() => {
     progress = loadProgress();
@@ -72,6 +74,7 @@
     recoveryAnswer = '';
     recoveryFeedback = '';
     recovered = false;
+    scenarioFinished = false;
     if (updateUrl) syncUrl();
   }
 
@@ -84,11 +87,24 @@
       if (updateUrl) syncUrl();
       return;
     }
+    if (
+      predictionResult &&
+      !predictionResult.correct &&
+      !recovered &&
+      clamped > scenario.predictionAfterStage + 1
+    ) {
+      index = scenario.predictionAfterStage + 1;
+      recoveryFeedback = 'Complete the recovery challenge before revealing the final relation.';
+      stopPlayback();
+      if (updateUrl) syncUrl();
+      return;
+    }
     index = clamped;
     checkpointNudge = false;
     if (index === scenario.stages.length - 1) {
       stopPlayback();
-      progress = completeLesson(progress, lessonId);
+      scenarioFinished = true;
+      progress = completeLesson(progress, 'query-pipeline');
       saveProgress(progress);
     }
     if (updateUrl) syncUrl();
@@ -103,6 +119,7 @@
     recoveryAnswer = '';
     recoveryFeedback = '';
     recovered = false;
+    scenarioFinished = false;
     syncUrl();
   }
 
@@ -123,9 +140,13 @@
     if (predictionResult) return;
     predictionResult = evaluateClausePrediction(answer);
     checkpointNudge = false;
-    const evidenceId = `${lessonId}:${scenario.prediction.id}`;
+    const evidenceId = `query-pipeline:${scenario.id}:${scenario.prediction.id}`;
     if (predictionResult.correct) {
-      progress = awardPrediction(progress, scenario.prediction.id, scenario.prediction.xpReward);
+      progress = awardPrediction(
+        progress,
+        'query-pipeline:where-vs-having',
+        scenario.prediction.xpReward
+      );
     } else {
       progress = recordMisconception(progress, evidenceId, 'where-vs-having');
       replayOpen = true;
@@ -141,7 +162,7 @@
     }
     recovered = true;
     recoveryFeedback = 'Recovered · +6 XP. Aggregate filters run in HAVING.';
-    progress = awardRecovery(progress, `${lessonId}:${scenario.prediction.id}`);
+    progress = awardRecovery(progress, 'query-pipeline:where-vs-having');
     saveProgress(progress);
   }
 
@@ -159,6 +180,22 @@
     const match = lines.findIndex((line) => line.includes(token));
     if (match < 0) return [];
     return operation === 'JOIN' ? lines.slice(match, match + 2) : [lines[match]];
+  }
+
+  function visibleSql() {
+    if (predictionResult) return scenario.sql;
+    return scenario.sql
+      .split('\n')
+      .map((line) =>
+        line.trimStart().startsWith('HAVING')
+          ? `${line.match(/^\s*/)?.[0] ?? ''}/* Predict the aggregate-filter clause */`
+          : line
+      )
+      .join('\n');
+  }
+
+  function visibleOperation(operation: string) {
+    return operation === 'HAVING' && !predictionResult ? 'PREDICT' : operation;
   }
 
   function mentorContext(): StepContext {
@@ -253,7 +290,7 @@
       </div>
       <span class="safe-badge">Deterministic</span>
     </div>
-    <pre><code>{scenario.sql}</code></pre>
+    <pre><code>{visibleSql()}</code></pre>
     <p>
       ReplayCS evaluates a fixed in-memory dataset. This lab does not execute user-provided SQL.
     </p>
@@ -267,7 +304,7 @@
       <p>The clause-by-clause result defined by SQL semantics.</p>
       <div class="mini-pipeline" aria-label="Logical SQL processing order">
         {#each scenario.stages as stage}
-          <span>{stage.operation}</span>
+          <span>{visibleOperation(stage.operation)}</span>
         {/each}
       </div>
     </div>
@@ -316,7 +353,7 @@
       class:done={stageIndex < index}
       onclick={() => jump(stageIndex)}
     >
-      <span>{stageIndex + 1}</span>{item.operation}
+      <span>{stageIndex + 1}</span>{visibleOperation(item.operation)}
     </button>
     {#if stageIndex < scenario.stages.length - 1}<i aria-hidden="true">→</i>{/if}
   {/each}
@@ -499,20 +536,38 @@
         <span class="eyebrow">Final deterministic relation</span>
         <h2 id="final-heading">Query result</h2>
       </div>
-      <span class="result-count"
-        >{finalStage.rows.length} row{finalStage.rows.length === 1 ? '' : 's'}</span
-      >
+      <span class="result-count">
+        {predictionResult
+          ? `${finalStage.rows.length} row${finalStage.rows.length === 1 ? '' : 's'}`
+          : 'Locked'}
+      </span>
     </div>
-    <QueryTable rows={finalStage.rows} caption={`Final result for ${scenario.title}`} />
-    {#if completed}<p class="complete-message" role="status">
+    {#if predictionResult}
+      <QueryTable rows={finalStage.rows} caption={`Final result for ${scenario.title}`} />
+    {:else}
+      <div class="locked-result" role="note">
+        <strong>Prediction first</strong>
+        <p>Commit to WHERE or HAVING before ReplayCS reveals the final relation.</p>
+      </div>
+    {/if}
+    {#if scenarioFinished}<p class="complete-message" role="status">
         ✓ Scenario complete. Progress saved locally.
       </p>{:else}<p class="finish-hint">
-        Reach LIMIT to complete this scenario and earn 25 XP.
+        {labComplete
+          ? 'Reach LIMIT to complete this scenario. Lab completion XP is awarded once.'
+          : 'Reach LIMIT to complete this scenario and earn 25 XP.'}
       </p>{/if}
   </section>
 
   <aside class="mentor panel">
-    {#key `${scenario.id}:${currentStage.id}`}<AiMentor context={mentorContext()} />{/key}
+    {#if checkpointLocked}
+      <div class="mentor-locked" role="note">
+        <strong>Mentor locked for this checkpoint</strong>
+        <p>Choose WHERE or HAVING first so the explanation cannot reveal your prediction.</p>
+      </div>
+    {:else}
+      {#key `${scenario.id}:${currentStage.id}`}<AiMentor context={mentorContext()} />{/key}
+    {/if}
   </aside>
 </div>
 
@@ -1078,6 +1133,31 @@
   }
   .complete-message {
     color: var(--success);
+  }
+  .locked-result,
+  .mentor-locked {
+    display: grid;
+    gap: 0.35rem;
+    min-height: 9rem;
+    place-content: center;
+    margin-top: 0.7rem;
+    padding: 1rem;
+    border: 1px dashed #fbbf2466;
+    border-radius: 11px;
+    background: #fbbf2408;
+    text-align: center;
+  }
+  .locked-result strong,
+  .mentor-locked strong {
+    color: var(--warning);
+  }
+  .locked-result p,
+  .mentor-locked p {
+    max-width: 44ch;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.5;
   }
   .mentor :global(.mentor) {
     margin-top: 0;

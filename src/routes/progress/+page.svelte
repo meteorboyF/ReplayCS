@@ -20,6 +20,14 @@
       .sort((a, b) => b[1] - a[1])
   );
 
+  const subjectMastery = [
+    { label: 'DSA I', prefixes: ['binary-search', 'sorting-arena'], accent: 'cyan' },
+    { label: 'DSA II', prefixes: ['graph-explorer'], accent: 'violet' },
+    { label: 'DBMS', prefixes: ['query-pipeline'], accent: 'amber' },
+    { label: 'Operating Systems', prefixes: ['cpu-scheduling'], accent: 'green' },
+    { label: 'Networks', prefixes: ['packet-journey'], accent: 'blue' }
+  ] as const;
+
   onMount(() => (progress = loadProgress()));
 
   function reset() {
@@ -38,6 +46,16 @@
     link.download = 'replaycs-progress.json';
     link.click();
     URL.revokeObjectURL(href);
+  }
+
+  function masteryFor(prefixes: readonly string[]) {
+    const recorded = Object.entries(progress.lessonMastery)
+      .filter(([lessonId]) => prefixes.some((prefix) => lessonId.includes(prefix)))
+      .map(([, score]) => score);
+    const hasLegacyCompletion = progress.completed.some((lessonId) =>
+      prefixes.some((prefix) => lessonId.includes(prefix))
+    );
+    return Math.max(hasLegacyCompletion ? 75 : 0, ...recorded, 0);
   }
 </script>
 
@@ -120,11 +138,10 @@
     </div>
     <span>Deterministic scoring</span>
   </div>
-  {#each [['DSA I', 'binary-search', 'cyan'], ['DSA II', 'bfs', 'violet'], ['DBMS', 'query-pipeline', 'amber'], ['Operating Systems', 'cpu-scheduling', 'green'], ['Networks', 'packet-journey', 'blue']] as subject}{@const score =
-      progress.completed.includes(subject[1]) ? 75 : 0}
+  {#each subjectMastery as subject}{@const score = masteryFor(subject.prefixes)}
     <div class="mastery-row">
-      <strong>{subject[0]}</strong>
-      <div class="bar"><span class={subject[2]} style={`width:${score}%`}></span></div>
+      <strong>{subject.label}</strong>
+      <div class="bar"><span class={subject.accent} style={`width:${score}%`}></span></div>
       <b>{score}%</b>
     </div>{/each}
 </section>
