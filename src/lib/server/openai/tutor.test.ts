@@ -1,6 +1,13 @@
+import { AuthenticationError } from 'openai';
+import { zodTextFormat } from 'openai/helpers/zod';
 import { afterEach, describe, expect, it } from 'vitest';
-import { deterministicFallback, explainStep, parsedExplanationOrFallback } from './tutor';
-import { stepContextSchema } from './schemas';
+import {
+  deterministicFallback,
+  explainStep,
+  openAIErrorMetadata,
+  parsedExplanationOrFallback
+} from './tutor';
+import { explanationSchema, stepContextSchema } from './schemas';
 
 const context = stepContextSchema.parse({
   subject: 'dsa-1',
@@ -20,6 +27,44 @@ afterEach(() => {
 });
 
 describe('AI tutor fallback', () => {
+  it('builds an OpenAI strict structured-output schema', () => {
+    expect(() => zodTextFormat(explanationSchema, 'step_explanation')).not.toThrow();
+  });
+
+  it('logs only allowlisted OpenAI error metadata', () => {
+    const error = new AuthenticationError(
+      401,
+      {
+        code: 'invalid_api_key',
+        type: 'invalid_request_error',
+        message: 'Incorrect API key provided: sk-never-log-this'
+      },
+      'Incorrect API key provided: sk-never-log-this',
+      new Headers({ 'x-request-id': 'req_safe123' })
+    );
+
+    const metadata = openAIErrorMetadata(error);
+
+    expect(metadata).toEqual({
+      name: 'AuthenticationError',
+      status: 401,
+      code: 'invalid_api_key',
+      type: 'invalid_request_error',
+      requestId: 'req_safe123'
+    });
+    expect(JSON.stringify(metadata)).not.toContain('sk-never-log-this');
+  });
+
+  it('does not copy arbitrary error fields into logs', () => {
+    const error = Object.assign(new Error('secret message'), {
+      status: 401,
+      code: 'invalid_api_key',
+      requestID: 'req_untrusted'
+    });
+
+    expect(openAIErrorMetadata(error)).toEqual({ name: 'Error' });
+  });
+
   it('remains grounded when the API key is missing', async () => {
     delete process.env.OPENAI_API_KEY;
     const result = await explainStep(context);
