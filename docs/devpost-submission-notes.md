@@ -1,11 +1,16 @@
 # Devpost submission notes
 
-## Existing before the hackathon
+The polished submission draft now lives in [devpost-submission.md](devpost-submission.md).
 
-Interview-Prep contained DSA I/II and DBMS Markdown study material, a canonical HR SQL dataset, an Astro study site, and a separate Svelte SQL trainer. Existing DBMS visualizers covered query plans, normalization, and simulated concurrency. It did **not** contain ReplayCS, a unified trace model, per-line multi-language playback, predictions, or AI trace tutoring.
+Do not remove the disclosures when copying it into Devpost:
 
-## Built for ReplayCS
+- Interview-Prep source commit `f3e8c22534819ad3f7351e55fbd040f6de098356` supplied selected
+  DSA/DBMS teaching references and an HR dataset concept.
+- ReplayCS's product identity, deterministic engines, prediction/recovery loop, multi-language
+  mapping, AI boundary, progress model, OS/network labs, challenges, deployment, and tests are new.
+- GPT-5.6 explains supplied trace truth; it does not generate canonical execution or scores.
+- The public deployment may visibly use deterministic fallback while no production key is configured.
+- No Codex session ID or source license should be fabricated.
 
-New work includes the product identity and responsive execution-lab design; SvelteKit architecture; normalized trace schema; snapshot playback; semantic C/C++/Java/Python source mapping; per-line binary search; predictions; state mutation inspector; XP/streak/badge persistence; deterministic compound SQL pipeline; server-only Responses API integration and fallback; subject foundations for OS/networks; tests and documentation.
-
-The source repository was not merged and its history was not imported. Every adapted item is disclosed in `migration-map.md`.
+Source detail: [existing-vs-new-work.md](existing-vs-new-work.md),
+[codex-collaboration.md](codex-collaboration.md), and [known-limitations.md](known-limitations.md).

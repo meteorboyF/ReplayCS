@@ -2,79 +2,244 @@
 
 > **Pause computer science. Trace every state. Understand what actually happens.**
 
-ReplayCS is an execution laboratory for learning to think like a computer. Learners predict the next line or state, reveal a deterministic mutation, inspect what changed, and ask an optional AI mentor _why_. AI explains trace truth; it never invents execution truth.
+ReplayCS is a prediction-first execution laboratory for computer science. A learner commits to what
+the computer will do next, reveals a deterministic state transition, replays mistakes, and can ask a
+grounded GPT-5.6 mentor why the transition occurred.
 
-## MVP features
+[Open ReplayCS](https://replaycs.vercel.app) ·
+[Start the Judge Demo](https://replaycs.vercel.app/judge-demo) ·
+[View the repository](https://github.com/meteorboyF/ReplayCS) ·
+[Check system health](https://replaycs.vercel.app/api/health)
 
-- Binary search with exact forward/backward state, active lines, range visualization, predictions, and C/C++/Java/Python tabs
-- A compound SQL logical pipeline: FROM → JOIN → WHERE → GROUP BY → SELECT/aggregate → ORDER BY → LIMIT
-- Subject maps for DSA I, DSA II, DBMS, Operating Systems, and Computer Networks
-- XP, streak, one badge, completion, idempotent rewards, and versioned local persistence
-- Server-only OpenAI Responses API integration with structured validation and deterministic fallback
-- Responsive, keyboard-focused, reduced-motion-friendly execution-lab interface
+No account or API key is required for the learning experience. Progress stays in the learner's
+browser.
+
+## The problem
+
+Students often recognize an algorithm, query, or protocol after seeing the answer but struggle to
+predict its next state. That gap is hidden by static notes and output-only visualizers. ReplayCS
+makes the learner commit first, then turns execution into evidence they can inspect and reverse.
+
+## What a learner does
+
+1. Choose a curated scenario or bounded custom input.
+2. Inspect the current source operation and state.
+3. Lock a prediction before a meaningful reveal.
+4. Step forward or backward through exact snapshots.
+5. Compare the prediction with deterministic truth.
+6. If wrong, inspect misconception feedback; in Binary Search and SQL, use **Replay My Mistake** to
+   find the first divergence and complete a recovery check.
+7. Optionally ask GPT-5.6 for an explanation grounded in that exact trace step.
+8. Build browser-local XP, mastery, misconception evidence, and recommendations from real actions.
+
+The [Judge Demo](https://replaycs.vercel.app/judge-demo) links a stable version of that loop across
+the flagship labs in under three minutes. Its markers do not award progress; the linked lab actions
+are the real product interactions.
+
+## Functional learning experiences
+
+| Subject           | Shipped experience           | What is deterministic                                                                         |
+| ----------------- | ---------------------------- | --------------------------------------------------------------------------------------------- |
+| DSA I             | Binary Search; Sorting Arena | Search bounds and midpoint; Bubble, Selection, and Insertion Sort operations                  |
+| DSA II            | Graph Explorer               | BFS, iterative DFS, and recursive DFS frontier/visited transitions                            |
+| DBMS              | SQL Query Pipeline           | `FROM → JOIN → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT` intermediate relations  |
+| Operating Systems | CPU Scheduling Arena         | FCFS, SJF, SRTF, Priority, and Round Robin Gantt/metric calculations                          |
+| Computer Networks | Packet Journey               | Cold/warm browser paths through cache, DNS, ARP, TCP, TLS, HTTP, decapsulation, and rendering |
+
+The Challenge Arena adds five deterministic two-checkpoint bosses: Binary Bounds, BFS Frontier, SQL
+Pipeline, Round Robin, and Packet Route. Each supports check, retry, reveal, and replay; completion
+awards 30 XP once, with Boss Tracer/Arena Champion badges. Revealing an answer makes that run
+practice-only, so it cannot clear the boss or award XP. Planned lesson cards remain labeled as
+planned; ReplayCS does not treat a subject dashboard as a finished lab.
+
+Curated C, C++, Java, and Python source mappings currently apply to Binary Search. Switching
+languages preserves the semantic trace step and visualization state. The domain labs do not claim
+four-language simulation.
+
+## Manual Trace and Replay My Mistake
+
+The deterministic engine emits serializable before/after snapshots. The player selects a snapshot
+instead of trying to reverse an animation, so backward navigation restores the exact earlier state.
+Prediction checkpoints are evaluated locally; GPT never chooses the correct answer.
+
+Every flagship lab records deterministic prediction evidence, persistent completion/mastery, and
+misconception tags. Binary Search and the SQL pipeline go further with the complete recovery loop:
+an incorrect prediction preserves the learner's answer, places predicted and actual state side by
+side, labels the first divergence, replays the correct transition, and offers an idempotently
+rewarded recovery check.
+
+## Grounded GPT-5.6 mentor
+
+The shared mentor is connected inside every shipped flagship lab. The browser sends a bounded
+context containing the lesson, active operation, before/after state, learner prediction,
+misconception evidence, language where relevant, and explanation level to a SvelteKit server route.
+Server-only code calls the OpenAI Responses API with a structured Zod schema; the canonical trace
+never comes from the model.
+
+The mentor supports step explanations, “why,” hints, simplification, mistake explanation, four depth
+levels, and English or Bangla teaching text. Without `OPENAI_API_KEY`, or when an upstream call
+fails, the same UI shows a deterministic grounded explanation. The public deployment currently
+operates in this no-key fallback mode; `/api/health` reports that state without exposing
+configuration values.
+
+See [OpenAI integration](docs/openai-integration.md) for the trust boundary and production behavior.
+
+## Screenshots
+
+| Prediction-first trace                                              | Mistake recovery                                                                       |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| ![Binary Search manual trace](static/screenshots/binary-search.png) | ![Replay My Mistake comparison and recovery](static/screenshots/replay-my-mistake.png) |
+
+| CPU scheduling                                                       | Packet journey                                                          |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| ![CPU Scheduling Gantt trace](static/screenshots/cpu-scheduling.png) | ![Packet Journey event timeline](static/screenshots/packet-journey.png) |
+
+The checked-in images are generated from the real application. Recreate the full landing, lesson,
+progress, and Judge Demo set with the [capture script](scripts/capture-screenshots.mjs):
+
+```bash
+npx playwright install chromium # once
+npm run screenshots
+```
+
+To capture the public deployment instead of a local production build:
+
+```bash
+REPLAYCS_BASE_URL=https://replaycs.vercel.app npm run screenshots
+```
+
+For the final submission gate, require both cross-product routes instead of allowing the script to
+skip a not-yet-merged route:
+
+```bash
+REQUIRE_CHALLENGE_ARENA=1 REQUIRE_JUDGE_DEMO=1 npm run screenshots
+```
 
 ## Architecture
 
 ```text
-Curated lesson → deterministic engine → serializable TraceStep snapshots
-                                             │
-                         semantic source map ─┼─ visual primitives
-                                             ├─ prediction + progress
-                                             └─ grounded AI explanation (optional)
+curated scenario / bounded input
+               │
+               ▼
+      deterministic engine ───────────────┐
+               │                          │
+               ▼                          ▼
+    serializable TraceStep snapshots   local scoring
+       │          │          │            │
+       ▼          ▼          ▼            ▼
+ source map   visual state   controls   progress/mastery
+       └──────────┬───────────┘
+                  ▼
+        optional server-only mentor
+       (GPT-5.6 or deterministic fallback)
 ```
 
-Trace generation, playback/rendering, subject content, AI, and progress are separate modules. Selecting a prior snapshot restores exact earlier state. See [architecture](docs/architecture.md), [product spec](docs/product-spec.md), and [build plan](docs/build-plan.md).
+Trace generation, rendering, learner progress, and AI explanation are separate systems. SvelteKit
+server routes keep OpenAI credentials out of browser bundles; the Vercel adapter preserves those
+routes in production. Read the [architecture](docs/architecture.md) and
+[product specification](docs/product-spec.md) for details.
 
 ## Local setup
 
-Requires a current Node.js LTS release and npm.
+Requires Node.js 22 and npm.
 
 ```bash
-npm install
+git clone https://github.com/meteorboyF/ReplayCS.git
+cd ReplayCS
+npm ci
 cp .env.example .env
 npm run dev
 ```
 
-Add your OpenAI API key to `.env` as `OPENAI_API_KEY`. Do not commit the file. AI is optional; every lesson works with deterministic explanations without a key.
+AI is optional. To enable it, edit the uncommitted `.env` file locally:
 
 ```dotenv
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5.6
 ```
 
+Never place the key in a public-prefixed variable, browser code, a commit, or chat. The app remains
+functional when both values are empty.
+
 ## Verification
 
 ```bash
-npm run check
-npm run lint
-npm run test
+npm run check       # Svelte and TypeScript contracts
+npm run lint        # Prettier check
+npm run test        # deterministic engine and progress tests
+npm run build       # production SvelteKit/Vercel build
 npx playwright install chromium # once
-npm run test:e2e
-npm run build
+npm run test:e2e    # browser journeys
 ```
 
-Adapter-auto selects a deployment adapter for common SvelteKit hosts. For a fixed platform, install its official adapter and update `svelte.config.js`.
+Run the production smoke suite without starting a local server:
 
-## Three-minute demo
+```bash
+REPLAYCS_BASE_URL=https://replaycs.vercel.app \
+  npx playwright test e2e/production-smoke.spec.ts
+```
 
-1. Open Binary Search, predict `mid`, reveal state, move backward, then switch C++ → Python without resetting.
-2. Open SQL Pipeline and walk the intermediate relations through JOIN, filter, grouping, aggregation and sorting.
-3. Show XP persistence and the DSA/DBMS/OS/networks roadmap.
+GitHub Actions runs install, checks, formatting, unit tests, a production build, and Chromium
+Playwright journeys for pull requests and pushes to `main`.
 
-## Existing-work disclosure
+## Deployment and recovery
 
-ReplayCS is a new product. Interview-Prep commit `f3e8c22534819ad3f7351e55fbd040f6de098356` supplied selected educational references and an HR dataset concept. The deterministic engine, multi-language manual trace, player, product UI, SQL stage engine, AI boundary, progress system and tests are new. See the [source audit](docs/source-audit.md), [migration map](docs/migration-map.md), and [Devpost notes](docs/devpost-submission-notes.md).
+ReplayCS is deployed as a SvelteKit server application on Vercel at
+<https://replaycs.vercel.app>. Feature branches are intended to produce Preview deployments; the
+tested `main` branch produces Production. `/api/health` returns only safe status, AI availability,
+and deployment identity.
 
-## Security and privacy
+Use [deployment.md](docs/deployment.md) for environment setup, smoke checks, troubleshooting, and
+rollback. Use [recovery-guide.md](docs/recovery-guide.md) to create a branch from a known checkpoint
+or revert a faulty feature without rewriting published history.
 
-The API key is server-side and ignored by Git. Inputs are validated and bounded; user code and SQL are never executed. Exact answers are evaluated locally. Avoid placing private information in learner explanations. The MVP stores only learning progress in local browser storage.
+## Existing work, new work, and Codex
 
-## Limitations and roadmap
+ReplayCS is a new SvelteKit product and architecture. The pre-Build-Week Interview-Prep repository
+at source commit `f3e8c22534819ad3f7351e55fbd040f6de098356` supplied selected DSA/DBMS teaching
+references and the concept for a small HR fixture. It did not supply ReplayCS's trace engine,
+prediction loop, product UI, cross-language source map, AI boundary, OS/network engines, progress
+model, deployment, or tests.
 
-The current deep lessons are binary search and a SQL logical pipeline. Bubble sort, BFS, DBMS physical plans, and connected mentor UI are next. Arbitrary code execution, user accounts, complete OS/networks curricula and distributed production rate limiting are intentionally out of scope.
+Codex helped audit the source, shape the normalized trace architecture, implement and test focused
+systems, and maintain recoverable feature branches and commits. Product constraints and release
+decisions remained user-directed. See [existing versus new work](docs/existing-vs-new-work.md),
+[Codex collaboration](docs/codex-collaboration.md), [source audit](docs/source-audit.md), and the
+[migration map](docs/migration-map.md).
 
-Screenshot/GIF placeholders: landing trace preview, binary-search checkpoint, and SQL pipeline.
+## Judge and submission documents
 
-## License
+- [Judge testing guide](docs/judge-testing-guide.md)
+- [Under-three-minute demo script and exact shot list](docs/demo-script.md)
+- [Devpost submission draft](docs/devpost-submission.md)
+- [Known limitations](docs/known-limitations.md)
+- [Product completion board](docs/product-completion-board.md)
 
-No license has yet been selected. The audited Interview-Prep source also contains no license file; provenance is documented and redistribution rights should be clarified before public reuse.
+## Roadmap
+
+1. Extend the full side-by-side Replay My Mistake recovery flow to Sorting, Graph, CPU, Packet, and
+   Challenge checkpoints.
+2. Deepen the curriculum with linked structures/trees, normalization/index/concurrency, page
+   replacement/deadlock, and TCP/subnet/routing labs.
+3. Add cloud-optional progress, shared production rate limiting/caching, side-by-side language study,
+   wider browser/device coverage, and automated accessibility evaluation.
+
+## Security, privacy, and intentional limits
+
+- ReplayCS does not execute arbitrary learner code or SQL.
+- Exact trace state and scoring are deterministic and local; AI explains but does not adjudicate.
+- Learning progress is versioned browser local storage and does not sync across devices.
+- The serverless rate limiter is in-memory, so it is not distributed enforcement across instances.
+- Some curriculum cards are honest roadmap entries, not implemented labs.
+- The current screenshot set and E2E suite use Chromium; broader browser/accessibility automation is
+  future work.
+
+See [known limitations](docs/known-limitations.md) for the full, current boundary and roadmap.
+
+## License and provenance
+
+No open-source license has been selected for ReplayCS. The audited Interview-Prep source also has no
+license file, so ownership and redistribution rights must be confirmed before adding a license or
+inviting reuse. No license has been added by this completion sprint. Provenance and adaptation
+decisions are recorded in the [source audit](docs/source-audit.md) and
+[migration map](docs/migration-map.md).

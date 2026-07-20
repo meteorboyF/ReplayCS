@@ -19,9 +19,13 @@ configured as a static-only site because `/api/ai/*` and `/api/health` execute o
 | Build command              | `npm run build`                                                               |
 | Output directory           | Managed by the SvelteKit Vercel adapter; do not set a static output directory |
 | Health endpoint            | `/api/health`                                                                 |
+| AI state at docs audit     | Not configured; deterministic mentor fallback verified                        |
+| Git deployment connection  | One-time Vercel dashboard confirmation still required                         |
 
-The first verified CLI production deployment completed on 2026-07-20. Its stable alias is the URL
-above; deployment-specific URLs remain visible in the Vercel dashboard for rollback and audit.
+The first verified CLI production deployment completed on 2026-07-20, and later curriculum
+milestones were deployed to the same stable alias. The health endpoint and automated public learner
+smoke passed. Deployment-specific URLs remain visible in the Vercel dashboard for rollback and
+audit.
 
 ## One-time Vercel setup
 
@@ -37,7 +41,8 @@ npx vercel@latest link
 During `link`, select the correct account/team and link or create the ReplayCS project. The generated
 `.vercel/` directory contains local project metadata and is ignored by Git.
 
-In the Vercel dashboard, import/connect `meteorboyF/ReplayCS`, verify the SvelteKit framework preset,
+The CLI project link and production domain are verified. Git-based automatic deployments still
+depend on a one-time dashboard check: import/connect `meteorboyF/ReplayCS`, verify the SvelteKit framework preset,
 and set `main` as the Production Branch under **Project Settings → Environments → Production →
 Branch Tracking**. Once connected, branch pushes and pull requests create Preview deployments and
 updates to `main` create Production deployments.
@@ -170,13 +175,15 @@ After every production deployment:
 1. Load the stable production URL.
 2. Open a DSA lesson and move forward and backward.
 3. Submit a prediction and confirm feedback.
-4. Open the DBMS lesson and inspect its stages.
-5. Reload and verify persistent progress.
-6. Check `/api/health`.
-7. Test the AI mentor when `aiConfigured` is true and its fallback when false.
-8. Check for browser console and failed-network errors.
-9. Test a mobile viewport and keyboard navigation.
-10. Run the automated smoke/E2E suite against production when configured to do so safely.
+4. Open SQL Query Pipeline and inspect/predict its logical stages.
+5. Open CPU Scheduling and Packet Journey and restore an earlier state in each.
+6. Complete one Challenge Arena boss and reload Progress to verify persistence/idempotency.
+7. Follow every Judge Demo link.
+8. Check `/api/health`.
+9. Test the AI mentor when `aiConfigured` is true and its labeled fallback when false.
+10. Check for browser console and failed-network errors.
+11. Test a mobile viewport and keyboard navigation.
+12. Run the automated smoke/E2E suite against production when configured to do so safely.
 
 ## Health endpoint
 
@@ -187,7 +194,7 @@ After every production deployment:
   "status": "ok",
   "app": "ReplayCS",
   "aiConfigured": true,
-  "version": "git-commit-or-build-version"
+  "version": "git-commit-or-deployment-identity"
 }
 ```
 
@@ -208,7 +215,8 @@ Expected behavior:
 - HTTP status is `200`.
 - `status` is `ok` and `app` is `ReplayCS`.
 - `aiConfigured` is a boolean, not a secret or key value.
-- `version` matches `VERCEL_GIT_COMMIT_SHA` on Vercel; local development may report `development`.
+- `version` uses `VERCEL_GIT_COMMIT_SHA` or `GIT_COMMIT_SHA` when available, otherwise the safe
+  `VERCEL_URL` deployment identity. Local development reports `development`.
 - `Cache-Control` is `no-store`.
 
 The health route must never return environment values, tokens, stack traces, user data, or full

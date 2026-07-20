@@ -151,7 +151,7 @@ An instant rollback routes traffic to an existing build; it does not rebuild it 
 environment variables. Validate the restored release immediately:
 
 ```bash
-curl --fail --silent --show-error https://[production-domain]/api/health
+curl --fail --silent --show-error https://replaycs.vercel.app/api/health
 ```
 
 Then test the landing page, a DSA trace in both directions, a prediction, the DBMS pipeline,
