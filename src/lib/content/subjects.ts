@@ -74,19 +74,20 @@ export const subjects = {
   },
   'operating-systems': {
     title: 'Operating Systems',
-    description: 'Foundation prepared for process, scheduling, memory and concurrency traces.',
+    description:
+      'Predict CPU scheduling decisions and make process metrics visible clock by clock.',
     lessons: [
       {
-        title: 'Process state transitions',
-        slug: 'process-states',
-        status: 'planned',
-        detail: 'Follow a process through ready, running, blocked and terminated.'
+        title: 'CPU Scheduling Arena',
+        slug: 'cpu-scheduling',
+        status: 'live',
+        detail: 'Compare FCFS, SJF, SRTF, Priority, and Round Robin on one workload.'
       },
       {
-        title: 'Round Robin',
-        slug: 'round-robin',
+        title: 'Page Replacement',
+        slug: 'page-replacement',
         status: 'planned',
-        detail: 'Trace the ready queue and context switches.'
+        detail: 'Trace page hits, faults, frames, and eviction decisions.'
       }
     ]
   },
