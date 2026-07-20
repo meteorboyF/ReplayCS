@@ -34,9 +34,9 @@ complete CS curriculum. This document keeps those boundaries explicit.
 - Judge Demo is a persistent guided checklist that opens real labs in new tabs. Checklist state marks
   tour position only; it does not infer that every linked interaction was completed and does not
   award XP itself.
-- Some subject cards remain labeled planned. Linked lists, trees/heaps/DP, normalization/indexing/
-  concurrency, page replacement/deadlock, and TCP/subnetting/routing are roadmap topics, not shipped
-  labs.
+- Linked lists, trees/heaps/DP, normalization/indexing/concurrency, page replacement/deadlock, and
+  TCP/subnetting/routing remain roadmap topics rather than shipped labs. They are omitted from
+  primary public lesson navigation until they satisfy the lesson completion contract.
 - ReplayCS does not execute arbitrary C, C++, Java, Python, SQL, shell commands, or uploaded files.
 
 ## Domain-model boundaries

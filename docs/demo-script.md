@@ -32,7 +32,7 @@ in the video.
 - Pre-open the Judge Demo stops, Challenge Arena, Progress, the public commit history, and the
   repository architecture document in shot order. Reload Progress and the final landing tab before
   showing them so they read the latest browser-local evidence.
-- Keep the pointer still during narration and avoid scrolling past planned cards.
+- Keep the pointer still during narration and use only the published lesson cards.
 - Retake if a toast, prediction, XP value, or model-source badge is not readable.
 - Export at 1080p and verify the final file is strictly shorter than three minutes.
 

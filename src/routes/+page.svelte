@@ -73,9 +73,9 @@
 </section>
 <section class="section">
   <p class="eyebrow">Curriculum</p>
-  <h2>From pointers to packets.</h2>
+  <h2>From searches to packets.</h2>
   <div class="cards subjects">
-    {#each [['DSA I', 'Arrays, lists, stacks, sorting and searching', '/learn/dsa-1', 'Live'], ['DSA II', 'Trees, graphs, heaps and dynamic programming', '/learn/dsa-2', 'Graph lab live'], ['DBMS', 'Trace joins, filters, grouping and transactions', '/learn/dbms', 'Pipeline live'], ['Operating Systems', 'Processes, scheduling, pages and locks', '/learn/operating-systems', 'Scheduling live'], ['Networks', 'Packets, protocols, DNS and TCP', '/learn/computer-networks', 'Packet lab live']] as s}<a
+    {#each [['DSA I', 'Binary Search and three deterministic sorting traces', '/learn/dsa-1', '2 labs live'], ['DSA II', 'BFS, iterative DFS, and recursive DFS', '/learn/dsa-2', 'Graph lab live'], ['DBMS', 'Trace joins, filters, grouping, aggregates, sorting, and limits', '/learn/dbms', 'Pipeline live'], ['Operating Systems', 'Compare five CPU scheduling policies and exact metrics', '/learn/operating-systems', 'Scheduling live'], ['Networks', 'Trace cache, DNS, ARP, TCP, TLS, HTTP, and rendering', '/learn/computer-networks', 'Packet lab live']] as s}<a
         class="card panel"
         href={s[2]}
         ><span class="pill">{s[3]}</span>
