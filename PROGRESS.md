@@ -3,18 +3,18 @@
 ## Last updated
 
 - Date: 2026-07-21
-- Local time: 22:45 (+06)
+- Local time: 23:00 (+06)
 - Updated by: Development session
 - Repository: https://github.com/meteorboyF/ReplayCS.git
 - Production: https://replaycs.vercel.app
-- Current branch: `claude/session-521cb8`
-- Current commit: `3841a9b`
+- Current branch: `refactor/visualizer-first-rescue` (renamed locally from `claude/session-521cb8`; commits unchanged)
+- Current commit: `6d6506e` (pre-publish; will advance with this doc update)
 - Remote main commit: `c17f6f5`
-- Latest production commit: unknown this session (not deployed here — see Blockers)
+- Latest production commit: unknown this session (not yet deployed — publish in progress)
 - Worktree status: clean
 - CI status: local gate green (see Testing status)
-- Production health: not verified this session (no deploy performed)
-- Open blockers: branch not yet merged/pushed to origin; production not redeployed (see Blockers)
+- Production health: not verified this session (deploy pending)
+- Open blockers: none — publishing Phase 0 now (push → PR → merge → deploy)
 
 ## Current session objective
 
@@ -22,7 +22,7 @@
 > lesson; rebuild the shared visual-first workspace; de-predict the six bespoke lesson pages; remove
 > Challenges from the primary nav; and get the full local gate (check/lint/vitest/build/playwright) green.
 
-This objective is **complete** on branch `claude/session-521cb8`. Not yet merged to `main` or deployed.
+This objective is **complete** on branch `refactor/visualizer-first-rescue`. Not yet merged to `main` or deployed.
 
 ## Product direction (active rules — do not restore rejected features)
 
@@ -194,16 +194,16 @@ Production smoke:   NOT run (no deploy this session)
 
 ## Git history for this session
 
-| Commit  | Branch                | Description                                   | Pushed | Merged | Production |
-| ------- | --------------------- | --------------------------------------------- | ------ | ------ | ---------- |
-| 6bbe854 | claude/session-521cb8 | rebuild visual-first LessonWorkspace          | no     | no     | no         |
-| 029fab7 | claude/session-521cb8 | de-predict Sorting Arena                      | no     | no     | no         |
-| 9e90187 | claude/session-521cb8 | de-predict binary search + graph explorer     | no     | no     | no         |
-| a517868 | claude/session-521cb8 | de-predict SQL Query Pipeline                 | no     | no     | no         |
-| a904678 | claude/session-521cb8 | de-predict CPU Scheduling                     | no     | no     | no         |
-| c900327 | claude/session-521cb8 | de-predict Packet Journey                     | no     | no     | no         |
-| 4865f5a | claude/session-521cb8 | remove Challenges from primary nav            | no     | no     | no         |
-| 3841a9b | claude/session-521cb8 | align e2e specs with visualizer-first product | no     | no     | no         |
+| Commit  | Branch                           | Description                                   | Pushed | Merged | Production |
+| ------- | -------------------------------- | --------------------------------------------- | ------ | ------ | ---------- |
+| 6bbe854 | refactor/visualizer-first-rescue | rebuild visual-first LessonWorkspace          | no     | no     | no         |
+| 029fab7 | refactor/visualizer-first-rescue | de-predict Sorting Arena                      | no     | no     | no         |
+| 9e90187 | refactor/visualizer-first-rescue | de-predict binary search + graph explorer     | no     | no     | no         |
+| a517868 | refactor/visualizer-first-rescue | de-predict SQL Query Pipeline                 | no     | no     | no         |
+| a904678 | refactor/visualizer-first-rescue | de-predict CPU Scheduling                     | no     | no     | no         |
+| c900327 | refactor/visualizer-first-rescue | de-predict Packet Journey                     | no     | no     | no         |
+| 4865f5a | refactor/visualizer-first-rescue | remove Challenges from primary nav            | no     | no     | no         |
+| 3841a9b | refactor/visualizer-first-rescue | align e2e specs with visualizer-first product | no     | no     | no         |
 
 Recovery tag `replaycs-before-visualizer-rescue` created locally at `c17f6f5` (not pushed).
 
@@ -215,7 +215,7 @@ _None this session. Production still at its previous (pre-branch) commit._
 
 ### Branch not pushed / merged / deployed
 
-- Impact: the visualizer-first rescue is only on the local worktree branch `claude/session-521cb8`.
+- Impact: the visualizer-first rescue is only on the local worktree branch `refactor/visualizer-first-rescue`.
 - Cause: session scoped to implementation + local gate; push/merge/deploy left to the maintainer to review.
 - What was tried: full local gate is green.
 - Required user action: review the branch, then push, open a PR, merge to `main`, and deploy via the
@@ -226,7 +226,7 @@ _None this session. Production still at its previous (pre-branch) commit._
 
 ## Immediate next actions
 
-1. Push `claude/session-521cb8`, open a PR, merge to `main`, deploy to Vercel prod, verify the six flagship
+1. Push `refactor/visualizer-first-rescue`, open a PR, merge to `main`, deploy to Vercel prod, verify the six flagship
    routes render code+visual+state+complexity with working Next/Play and no lock UI (desktop + 390px).
 2. Resolve `/challenges`: convert `src/routes/challenges/+page.svelte` into a non-guessing Scenario Gallery
    OR delete the route + `src/lib/challenges/arena.ts` + `e2e/challenge-arena.spec.ts`, and prune the boss/
@@ -242,7 +242,7 @@ _None this session. Production still at its previous (pre-branch) commit._
 
 ## Recommended next session prompt context
 
-> Continue from branch `claude/session-521cb8` at commit `3841a9b` (off `origin/main` `c17f6f5`). Phase 0
+> Continue from branch `refactor/visualizer-first-rescue` at commit `3841a9b` (off `origin/main` `c17f6f5`). Phase 0
 > product rescue is complete and locally green (check/lint/vitest 211/build/playwright 31): the shared
 > `LessonWorkspace` shell and all six bespoke lesson pages (sorting, binary-search, graph-explorer,
 > query-pipeline, cpu-scheduling, packet-journey) have had prediction, Learn/Guided/Challenge modes, gating,
