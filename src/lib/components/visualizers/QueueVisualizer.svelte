@@ -1,64 +1,167 @@
 <script lang="ts">
   import type { TraceValue } from '$lib/trace/types';
 
-  type ElementView = {
+  type NodeView = {
     id: string;
     value: string | number;
+    next: string | null;
+    status: string;
   };
 
   let { state }: { state: Record<string, TraceValue> } = $props();
 
-  const pointerNames = ['front', 'rear', 'current'] as const;
-  let elements = $derived((Array.isArray(state.elements) ? state.elements : []) as unknown as ElementView[]);
+  let backing = $derived(String(state.backing ?? 'naive-array'));
+  let isList = $derived(backing === 'linked-list');
+  let slots = $derived((Array.isArray(state.array) ? state.array : []) as (number | null)[]);
+  let size = $derived(typeof state.size === 'number' ? state.size : 0);
+  let headIndex = $derived(typeof state.headIndex === 'number' ? state.headIndex : 0);
+  let tailIndex = $derived(typeof state.tailIndex === 'number' ? state.tailIndex : 0);
+  let shifted = $derived(new Set((state.shifted as number[] | undefined) ?? []));
+  let nodes = $derived((Array.isArray(state.nodes) ? state.nodes : []) as unknown as NodeView[]);
+  let rearSlot = $derived(slots.length > 0 ? (tailIndex - 1 + slots.length) % slots.length : 0);
+  let chain = $derived.by(() => {
+    const byId = new Map(nodes.map((node) => [node.id, node]));
+    const ordered: NodeView[] = [];
+    let cursor = typeof state.headId === 'string' ? state.headId : null;
+    const guard = new Set<string>();
+    while (cursor && byId.has(cursor) && !guard.has(cursor)) {
+      guard.add(cursor);
+      ordered.push(byId.get(cursor)!);
+      cursor = byId.get(cursor)!.next;
+    }
+    for (const node of nodes) if (!guard.has(node.id)) ordered.push(node);
+    return ordered;
+  });
+
+  const pointerNames = ['headId', 'tailId', 'current'] as const;
+  const pointerLabels: Record<(typeof pointerNames)[number], string> = {
+    headId: 'front',
+    tailId: 'rear',
+    current: 'cursor'
+  };
 
   function pointerValue(name: (typeof pointerNames)[number]) {
     const value = state[name];
-    return typeof value === 'string'
-      ? value
-      : value === null || value === undefined
-        ? 'null'
-        : String(value);
+    return value === null || value === undefined ? 'null' : String(value);
+  }
+
+  function slotClasses(index: number, value: number | null) {
+    return [
+      value !== null ? 'live' : 'spare',
+      index === headIndex && size > 0 ? 'front' : '',
+      index === rearSlot && size > 0 ? 'rear' : '',
+      shifted.has(index) ? 'shifted' : '',
+      state.readIndex === index ? 'reading' : '',
+      state.writeIndex === index ? 'writing' : ''
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  function nodeClasses(node: NodeView) {
+    return [
+      state.headId === node.id ? 'front-node' : '',
+      state.tailId === node.id ? 'rear-node' : '',
+      node.status === 'deleted' ? 'deleted' : '',
+      node.status === 'allocated' ? 'allocated' : '',
+      state.current === node.id ? 'current' : ''
+    ]
+      .filter(Boolean)
+      .join(' ');
   }
 </script>
 
 <section class="visualizer panel" aria-label="Queue memory state">
-  <div class="pointer-dock" aria-label="Pointer and reference values">
-    {#each pointerNames as name}
-      <div class:active={pointerValue(name) !== 'null'}>
-        <span>{name}</span><code>{pointerValue(name)}</code>
-      </div>
-    {/each}
-  </div>
+  {#if isList}
+    <div class="scalar-dock" aria-label="Pointer values">
+      {#each pointerNames as name}
+        <div class:active={pointerValue(name) !== 'null'}>
+          <span>{pointerLabels[name]}</span><code>{pointerValue(name)}</code>
+        </div>
+      {/each}
+      <div class="active"><span>size</span><code>{size}</code></div>
+    </div>
 
-  <div class="memory" aria-label="Queue elements">
-    {#if elements.length === 0}
-      <div class="empty"><code>front → null</code><span>The queue is empty.</span></div>
-    {:else}
-      <div class="queue-container">
-        {#each elements as element}
-          <article aria-label={`Element ${element.id}, value ${element.value}`}>
-            <span class="element-id">{element.id}</span>
-            <strong>{element.value}</strong>
-          </article>
+    <div class="memory" aria-label="Queue nodes from front to rear">
+      {#if chain.length === 0}
+        <div class="empty"><code>front → null</code><span>The queue is empty.</span></div>
+      {:else}
+        {#each chain as node (node.id)}
+          <div class="chain-part">
+            <article class={nodeClasses(node)} aria-label={`Node ${node.id}, value ${node.value}`}>
+              <span class="node-id">{node.id}</span>
+              <strong>{node.value}</strong>
+              <div><small>next</small><code>{node.next ?? 'null'}</code></div>
+              {#if state.headId === node.id}<em class="badge front-badge">front</em>{/if}
+              {#if state.tailId === node.id}<em class="badge rear-badge">rear</em>{/if}
+            </article>
+            <div class="arrow" aria-hidden="true">→ <small>{node.next ?? 'null'}</small></div>
+          </div>
         {/each}
+      {/if}
+    </div>
+  {:else}
+    <div class="scalar-dock" aria-label="Queue index values">
+      <div class="active"><span>front index</span><code>{headIndex}</code></div>
+      <div class="active"><span>rear index</span><code>{tailIndex}</code></div>
+      <div class="active"><span>size</span><code>{size}</code></div>
+      <div class="active"><span>capacity</span><code>{String(state.capacity)}</code></div>
+      <div class:active={backing === 'circular-array'}>
+        <span>indexing</span><code>{backing === 'circular-array' ? 'mod capacity' : 'linear'}</code>
       </div>
-    {/if}
+    </div>
+
+    <div class="buffer-block">
+      <p>
+        <b>Buffer</b> · {backing === 'circular-array'
+          ? 'front and rear wrap around modulo capacity'
+          : 'front stays at index 0; dequeue shifts every survivor left'}
+      </p>
+      <div class="buffer" aria-label="Queue buffer slots">
+        {#if slots.length === 0}
+          <div class="empty">The buffer has zero capacity.</div>
+        {:else}
+          {#each slots as value, index}
+            <div class="slot {slotClasses(index, value)}">
+              <small>{index}</small>
+              <b>{value === null ? '·' : value}</b>
+              <span class="pointer-tags">
+                {#if index === headIndex && size > 0}<i class="front-tag">F</i>{/if}
+                {#if index === rearSlot && size > 0}<i class="rear-tag">R</i>{/if}
+              </span>
+              <span class="marks">
+                {#if state.readIndex === index}<i class="r">R</i>{/if}
+                {#if state.writeIndex === index}<i class="w">W</i>{/if}
+              </span>
+            </div>
+          {/each}
+        {/if}
+      </div>
+    </div>
+  {/if}
+
+  <div class="legend" aria-label="State legend">
+    <span><i class="l-front"></i>Front</span><span><i class="l-rear"></i>Rear</span>
+    <span><i class="l-shifted"></i>Shifted</span><span><i class="l-spare"></i>Free slot</span>
+    <span><i class="l-rw"></i>Read / write this line</span>
   </div>
 </section>
 
 <style>
   .visualizer {
     padding: 1rem;
+    display: grid;
+    gap: 0.9rem;
     overflow: hidden;
   }
-  .pointer-dock {
+  .scalar-dock {
     display: grid;
-    grid-template-columns: repeat(4, minmax(68px, 1fr));
+    grid-template-columns: repeat(5, minmax(70px, 1fr));
     gap: 0.4rem;
     padding-bottom: 0.85rem;
     border-bottom: 1px solid var(--border);
   }
-  .pointer-dock > div {
+  .scalar-dock > div {
     display: grid;
     gap: 0.2rem;
     padding: 0.45rem 0.55rem;
@@ -66,58 +169,263 @@
     border-radius: 9px;
     background: #07111f88;
   }
-  .pointer-dock > div.active {
+  .scalar-dock > div.active {
     border-color: #2dd4bf66;
     background: #2dd4bf0b;
   }
-  .pointer-dock span, .element-id {
+  .scalar-dock span,
+  .node-id {
     color: var(--muted);
     font-size: 0.64rem;
   }
-  .pointer-dock code {
+  .scalar-dock code {
     color: var(--primary);
     font-size: 0.78rem;
   }
+  .buffer-block p {
+    margin: 0 0 0.4rem;
+    color: var(--muted);
+    font-size: 0.68rem;
+  }
+  .buffer-block p b {
+    color: var(--text);
+  }
+  .buffer {
+    display: flex;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding: 0.6rem 0 0.2rem;
+  }
+  .slot {
+    position: relative;
+    flex: 1;
+    min-width: 58px;
+    display: grid;
+    gap: 0.15rem;
+    justify-items: center;
+    padding: 0.55rem 0.3rem 0.4rem;
+    border: 2px solid #334155;
+    border-radius: 10px;
+    background: #0a1727;
+    transition: 160ms ease;
+  }
+  .slot small {
+    color: var(--muted);
+    font-size: 0.58rem;
+  }
+  .slot b {
+    font: 1.15rem var(--mono);
+  }
+  .slot.live {
+    border-color: #2dd4bf66;
+    background: #2dd4bf0a;
+  }
+  .slot.spare {
+    border-style: dashed;
+    opacity: 0.65;
+  }
+  .slot.front {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px #2dd4bf18;
+  }
+  .slot.rear {
+    border-color: var(--secondary);
+  }
+  .slot.front.rear {
+    box-shadow:
+      0 0 0 3px #2dd4bf18,
+      0 0 0 6px #9b7cff14;
+  }
+  .slot.shifted {
+    border-color: var(--accent);
+    background: #38bdf812;
+  }
+  .slot.reading {
+    border-color: var(--warning);
+    transform: translateY(-4px);
+  }
+  .slot.writing {
+    border-color: var(--success);
+    box-shadow: 0 0 0 4px #4ade8018;
+    transform: translateY(-4px);
+  }
+  .pointer-tags {
+    display: flex;
+    gap: 0.2rem;
+    min-height: 14px;
+  }
+  .pointer-tags i {
+    display: grid;
+    place-items: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 4px;
+    font: 0.52rem var(--mono);
+    font-style: normal;
+  }
+  .pointer-tags .front-tag {
+    background: var(--primary);
+    color: #04231f;
+  }
+  .pointer-tags .rear-tag {
+    background: var(--secondary);
+    color: #150b2e;
+  }
+  .marks {
+    position: absolute;
+    top: -9px;
+    right: -4px;
+    display: flex;
+    gap: 0.15rem;
+  }
+  .marks i {
+    display: grid;
+    place-items: center;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    font: 0.55rem var(--mono);
+    font-style: normal;
+  }
+  .marks i.r {
+    background: var(--warning);
+    color: #241a02;
+  }
+  .marks i.w {
+    background: var(--success);
+    color: #04230d;
+  }
   .memory {
     display: flex;
-    justify-content: flex-start;
     align-items: center;
-    min-height: 210px;
-    padding: 1.25rem 0.25rem;
+    min-height: 150px;
+    padding: 0.8rem 0.25rem;
     overflow-x: auto;
   }
-  .queue-container {
+  .chain-part {
     display: flex;
-    flex-direction: row;
-    gap: 0.5rem;
+    align-items: center;
+    flex: none;
   }
   article {
     position: relative;
-    width: 112px;
-    min-height: 80px;
+    width: 106px;
     display: grid;
-    grid-template-rows: auto 1fr;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.65rem;
+    gap: 0.3rem;
+    padding: 0.6rem;
     border: 2px solid #334155;
-    border-radius: 8px;
+    border-radius: 13px;
     background: #0a1727;
-    transition: 180ms ease;
-    text-align: center;
+    transition: 160ms ease;
   }
   article strong {
-    font: 1.35rem var(--mono);
+    display: grid;
+    place-items: center;
+    font: 1.25rem var(--mono);
+  }
+  article > div {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 0.3rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.66rem;
+  }
+  article.front-node {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px #2dd4bf18;
+  }
+  article.rear-node {
+    border-color: var(--secondary);
+  }
+  article.current {
+    transform: translateY(-4px);
+    border-color: var(--warning);
+  }
+  article.allocated {
+    border-color: var(--success);
+  }
+  article.deleted {
+    border-color: var(--danger);
+    opacity: 0.5;
+    text-decoration: line-through;
+  }
+  article .badge {
+    position: absolute;
+    top: -9px;
+    padding: 0.05rem 0.4rem;
+    border-radius: 99px;
+    font-size: 0.55rem;
+    font-style: normal;
+  }
+  article .front-badge {
+    left: 8px;
+    background: var(--primary);
+    color: #04231f;
+  }
+  article .rear-badge {
+    right: 8px;
+    background: var(--secondary);
+    color: #150b2e;
+  }
+  .arrow {
+    width: 52px;
+    display: grid;
+    justify-items: center;
+    color: var(--primary);
+    font: 1rem var(--mono);
+  }
+  .arrow small {
+    color: var(--muted);
+    font-size: 0.55rem;
   }
   .empty {
     margin: auto;
     display: grid;
-    gap: 0.5rem;
+    gap: 0.4rem;
     text-align: center;
     color: var(--muted);
+    padding: 0.8rem;
   }
   .empty code {
     color: var(--primary);
-    font-size: 1.1rem;
+  }
+  .legend {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    color: var(--muted);
+    font-size: 0.62rem;
+  }
+  .legend span {
+    display: inline-flex;
+    gap: 0.3rem;
+    align-items: center;
+  }
+  .legend i {
+    width: 9px;
+    height: 9px;
+    border: 2px solid;
+    border-radius: 3px;
+  }
+  .legend i.l-front {
+    border-color: var(--primary);
+  }
+  .legend i.l-rear {
+    border-color: var(--secondary);
+  }
+  .legend i.l-shifted {
+    border-color: var(--accent);
+  }
+  .legend i.l-spare {
+    border-color: var(--border);
+    border-style: dashed;
+  }
+  .legend i.l-rw {
+    border-color: var(--success);
+  }
+  @media (max-width: 720px) {
+    .scalar-dock {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
 </style>

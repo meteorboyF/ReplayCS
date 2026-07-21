@@ -80,38 +80,45 @@ const operation = (
 });
 
 export const STACK_OPERATIONS: readonly StackOperationMetadata[] = [
-  operation('push', 'Push', 'Add an element to the top of the stack.', 'Modification', { requiresNewValue: true }, [
-    {
-      id: 'push-normal',
-      label: 'Normal push',
-      caseType: 'worst',
-      timeComplexity: 'O(1)',
-      auxiliarySpace: 'O(1)',
-      implementationVariant: 'Array/Linked List',
-      assumptions: ['Stack is not full'],
-      description: 'One write and top update.'
-    },
-    {
-      id: 'push-resize',
-      label: 'Resize push',
-      caseType: 'worst',
-      timeComplexity: 'O(n)',
-      auxiliarySpace: 'O(n)',
-      implementationVariant: 'Dynamic Array',
-      assumptions: ['Capacity is exceeded, requiring array copy'],
-      description: 'Allocating new array and copying elements.'
-    },
-    {
-      id: 'push-amortized',
-      label: 'Amortized push',
-      caseType: 'amortized',
-      timeComplexity: 'O(1)',
-      auxiliarySpace: 'O(1)',
-      implementationVariant: 'Dynamic Array',
-      assumptions: ['Array doubles on resize'],
-      description: 'Frequent O(1) pushes pay for infrequent O(n) resize.'
-    }
-  ]),
+  operation(
+    'push',
+    'Push',
+    'Add an element to the top of the stack.',
+    'Modification',
+    { requiresNewValue: true },
+    [
+      {
+        id: 'push-normal',
+        label: 'Normal push',
+        caseType: 'worst',
+        timeComplexity: 'O(1)',
+        auxiliarySpace: 'O(1)',
+        implementationVariant: 'Array/Linked List',
+        assumptions: ['Stack is not full'],
+        description: 'One write and top update.'
+      },
+      {
+        id: 'push-resize',
+        label: 'Resize push',
+        caseType: 'worst',
+        timeComplexity: 'O(n)',
+        auxiliarySpace: 'O(n)',
+        implementationVariant: 'Dynamic Array',
+        assumptions: ['Capacity is exceeded, requiring array copy'],
+        description: 'Allocating new array and copying elements.'
+      },
+      {
+        id: 'push-amortized',
+        label: 'Amortized push',
+        caseType: 'amortized',
+        timeComplexity: 'O(1)',
+        auxiliarySpace: 'O(1)',
+        implementationVariant: 'Dynamic Array',
+        assumptions: ['Array doubles on resize'],
+        description: 'Frequent O(1) pushes pay for infrequent O(n) resize.'
+      }
+    ]
+  ),
   operation('pop', 'Pop', 'Remove the element from the top of the stack.', 'Modification', {}, [
     {
       id: 'pop-normal',
@@ -136,18 +143,25 @@ export const STACK_OPERATIONS: readonly StackOperationMetadata[] = [
       description: 'Return top element.'
     }
   ]),
-  operation('search', 'Search', 'Search for an element from the top.', 'Inspection', { requiresTarget: true }, [
-    {
-      id: 'search-normal',
-      label: 'Search',
-      caseType: 'worst',
-      timeComplexity: 'O(n)',
-      auxiliarySpace: 'O(1)',
-      implementationVariant: 'Linear Search',
-      assumptions: ['Target is at the bottom or not present'],
-      description: 'Traverse stack from top to bottom.'
-    }
-  ])
+  operation(
+    'search',
+    'Search',
+    'Search for an element from the top.',
+    'Inspection',
+    { requiresTarget: true },
+    [
+      {
+        id: 'search-normal',
+        label: 'Search',
+        caseType: 'worst',
+        timeComplexity: 'O(n)',
+        auxiliarySpace: 'O(1)',
+        implementationVariant: 'Linear Search',
+        assumptions: ['Target is at the bottom or not present'],
+        description: 'Traverse stack from top to bottom.'
+      }
+    ]
+  )
 ];
 
 export function getStackOperationMetadata(operationId: StackOperation): StackOperationMetadata {
@@ -228,7 +242,7 @@ function nodeId(index: number): string {
 
 function resolveConfig(input: StackConfig): ResolvedConfig {
   const values = input.values || [];
-  const capacity = input.capacity ?? (values.length + 2);
+  const capacity = input.capacity ?? values.length + 2;
   return {
     operation: input.operation,
     values: [...values],
@@ -244,9 +258,9 @@ function initialRuntime(config: ResolvedConfig): RuntimeState {
   let slots: (number | null)[] = [];
   let nodes: RuntimeNode[] = [];
   let head: string | null = null;
-  
+
   if (config.backing === 'array' || config.backing === 'dynamic-array') {
-    slots = Array.from({ length: config.capacity }, (_, i) => i < n ? config.values[i] : null);
+    slots = Array.from({ length: config.capacity }, (_, i) => (i < n ? config.values[i] : null));
   } else {
     for (let i = n - 1; i >= 0; i--) {
       nodes.push({
@@ -291,7 +305,7 @@ function traceState(state: RuntimeState, config: ResolvedConfig): Record<string,
     size: state.size,
     capacity: state.capacity,
     oldCapacity: state.oldCapacity,
-    nodes: state.nodes.map(n => ({...n})) as unknown as TraceValue,
+    nodes: state.nodes.map((n) => ({ ...n })) as unknown as TraceValue,
     head: state.head,
     newNode: state.newNode,
     detached: [...state.detached],
@@ -330,7 +344,7 @@ function entitiesFor(state: RuntimeState): TraceEntity[] {
       }
     }));
     entities.push(...slots);
-    
+
     const scalars: TraceEntity[] = scalarFields.map((field) => ({
       id: `var-${field}`,
       type: 'variable',
@@ -338,7 +352,7 @@ function entitiesFor(state: RuntimeState): TraceEntity[] {
       value: state[field]
     }));
     entities.push(...scalars);
-    
+
     entities.push({ id: 'old-buffer', type: 'array', label: 'old buffer', value: state.oldSlots });
   } else {
     const nodes: TraceEntity[] = state.nodes.map((node) => ({
@@ -356,7 +370,7 @@ function entitiesFor(state: RuntimeState): TraceEntity[] {
       }
     }));
     entities.push(...nodes);
-    
+
     const pointers: TraceEntity[] = pointerFields.map((pointer) => ({
       id: `pointer-${pointer}`,
       type: 'pointer',
@@ -366,13 +380,18 @@ function entitiesFor(state: RuntimeState): TraceEntity[] {
     }));
     entities.push(...pointers);
   }
-  
+
   entities.push(
     { id: 'result', type: 'variable', label: 'result', value: state.result },
     { id: 'resultIndex', type: 'variable', label: 'result index', value: state.resultIndex },
-    { id: 'operation-count', type: 'variable', label: 'exact operations', value: state.operationCount }
+    {
+      id: 'operation-count',
+      type: 'variable',
+      label: 'exact operations',
+      value: state.operationCount
+    }
   );
-  
+
   return entities;
 }
 
@@ -382,7 +401,7 @@ function mutationsBetween(
 ): TraceMutation[] {
   const mutations: TraceMutation[] = [];
   const backing = before.backing as StackBacking;
-  
+
   if (backing === 'array' || backing === 'dynamic-array') {
     const beforeSlots = (before.slots as (number | null)[]) ?? [];
     const afterSlots = (after.slots as (number | null)[]) ?? [];
@@ -400,7 +419,7 @@ function mutationsBetween(
         });
       }
     }
-    
+
     for (const field of scalarFields) {
       if (JSON.stringify(before[field]) !== JSON.stringify(after[field])) {
         mutations.push({
@@ -412,7 +431,7 @@ function mutationsBetween(
         });
       }
     }
-    
+
     if (JSON.stringify(before.oldSlots) !== JSON.stringify(after.oldSlots)) {
       mutations.push({
         entityId: 'old-buffer',
@@ -434,7 +453,7 @@ function mutationsBetween(
         });
       }
     }
-    
+
     const beforeNodes = new Map(
       ((before.nodes as unknown as RuntimeNode[]) ?? []).map((node) => [node.id, node])
     );
@@ -471,11 +490,16 @@ function mutationsBetween(
       }
     }
   }
-  
+
   for (const field of ['result', 'resultIndex', 'operationCount']) {
     if (JSON.stringify(before[field]) !== JSON.stringify(after[field])) {
       mutations.push({
-        entityId: field === 'operationCount' ? 'operation-count' : field === 'result' || field === 'resultIndex' ? field : `var-${field}`,
+        entityId:
+          field === 'operationCount'
+            ? 'operation-count'
+            : field === 'result' || field === 'resultIndex'
+              ? field
+              : `var-${field}`,
         property: 'value',
         previousValue: before[field],
         nextValue: after[field],
@@ -483,9 +507,43 @@ function mutationsBetween(
       });
     }
   }
-  
+
   return mutations;
 }
+
+export interface StackMistakeMetadata {
+  prompt: string;
+  wrongAnswer: TraceValue;
+  correctAnswer: TraceValue;
+  explanation: string;
+  tag: string;
+}
+
+function makePrediction(
+  id: string,
+  prompt: string,
+  type: PredictionChallenge['type'],
+  correctAnswer: TraceValue,
+  explanation: string,
+  tag: string,
+  wrongAnswer: TraceValue
+): { prediction: PredictionChallenge; mistake: StackMistakeMetadata } {
+  return {
+    prediction: {
+      id,
+      prompt,
+      type,
+      correctAnswer,
+      explanation,
+      misconceptionTags: [tag],
+      xpReward: 10
+    },
+    mistake: { prompt, wrongAnswer, correctAnswer, explanation, tag }
+  };
+}
+
+const boundedPrimitiveAssumption =
+  'Each displayed read, write, comparison, allocation, or copy is one counted primitive.';
 
 interface TraceBuilder {
   state: RuntimeState;
@@ -495,7 +553,8 @@ interface TraceBuilder {
     title: string,
     explanation: string,
     stepWork: WorkCounts,
-    mutate?: (state: RuntimeState) => void
+    mutate?: (state: RuntimeState) => void,
+    checkpoint?: ReturnType<typeof makePrediction>
   ) => void;
 }
 
@@ -505,14 +564,38 @@ function createTraceBuilder(
   state: RuntimeState
 ): TraceBuilder {
   const steps: TraceStep[] = [];
-  
-  const add: TraceBuilder['add'] = (semantic, title, explanation, stepWork, mutate = () => {}) => {
+  let peakAuxiliary = 0;
+  let peakOutput = 0;
+
+  const add: TraceBuilder['add'] = (
+    semantic,
+    title,
+    explanation,
+    stepWork,
+    mutate = () => {},
+    checkpoint
+  ) => {
     const before = traceState(state, config);
     mutate(state);
     const exactOperationCount = totalWork(stepWork);
     state.cumulativeWork = addWork(state.cumulativeWork, stepWork);
     state.operationCount += exactOperationCount;
     const after = traceState(state, config);
+
+    // Auxiliary space is the transient memory the operation itself needs: a resized
+    // buffer copy is O(n); a handful of temp cursors/pointers is O(1).
+    const bufferAuxiliary = state.oldSlots ? state.slots.length : 0;
+    const cursorAuxiliary = [
+      state.i,
+      state.readIndex,
+      state.writeIndex,
+      state.current,
+      state.newNode
+    ].filter((value) => value !== null).length;
+    const auxiliaryCurrent = bufferAuxiliary + Math.min(3, cursorAuxiliary);
+    const outputCurrent = state.result === null ? 0 : 1;
+    peakAuxiliary = Math.max(peakAuxiliary, auxiliaryCurrent);
+    peakOutput = Math.max(peakOutput, outputCurrent);
 
     const complexityEvidence: ComplexityEvidence = {
       caseId: complexityCase.id,
@@ -526,15 +609,26 @@ function createTraceBuilder(
       timeComplexity: complexityCase.timeComplexity,
       auxiliarySpace: complexityCase.auxiliarySpace,
       space: {
-        auxiliary: { current: 0, peak: 0, unit: 'slots' },
-        output: { current: 0, peak: 0, unit: 'slots' },
+        auxiliary: { current: auxiliaryCurrent, peak: peakAuxiliary, unit: 'slots + cursors' },
+        output: { current: outputCurrent, peak: peakOutput, unit: 'reported values' },
         callStackDepth: 1
       },
-      assumptions: [...complexityCase.assumptions],
+      assumptions: [
+        ...new Set([
+          ...complexityCase.assumptions,
+          boundedPrimitiveAssumption,
+          'Trace construction and visualization bookkeeping are excluded from the algorithm count.'
+        ])
+      ],
       derivation: [...complexityCase.derivation]
     };
 
-    const visualFocus: string[] = [];
+    const visualFocus = [state.readIndex, state.writeIndex, state.i]
+      .filter((value): value is number => value !== null)
+      .map((index) => `slot-${index}`);
+    for (const id of [state.head, state.current, state.newNode]) {
+      if (id) visualFocus.push(id);
+    }
 
     steps.push({
       id: `stack-${config.operation}-${steps.length}`,
@@ -548,7 +642,8 @@ function createTraceBuilder(
       entities: entitiesFor(state),
       mutations: mutationsBetween(before, after),
       deterministicExplanation: explanation,
-      visualFocus,
+      visualFocus: [...new Set(visualFocus)],
+      ...(checkpoint ? { prediction: checkpoint.prediction } : {}),
       complexityCost: {
         comparisons: state.cumulativeWork.comparison ?? 0,
         reads: state.cumulativeWork.read ?? 0,
@@ -556,7 +651,22 @@ function createTraceBuilder(
         swaps: state.cumulativeWork.swap ?? 0
       },
       complexityEvidence,
-      metadata: { operation: config.operation, complexityCase: complexityCase.id }
+      metadata: {
+        operation: config.operation,
+        complexityCase: complexityCase.id,
+        backing: config.backing,
+        ...(checkpoint
+          ? {
+              mistake: {
+                prompt: checkpoint.mistake.prompt,
+                wrongAnswer: checkpoint.mistake.wrongAnswer,
+                correctAnswer: checkpoint.mistake.correctAnswer,
+                explanation: checkpoint.mistake.explanation,
+                tag: checkpoint.mistake.tag
+              }
+            }
+          : {})
+      }
     });
   };
   return { state, steps, add };
@@ -564,122 +674,394 @@ function createTraceBuilder(
 
 function runPush(builder: TraceBuilder, config: ResolvedConfig) {
   if (config.backing === 'array') {
-    builder.add('push-check', 'Check capacity', 'Verify array is not full', { comparison: 1 });
-    if (builder.state.size === builder.state.capacity) return; // Full array
-    builder.add('push-write', 'Write value', 'Write new value to the top of the stack', { write: 1 }, (s) => {
-      s.slots[s.size] = config.newValue;
-      s.writeIndex = s.size;
-    });
-    builder.add('push-size', 'Update size', 'Increment stack size', { write: 1 }, (s) => {
-      s.size++;
-      s.result = config.newValue;
-    });
-  } else if (config.backing === 'dynamic-array') {
-    builder.add('push-check', 'Check capacity', 'Verify array capacity', { comparison: 1 });
-    if (builder.state.size === builder.state.capacity) {
-      builder.add('push-resize', 'Resize array', 'Allocate and copy array', { allocation: 1, write: builder.state.size * 2 }, (s) => {
-        s.oldCapacity = s.capacity;
-        s.oldSlots = [...s.slots];
-        s.capacity *= 2;
-        s.slots = Array.from({ length: s.capacity }, (_, i) => i < s.size ? s.oldSlots![i] : null);
-      });
+    const full = builder.state.size === builder.state.capacity;
+    const checkpoint = makePrediction(
+      'stack-lab:push:array:checkpoint',
+      `The fixed array has size ${builder.state.size} and capacity ${builder.state.capacity}. Does this push write the value or overflow?`,
+      'text',
+      full ? 'overflow' : 'write',
+      full
+        ? 'size == capacity, so a fixed-capacity array stack has no free slot and rejects the push (overflow).'
+        : `size < capacity, so ${config.newValue} is written at index ${builder.state.size} in O(1).`,
+      'capacity-vs-size',
+      full ? 'write' : 'overflow'
+    );
+    builder.add(
+      'push-check',
+      'Check capacity',
+      full
+        ? 'size equals capacity: a fixed array cannot grow, so this is a stack overflow.'
+        : 'size is below capacity, so there is a free slot at index size.',
+      { comparison: 1 },
+      undefined,
+      checkpoint
+    );
+    if (full) {
+      builder.add(
+        'push-check',
+        'Overflow',
+        'The push is rejected; no slot is written.',
+        { comparison: 1 },
+        (s) => {
+          s.result = 'overflow';
+        }
+      );
+      return;
     }
-    builder.add('push-write', 'Write value', 'Write new value to array', { write: 1 }, (s) => {
-      s.slots[s.size] = config.newValue;
-      s.writeIndex = s.size;
-    });
-    builder.add('push-size', 'Update size', 'Increment stack size', { write: 1 }, (s) => {
-      s.size++;
-      s.result = config.newValue;
-    });
+    builder.add(
+      'push-write',
+      'Write value',
+      `${config.newValue} is written into slot ${builder.state.size} (the top).`,
+      { write: 1 },
+      (s) => {
+        s.slots[s.size] = config.newValue;
+        s.writeIndex = s.size;
+      }
+    );
+    builder.add(
+      'push-size',
+      'Update size',
+      'size increments so the new value is now the top.',
+      { write: 1 },
+      (s) => {
+        s.size++;
+        s.result = config.newValue;
+      }
+    );
+  } else if (config.backing === 'dynamic-array') {
+    const willResize = builder.state.size === builder.state.capacity;
+    const checkpoint = makePrediction(
+      'stack-lab:push:dynamic:checkpoint',
+      `size is ${builder.state.size} and capacity is ${builder.state.capacity}. Is this a direct O(1) push or does it trigger an O(n) resize first?`,
+      'text',
+      willResize ? 'resize' : 'direct',
+      willResize
+        ? `size == capacity, so the buffer doubles to ${builder.state.capacity * 2} and all ${builder.state.size} elements are copied before the write — this single push is O(n).`
+        : 'size < capacity, so the value is written directly in O(1); no copy is needed.',
+      'amortized-vs-worst',
+      willResize ? 'direct' : 'resize'
+    );
+    builder.add(
+      'push-check',
+      'Check capacity',
+      willResize
+        ? 'size equals capacity, so a bigger buffer must be allocated before writing.'
+        : 'size is below capacity, so the write can proceed directly.',
+      { comparison: 1 },
+      undefined,
+      checkpoint
+    );
+    if (willResize) {
+      builder.add(
+        'push-resize',
+        'Resize array',
+        `Allocate a ${builder.state.capacity * 2}-slot buffer and copy all ${builder.state.size} elements — this is the O(n) part amortized across many cheap pushes.`,
+        { allocation: 1, write: builder.state.size * 2 },
+        (s) => {
+          s.oldCapacity = s.capacity;
+          s.oldSlots = [...s.slots];
+          s.capacity *= 2;
+          s.slots = Array.from({ length: s.capacity }, (_, i) =>
+            i < s.size ? s.oldSlots![i] : null
+          );
+        }
+      );
+    }
+    builder.add(
+      'push-write',
+      'Write value',
+      `${config.newValue} is written into slot ${builder.state.size}.`,
+      { write: 1 },
+      (s) => {
+        s.slots[s.size] = config.newValue;
+        s.writeIndex = s.size;
+        s.oldSlots = null;
+      }
+    );
+    builder.add(
+      'push-size',
+      'Update size',
+      'size increments so the new value is the top.',
+      { write: 1 },
+      (s) => {
+        s.size++;
+        s.result = config.newValue;
+      }
+    );
   } else {
     // Linked List
-    builder.add('push-alloc', 'Allocate node', 'Create a new node', { allocation: 1 }, (s) => {
-      s.newNode = `N${s.nodes.length + 1}`;
-      s.nodes.push({ id: s.newNode, value: config.newValue, next: null, status: 'allocated' });
-      s.allocated.push(s.newNode);
-    });
-    builder.add('push-link', 'Link node', 'Point new node to current head', { write: 1 }, (s) => {
-      const node = s.nodes.find(n => n.id === s.newNode);
-      if (node) node.next = s.head;
-    });
-    builder.add('push-head', 'Update head', 'Make the new node the head', { write: 1 }, (s) => {
-      s.head = s.newNode;
-      const node = s.nodes.find(n => n.id === s.newNode);
-      if (node) node.status = 'live';
-      s.newNode = null;
-      s.result = config.newValue;
-    });
+    const oldHead = builder.state.head;
+    const newId = `N${builder.state.nodes.length + 1}`;
+    const checkpoint = makePrediction(
+      'stack-lab:push:linked:checkpoint',
+      `Which reference must ${newId}.next receive BEFORE head moves, so the existing stack is not lost?`,
+      'text',
+      oldHead ?? 'null',
+      `${newId}.next must point at the old head ${oldHead ?? 'null'} first; only then does head move to ${newId}. Reversing the order would leak the rest of the stack.`,
+      'pointer-update-order',
+      newId
+    );
+    builder.add(
+      'push-alloc',
+      'Allocate node',
+      `Create ${newId} holding ${config.newValue}; no capacity check is ever needed for a linked stack.`,
+      { allocation: 1 },
+      (s) => {
+        s.newNode = newId;
+        s.nodes.push({ id: newId, value: config.newValue, next: null, status: 'allocated' });
+        s.allocated.push(newId);
+      },
+      checkpoint
+    );
+    builder.add(
+      'push-link',
+      'Link node',
+      `${newId}.next receives the old head ${oldHead ?? 'null'}.`,
+      { write: 1 },
+      (s) => {
+        const node = s.nodes.find((n) => n.id === s.newNode);
+        if (node) node.next = s.head;
+      }
+    );
+    builder.add(
+      'push-head',
+      'Update head',
+      `head now points at ${newId}; the push was O(1) with no traversal.`,
+      { write: 1 },
+      (s) => {
+        s.head = s.newNode;
+        const node = s.nodes.find((n) => n.id === s.newNode);
+        if (node) node.status = 'live';
+        s.newNode = null;
+        s.result = config.newValue;
+      }
+    );
   }
 }
 
 function runPop(builder: TraceBuilder, config: ResolvedConfig) {
+  const empty = config.values.length === 0;
+  const topValue = empty ? null : config.values[config.values.length - 1];
+  const checkpoint = makePrediction(
+    'stack-lab:pop:checkpoint',
+    empty ? 'The stack is empty. What does pop return?' : 'Which value does pop remove and return?',
+    empty ? 'text' : 'numeric',
+    empty ? 'underflow' : (topValue as number),
+    empty
+      ? 'An empty stack cannot pop: this is underflow, distinct from returning a real value.'
+      : `A stack is LIFO, so pop returns the most recently pushed value ${topValue} (the top), not the bottom.`,
+    empty ? 'underflow-vs-empty' : 'peek-vs-pop',
+    empty ? 'null' : (config.values[0] as number)
+  );
   if (config.backing === 'array' || config.backing === 'dynamic-array') {
-    builder.add('pop-check', 'Check empty', 'Verify stack is not empty', { comparison: 1 });
-    if (builder.state.size === 0) return;
-    builder.add('pop-size', 'Update size', 'Decrement stack size', { write: 1 }, (s) => {
-      s.size--;
-    });
-    builder.add('pop-read', 'Read value', 'Return top element', { read: 1 }, (s) => {
-      s.result = s.slots[s.size]!;
-      s.readIndex = s.size;
-    });
+    builder.add(
+      'pop-check',
+      'Check empty',
+      empty
+        ? 'size is 0, so there is nothing to pop (underflow).'
+        : 'size is above 0, so the top slot can be returned.',
+      { comparison: 1 },
+      empty
+        ? (s) => {
+            s.result = 'underflow';
+          }
+        : undefined,
+      checkpoint
+    );
+    if (empty) return;
+    builder.add(
+      'pop-size',
+      'Update size',
+      'size decrements so the top slot leaves the logical stack.',
+      { write: 1 },
+      (s) => {
+        s.size--;
+      }
+    );
+    builder.add(
+      'pop-read',
+      'Read value',
+      `The removed top value ${topValue} is returned in O(1).`,
+      { read: 1 },
+      (s) => {
+        s.result = s.slots[s.size]!;
+        s.readIndex = s.size;
+      }
+    );
   } else {
-    builder.add('pop-check', 'Check empty', 'Verify head is not null', { comparison: 1 });
-    if (!builder.state.head) return;
-    let poppedNodeId = builder.state.head;
-    builder.add('pop-read', 'Read value', 'Read top node value', { read: 1 }, (s) => {
-      const node = s.nodes.find(n => n.id === s.head);
-      s.result = node?.value ?? null;
-    });
-    builder.add('pop-head', 'Update head', 'Move head to next node', { write: 1 }, (s) => {
-      const node = s.nodes.find(n => n.id === s.head);
-      s.head = node?.next ?? null;
-    });
-    builder.add('pop-free', 'Free node', 'Deallocate popped node', { write: 1 }, (s) => {
-      const node = s.nodes.find(n => n.id === poppedNodeId);
-      if (node) node.status = 'deleted';
-      s.deleted.push(poppedNodeId);
-    });
+    builder.add(
+      'pop-check',
+      'Check empty',
+      empty
+        ? 'head is null, so there is nothing to pop (underflow).'
+        : 'head is not null, so the top node can be returned.',
+      { comparison: 1 },
+      empty
+        ? (s) => {
+            s.result = 'underflow';
+          }
+        : undefined,
+      checkpoint
+    );
+    if (empty || !builder.state.head) return;
+    const poppedNodeId = builder.state.head;
+    builder.add(
+      'pop-read',
+      'Read value',
+      `Read the top node value ${topValue}.`,
+      { read: 1 },
+      (s) => {
+        const node = s.nodes.find((n) => n.id === s.head);
+        s.result = node?.value ?? null;
+      }
+    );
+    builder.add(
+      'pop-head',
+      'Update head',
+      'head moves to the next node in O(1); no traversal.',
+      { write: 1 },
+      (s) => {
+        const node = s.nodes.find((n) => n.id === s.head);
+        s.head = node?.next ?? null;
+      }
+    );
+    builder.add(
+      'pop-free',
+      'Free node',
+      `${poppedNodeId} is detached and released.`,
+      { write: 1 },
+      (s) => {
+        const node = s.nodes.find((n) => n.id === poppedNodeId);
+        if (node) node.status = 'deleted';
+        s.deleted.push(poppedNodeId);
+      }
+    );
   }
 }
 
 function runPeek(builder: TraceBuilder, config: ResolvedConfig) {
+  const empty = config.values.length === 0;
+  const topValue = empty ? null : config.values[config.values.length - 1];
+  const checkpoint = makePrediction(
+    'stack-lab:peek:checkpoint',
+    empty
+      ? 'The stack is empty. What does peek return?'
+      : 'What does peek return, and does the stack size change?',
+    'text',
+    empty ? 'underflow' : `${topValue} (size unchanged)`,
+    empty
+      ? 'peek on an empty stack is underflow.'
+      : `peek returns the top value ${topValue} but, unlike pop, leaves size unchanged — that is the peek-versus-pop distinction.`,
+    empty ? 'underflow-vs-empty' : 'peek-vs-pop',
+    empty ? 'null' : `${topValue} (size decreases)`
+  );
   if (config.backing === 'array' || config.backing === 'dynamic-array') {
-    builder.add('peek-check', 'Check empty', 'Verify stack is not empty', { comparison: 1 });
-    if (builder.state.size === 0) return;
-    builder.add('peek-read', 'Read value', 'Return top element', { read: 1 }, (s) => {
-      s.result = s.slots[s.size - 1]!;
-      s.readIndex = s.size - 1;
-    });
+    builder.add(
+      'peek-check',
+      'Check empty',
+      empty
+        ? 'size is 0, so peek reports underflow.'
+        : 'size is above 0, so the top slot can be read.',
+      { comparison: 1 },
+      empty
+        ? (s) => {
+            s.result = 'underflow';
+          }
+        : undefined,
+      checkpoint
+    );
+    if (empty) return;
+    builder.add(
+      'peek-read',
+      'Read value',
+      `The top value ${topValue} is read without changing size.`,
+      { read: 1 },
+      (s) => {
+        s.result = s.slots[s.size - 1]!;
+        s.readIndex = s.size - 1;
+      }
+    );
   } else {
-    builder.add('peek-check', 'Check empty', 'Verify head is not null', { comparison: 1 });
-    if (!builder.state.head) return;
-    builder.add('peek-read', 'Read value', 'Read top node value', { read: 1 }, (s) => {
-      const node = s.nodes.find(n => n.id === s.head);
-      s.result = node?.value ?? null;
-    });
+    builder.add(
+      'peek-check',
+      'Check empty',
+      empty
+        ? 'head is null, so peek reports underflow.'
+        : 'head is not null, so the top node can be read.',
+      { comparison: 1 },
+      empty
+        ? (s) => {
+            s.result = 'underflow';
+          }
+        : undefined,
+      checkpoint
+    );
+    if (empty || !builder.state.head) return;
+    builder.add(
+      'peek-read',
+      'Read value',
+      `The top node value ${topValue} is read; head does not move.`,
+      { read: 1 },
+      (s) => {
+        const node = s.nodes.find((n) => n.id === s.head);
+        s.result = node?.value ?? null;
+      }
+    );
   }
 }
 
 function runSearch(builder: TraceBuilder, config: ResolvedConfig) {
+  // Distance from the top: the top element is distance 0.
+  const n = config.values.length;
+  const foundArrayIndex = config.values.lastIndexOf(config.target);
+  const distance = foundArrayIndex < 0 ? -1 : n - 1 - foundArrayIndex;
+  const checkpoint = makePrediction(
+    'stack-lab:search:checkpoint',
+    `Searching from the top for ${config.target}: what distance-from-top is returned? (-1 if absent)`,
+    'numeric',
+    distance,
+    distance < 0
+      ? `${config.target} is not in the stack, so the scan touches all ${n} elements and returns -1.`
+      : `${config.target} sits ${distance} position${distance === 1 ? '' : 's'} below the top, so search returns ${distance} after ${distance + 1} comparison${distance === 0 ? '' : 's'}.`,
+    'off-by-one',
+    foundArrayIndex < 0 ? n : foundArrayIndex
+  );
   if (config.backing === 'array' || config.backing === 'dynamic-array') {
-    builder.add('search-init', 'Initialize', 'Start from top of stack', { write: 1 }, (s) => {
-      s.i = s.size - 1;
-    });
+    builder.add(
+      'search-init',
+      'Initialize',
+      'The scan starts at the top (index size − 1) and walks down toward the bottom.',
+      { write: 1 },
+      (s) => {
+        s.i = s.size - 1;
+      },
+      checkpoint
+    );
     let found = false;
     for (let i = config.values.length - 1; i >= 0; i--) {
       builder.add('search-check', 'Check bounds', 'Verify loop bounds', { comparison: 1 }, (s) => {
         s.i = i;
       });
-      builder.add('search-compare', 'Compare', 'Check if current element matches target', { read: 1, comparison: 1 }, (s) => {
-        s.readIndex = i;
-      });
+      builder.add(
+        'search-compare',
+        'Compare',
+        'Check if current element matches target',
+        { read: 1, comparison: 1 },
+        (s) => {
+          s.readIndex = i;
+        }
+      );
       if (config.values[i] === config.target) {
-        builder.add('search-found', 'Found target', 'Return distance from top', { write: 1 }, (s) => {
-          s.result = s.size - 1 - i;
-          s.resultIndex = i;
-        });
+        builder.add(
+          'search-found',
+          'Found target',
+          'Return distance from top',
+          { write: 1 },
+          (s) => {
+            s.result = s.size - 1 - i;
+            s.resultIndex = i;
+          }
+        );
         found = true;
         break;
       }
@@ -693,18 +1075,37 @@ function runSearch(builder: TraceBuilder, config: ResolvedConfig) {
       });
     }
   } else {
-    builder.add('search-init', 'Initialize', 'Start from head', { write: 1 }, (s) => {
-      s.current = s.head;
-      s.i = 0; // distance
-    });
+    builder.add(
+      'search-init',
+      'Initialize',
+      'The scan starts at head (the top) with distance 0 and follows next references down.',
+      { write: 1 },
+      (s) => {
+        s.current = s.head;
+        s.i = 0; // distance
+      },
+      checkpoint
+    );
     let currentId = config.values.length > 0 ? `N${config.values.length}` : null;
     let distance = 0;
     let found = false;
     while (currentId) {
-      builder.add('search-check', 'Check null', 'Verify current is not null', { comparison: 1 }, (s) => {
-        s.current = currentId;
-      });
-      builder.add('search-compare', 'Compare', 'Check if current node matches target', { read: 1, comparison: 1 }, (s) => {});
+      builder.add(
+        'search-check',
+        'Check null',
+        'Verify current is not null',
+        { comparison: 1 },
+        (s) => {
+          s.current = currentId;
+        }
+      );
+      builder.add(
+        'search-compare',
+        'Compare',
+        'Check if current node matches target',
+        { read: 1, comparison: 1 },
+        (s) => {}
+      );
       if (config.values[parseInt(currentId!.substring(1)) - 1] === config.target) {
         builder.add('search-found', 'Found target', 'Return distance', { write: 1 }, (s) => {
           s.result = distance;
@@ -713,7 +1114,7 @@ function runSearch(builder: TraceBuilder, config: ResolvedConfig) {
         break;
       }
       builder.add('search-advance', 'Advance', 'Move to next node', { write: 1 }, (s) => {
-        const node = s.nodes.find(n => n.id === currentId);
+        const node = s.nodes.find((n) => n.id === currentId);
         currentId = node?.next ?? null;
         s.current = currentId;
         if (s.i !== null) s.i++;
@@ -721,9 +1122,15 @@ function runSearch(builder: TraceBuilder, config: ResolvedConfig) {
       });
     }
     if (!found) {
-      builder.add('search-check', 'Check null', 'Verify current is not null', { comparison: 1 }, (s) => {
-        s.current = null;
-      });
+      builder.add(
+        'search-check',
+        'Check null',
+        'Verify current is not null',
+        { comparison: 1 },
+        (s) => {
+          s.current = null;
+        }
+      );
       builder.add('search-missing', 'Not found', 'Return -1', { write: 1 }, (s) => {
         s.result = -1;
       });
@@ -739,7 +1146,13 @@ interface QuadSourceLine {
   python: string;
 }
 
-function quad(semantic: string | undefined, c: string, cpp: string, java: string, python: string): QuadSourceLine {
+function quad(
+  semantic: string | undefined,
+  c: string,
+  cpp: string,
+  java: string,
+  python: string
+): QuadSourceLine {
   return { semantic, c, cpp, java, python };
 }
 
@@ -749,40 +1162,136 @@ function sourceLines(config: ResolvedConfig, lang: SupportedLanguage): SourceLin
     switch (config.operation) {
       case 'push':
         lines = [
-          quad(undefined, 'void push(Stack* s, int value) {', 'void push(Stack& s, int value) {', '  void push(int value) {', '    def push(self, value):'),
-          quad('push-check', '  if (s->size == s->capacity) return;', '  if (s.size == s.capacity) return;', '    if (size == capacity) return;', '        if self.size == self.capacity: return'),
-          quad('push-resize', '  // Resize logic if dynamic', '  // Resize logic if dynamic', '    // Resize logic if dynamic', '        # Resize logic if dynamic'),
-          quad('push-write', '  s->data[s->size] = value;', '  s.slots[s.size] = value;', '    slots[size] = value;', '        self.slots[self.size] = value'),
+          quad(
+            undefined,
+            'void push(Stack* s, int value) {',
+            'void push(Stack& s, int value) {',
+            '  void push(int value) {',
+            '    def push(self, value):'
+          ),
+          quad(
+            'push-check',
+            '  if (s->size == s->capacity) return;',
+            '  if (s.size == s.capacity) return;',
+            '    if (size == capacity) return;',
+            '        if self.size == self.capacity: return'
+          ),
+          quad(
+            'push-resize',
+            '  // Resize logic if dynamic',
+            '  // Resize logic if dynamic',
+            '    // Resize logic if dynamic',
+            '        # Resize logic if dynamic'
+          ),
+          quad(
+            'push-write',
+            '  s->data[s->size] = value;',
+            '  s.slots[s.size] = value;',
+            '    slots[size] = value;',
+            '        self.slots[self.size] = value'
+          ),
           quad('push-size', '  s->size++;', '  s.size++;', '    size++;', '        self.size += 1'),
           quad(undefined, '}', '}', '  }', '')
         ];
         break;
       case 'pop':
         lines = [
-          quad(undefined, 'int pop(Stack* s) {', 'int pop(Stack& s) {', '  int pop() {', '    def pop(self):'),
-          quad('pop-check', '  if (s->size == 0) return -1;', '  if (s.size == 0) return -1;', '    if (size == 0) return -1;', '        if self.size == 0: return -1'),
+          quad(
+            undefined,
+            'int pop(Stack* s) {',
+            'int pop(Stack& s) {',
+            '  int pop() {',
+            '    def pop(self):'
+          ),
+          quad(
+            'pop-check',
+            '  if (s->size == 0) return -1;',
+            '  if (s.size == 0) return -1;',
+            '    if (size == 0) return -1;',
+            '        if self.size == 0: return -1'
+          ),
           quad('pop-size', '  s->size--;', '  s.size--;', '    size--;', '        self.size -= 1'),
-          quad('pop-read', '  return s->data[s->size];', '  return s.slots[s.size];', '    return slots[size];', '        return self.slots[self.size]'),
+          quad(
+            'pop-read',
+            '  return s->data[s->size];',
+            '  return s.slots[s.size];',
+            '    return slots[size];',
+            '        return self.slots[self.size]'
+          ),
           quad(undefined, '}', '}', '  }', '')
         ];
         break;
       case 'peek':
         lines = [
-          quad(undefined, 'int peek(Stack* s) {', 'int peek(Stack& s) {', '  int peek() {', '    def peek(self):'),
-          quad('peek-check', '  if (s->size == 0) return -1;', '  if (s.size == 0) return -1;', '    if (size == 0) return -1;', '        if self.size == 0: return -1'),
-          quad('peek-read', '  return s->data[s->size - 1];', '  return s.slots[s.size - 1];', '    return slots[size - 1];', '        return self.slots[self.size - 1]'),
+          quad(
+            undefined,
+            'int peek(Stack* s) {',
+            'int peek(Stack& s) {',
+            '  int peek() {',
+            '    def peek(self):'
+          ),
+          quad(
+            'peek-check',
+            '  if (s->size == 0) return -1;',
+            '  if (s.size == 0) return -1;',
+            '    if (size == 0) return -1;',
+            '        if self.size == 0: return -1'
+          ),
+          quad(
+            'peek-read',
+            '  return s->data[s->size - 1];',
+            '  return s.slots[s.size - 1];',
+            '    return slots[size - 1];',
+            '        return self.slots[self.size - 1]'
+          ),
           quad(undefined, '}', '}', '  }', '')
         ];
         break;
       case 'search':
         lines = [
-          quad(undefined, 'int search(Stack* s, int target) {', 'int search(Stack& s, int target) {', '  int search(int target) {', '    def search(self, target):'),
-          quad('search-init', '  int distance = 0;', '  int distance = 0;', '    int distance = 0;', '        distance = 0'),
-          quad('search-check', '  for (int i = s->size - 1; i >= 0; i--) {', '  for (int i = s.size - 1; i >= 0; i--) {', '    for (int i = size - 1; i >= 0; i--) {', '        for i in range(self.size - 1, -1, -1):'),
-          quad('search-compare', '    if (s->data[i] == target)', '    if (s.slots[i] == target)', '      if (slots[i] == target)', '            if self.slots[i] == target:'),
-          quad('search-found', '      return s->size - 1 - i;', '      return s.size - 1 - i;', '        return size - 1 - i;', '                return self.size - 1 - i'),
+          quad(
+            undefined,
+            'int search(Stack* s, int target) {',
+            'int search(Stack& s, int target) {',
+            '  int search(int target) {',
+            '    def search(self, target):'
+          ),
+          quad(
+            'search-init',
+            '  int distance = 0;',
+            '  int distance = 0;',
+            '    int distance = 0;',
+            '        distance = 0'
+          ),
+          quad(
+            'search-check',
+            '  for (int i = s->size - 1; i >= 0; i--) {',
+            '  for (int i = s.size - 1; i >= 0; i--) {',
+            '    for (int i = size - 1; i >= 0; i--) {',
+            '        for i in range(self.size - 1, -1, -1):'
+          ),
+          quad(
+            'search-compare',
+            '    if (s->data[i] == target)',
+            '    if (s.slots[i] == target)',
+            '      if (slots[i] == target)',
+            '            if self.slots[i] == target:'
+          ),
+          quad(
+            'search-found',
+            '      return s->size - 1 - i;',
+            '      return s.size - 1 - i;',
+            '        return size - 1 - i;',
+            '                return self.size - 1 - i'
+          ),
           quad('search-advance', '  }', '  }', '    }', ''),
-          quad('search-missing', '  return -1;', '  return -1;', '    return -1;', '        return -1'),
+          quad(
+            'search-missing',
+            '  return -1;',
+            '  return -1;',
+            '    return -1;',
+            '        return -1'
+          ),
           quad(undefined, '}', '}', '  }', '')
         ];
         break;
@@ -791,92 +1300,271 @@ function sourceLines(config: ResolvedConfig, lang: SupportedLanguage): SourceLin
     switch (config.operation) {
       case 'push':
         lines = [
-          quad(undefined, 'void push(Stack* s, int value) {', 'void push(Stack& s, int value) {', '  void push(int value) {', '    def push(self, value):'),
-          quad('push-alloc', '  Node* newNode = malloc(sizeof(Node));', '  Node* newNode = new Node();', '    Node newNode = new Node(value);', '        new_node = Node(value)'),
-          quad('push-link', '  newNode->next = s->head;', '  newNode->next = s.head;', '    newNode.next = head;', '        new_node.next = self.head'),
-          quad('push-head', '  s->head = newNode;', '  s.head = newNode;', '    head = newNode;', '        self.head = new_node'),
+          quad(
+            undefined,
+            'void push(Stack* s, int value) {',
+            'void push(Stack& s, int value) {',
+            '  void push(int value) {',
+            '    def push(self, value):'
+          ),
+          quad(
+            'push-alloc',
+            '  Node* newNode = malloc(sizeof(Node));',
+            '  Node* newNode = new Node();',
+            '    Node newNode = new Node(value);',
+            '        new_node = Node(value)'
+          ),
+          quad(
+            'push-link',
+            '  newNode->next = s->head;',
+            '  newNode->next = s.head;',
+            '    newNode.next = head;',
+            '        new_node.next = self.head'
+          ),
+          quad(
+            'push-head',
+            '  s->head = newNode;',
+            '  s.head = newNode;',
+            '    head = newNode;',
+            '        self.head = new_node'
+          ),
           quad(undefined, '}', '}', '  }', '')
         ];
         break;
       case 'pop':
         lines = [
-          quad(undefined, 'int pop(Stack* s) {', 'int pop(Stack& s) {', '  int pop() {', '    def pop(self):'),
-          quad('pop-check', '  if (s->head == NULL) return -1;', '  if (s.head == nullptr) return -1;', '    if (head == null) return -1;', '        if self.head is None: return -1'),
-          quad('pop-read', '  int value = s->head->value;', '  int value = s.head->value;', '    int value = head.value;', '        value = self.head.value'),
-          quad('pop-head', '  Node* temp = s->head; s->head = s->head->next;', '  Node* temp = s.head; s.head = s.head->next;', '    head = head.next;', '        self.head = self.head.next'),
-          quad('pop-free', '  free(temp); return value;', '  delete temp; return value;', '    return value;', '        return value'),
+          quad(
+            undefined,
+            'int pop(Stack* s) {',
+            'int pop(Stack& s) {',
+            '  int pop() {',
+            '    def pop(self):'
+          ),
+          quad(
+            'pop-check',
+            '  if (s->head == NULL) return -1;',
+            '  if (s.head == nullptr) return -1;',
+            '    if (head == null) return -1;',
+            '        if self.head is None: return -1'
+          ),
+          quad(
+            'pop-read',
+            '  int value = s->head->value;',
+            '  int value = s.head->value;',
+            '    int value = head.value;',
+            '        value = self.head.value'
+          ),
+          quad(
+            'pop-head',
+            '  Node* temp = s->head; s->head = s->head->next;',
+            '  Node* temp = s.head; s.head = s.head->next;',
+            '    head = head.next;',
+            '        self.head = self.head.next'
+          ),
+          quad(
+            'pop-free',
+            '  free(temp); return value;',
+            '  delete temp; return value;',
+            '    return value;',
+            '        return value'
+          ),
           quad(undefined, '}', '}', '  }', '')
         ];
         break;
       case 'peek':
         lines = [
-          quad(undefined, 'int peek(Stack* s) {', 'int peek(Stack& s) {', '  int peek() {', '    def peek(self):'),
-          quad('peek-check', '  if (s->head == NULL) return -1;', '  if (s.head == nullptr) return -1;', '    if (head == null) return -1;', '        if self.head is None: return -1'),
-          quad('peek-read', '  return s->head->value;', '  return s.head->value;', '    return head.value;', '        return self.head.value'),
+          quad(
+            undefined,
+            'int peek(Stack* s) {',
+            'int peek(Stack& s) {',
+            '  int peek() {',
+            '    def peek(self):'
+          ),
+          quad(
+            'peek-check',
+            '  if (s->head == NULL) return -1;',
+            '  if (s.head == nullptr) return -1;',
+            '    if (head == null) return -1;',
+            '        if self.head is None: return -1'
+          ),
+          quad(
+            'peek-read',
+            '  return s->head->value;',
+            '  return s.head->value;',
+            '    return head.value;',
+            '        return self.head.value'
+          ),
           quad(undefined, '}', '}', '  }', '')
         ];
         break;
       case 'search':
         lines = [
-          quad(undefined, 'int search(Stack* s, int target) {', 'int search(Stack& s, int target) {', '  int search(int target) {', '    def search(self, target):'),
-          quad('search-init', '  int distance = 0; Node* current = s->head;', '  int distance = 0; Node* current = s.head;', '    int distance = 0; Node current = head;', '        distance = 0; current = self.head'),
-          quad('search-check', '  while (current != NULL) {', '  while (current != nullptr) {', '    while (current != null) {', '        while current is not None:'),
-          quad('search-compare', '    if (current->value == target)', '    if (current->value == target)', '      if (current.value == target)', '            if current.value == target:'),
-          quad('search-found', '      return distance;', '      return distance;', '        return distance;', '                return distance'),
-          quad('search-advance', '    current = current->next; distance++;', '    current = current->next; distance++;', '      current = current.next; distance++;', '            current = current.next; distance += 1'),
+          quad(
+            undefined,
+            'int search(Stack* s, int target) {',
+            'int search(Stack& s, int target) {',
+            '  int search(int target) {',
+            '    def search(self, target):'
+          ),
+          quad(
+            'search-init',
+            '  int distance = 0; Node* current = s->head;',
+            '  int distance = 0; Node* current = s.head;',
+            '    int distance = 0; Node current = head;',
+            '        distance = 0; current = self.head'
+          ),
+          quad(
+            'search-check',
+            '  while (current != NULL) {',
+            '  while (current != nullptr) {',
+            '    while (current != null) {',
+            '        while current is not None:'
+          ),
+          quad(
+            'search-compare',
+            '    if (current->value == target)',
+            '    if (current->value == target)',
+            '      if (current.value == target)',
+            '            if current.value == target:'
+          ),
+          quad(
+            'search-found',
+            '      return distance;',
+            '      return distance;',
+            '        return distance;',
+            '                return distance'
+          ),
+          quad(
+            'search-advance',
+            '    current = current->next; distance++;',
+            '    current = current->next; distance++;',
+            '      current = current.next; distance++;',
+            '            current = current.next; distance += 1'
+          ),
           quad(undefined, '  }', '  }', '    }', ''),
-          quad('search-missing', '  return -1;', '  return -1;', '    return -1;', '        return -1'),
+          quad(
+            'search-missing',
+            '  return -1;',
+            '  return -1;',
+            '    return -1;',
+            '        return -1'
+          ),
           quad(undefined, '}', '}', '  }', '')
         ];
         break;
     }
   }
-  
+
   return lines.map((q, i) => ({
-    id: q.semantic || `L${i}`,
-    semanticOperationId: q.semantic || null,
-    text: q[lang]
+    id: `${config.operation}-${config.backing}-${i + 1}`,
+    number: i + 1,
+    text: q[lang],
+    ...(q.semantic ? { semanticOperationId: q.semantic } : {})
   }));
 }
 
-function deriveComplexity(config: ResolvedConfig): string[] {
-  return ['O(1) normally.'];
+function deriveComplexity(caseId: string): string[] {
+  switch (caseId) {
+    case 'push-normal':
+      return [
+        'Push writes into slot size (array) or relinks head (list) — a fixed number of operations.',
+        'Nothing depends on how many elements are already on the stack.',
+        'A bounded primitive count is O(1) time and O(1) auxiliary space.'
+      ];
+    case 'push-resize':
+      return [
+        'size == capacity, so a new buffer is allocated and every existing element is copied first.',
+        'The copy loop runs once per element, so the work grows linearly with n.',
+        'This single push is O(n) time and O(n) transient auxiliary space for the second buffer.'
+      ];
+    case 'push-amortized':
+      return [
+        'Doubling makes resizes rare: costs of 1, 2, 4, 8, … form a geometric series bounded by 2n.',
+        'Total work over n pushes stays below 3n primitive writes.',
+        'Averaged across all pushes, each is O(1) amortized even though one resize is O(n).'
+      ];
+    case 'pop-normal':
+      return [
+        'Pop reads the top slot and decrements size, or relinks head and frees one node.',
+        'The amount of work is the same regardless of stack depth.',
+        'A bounded primitive count is O(1) time and O(1) auxiliary space.'
+      ];
+    case 'peek-normal':
+      return [
+        'Peek reads exactly one location — the top — and returns it.',
+        'No element moves and size is unchanged.',
+        'A single read is O(1) time and O(1) auxiliary space.'
+      ];
+    case 'search-normal':
+      return [
+        'Search compares elements from the top downward until a match or the bottom.',
+        'A target at the bottom, or absent, forces one comparison per element.',
+        'Work grows linearly with n: O(n) time, with only a cursor for O(1) auxiliary space.'
+      ];
+    default:
+      return ['A bounded primitive count is O(1).'];
+  }
 }
+
+const STACK_OBJECTIVES = [
+  'Explain why array, dynamic-array, and linked-list stacks all push and pop in O(1)',
+  'Distinguish a worst-case O(n) resize push from the amortized O(1) it enables',
+  'Separate overflow, underflow, peek-versus-pop, and search distance from the top'
+];
 
 export function createStackLesson(input: StackConfig = DEFAULT_STACK_CONFIG): TraceLesson {
   const config = resolveConfig(input);
   const metadata = getStackOperationMetadata(config.operation);
   let caseId = metadata.cases[0].id;
-  
-  if (config.operation === 'push' && config.backing === 'dynamic-array') {
-    caseId = config.values.length === config.capacity ? 'push-resize' : 'push-normal';
+
+  if (config.operation === 'push') {
+    if (config.backing === 'dynamic-array') {
+      caseId = config.values.length === config.capacity ? 'push-resize' : 'push-amortized';
+    } else {
+      caseId = 'push-normal';
+    }
   } else if (config.operation === 'search') {
     caseId = 'search-normal';
   }
-  
-  const complexityCase = {
-    ...metadata.cases.find(c => c.id === caseId)!,
-    derivation: deriveComplexity(config)
+
+  const complexityCase: SelectedCase = {
+    ...metadata.cases.find((c) => c.id === caseId)!,
+    derivation: deriveComplexity(caseId)
   };
-  
+
   const state = initialRuntime(config);
   const builder = createTraceBuilder(config, complexityCase, state);
-  
+
   switch (config.operation) {
-    case 'push': runPush(builder, config); break;
-    case 'pop': runPop(builder, config); break;
-    case 'peek': runPeek(builder, config); break;
-    case 'search': runSearch(builder, config); break;
+    case 'push':
+      runPush(builder, config);
+      break;
+    case 'pop':
+      runPop(builder, config);
+      break;
+    case 'peek':
+      runPeek(builder, config);
+      break;
+    case 'search':
+      runSearch(builder, config);
+      break;
   }
-  
+
+  const backingLabel =
+    config.backing === 'array'
+      ? 'fixed array'
+      : config.backing === 'dynamic-array'
+        ? 'dynamic array'
+        : 'linked list';
+
   return {
-    id: `stack-${config.backing}-${config.operation}`,
+    id: 'stack-lab',
     subject: 'dsa-1',
-    topic: 'stack',
-    title: `Stack: ${metadata.label} (${config.backing})`,
+    topic: 'Stack',
+    title: `Stack Lab — ${metadata.label} (${backingLabel})`,
     description: metadata.description,
     difficulty: 'beginner',
-    learningObjectives: ['Understand stack operations', 'Understand complexity'],
+    learningObjectives: STACK_OBJECTIVES,
     supportedLanguages: ['c', 'cpp', 'java', 'python'],
     sourceByLanguage: {
       c: sourceLines(config, 'c'),
@@ -886,6 +1574,6 @@ export function createStackLesson(input: StackConfig = DEFAULT_STACK_CONFIG): Tr
     },
     initialState: traceState(initialRuntime(config), config),
     steps: builder.steps,
-    completionCriteria: { requiredCorrectPredictions: 0, masteryThreshold: 0 }
+    completionCriteria: { requiredCorrectPredictions: 1, masteryThreshold: 0.8 }
   };
 }

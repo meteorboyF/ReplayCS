@@ -22,8 +22,57 @@ describe('live lesson registry', () => {
 
   it('derives remaining completion XP from live metadata and completion state', () => {
     const progress = { ...createEmptyProgress(), completed: ['binary-search'] };
-    expect(liveLessonsForSubject('dsa-1')).toHaveLength(4);
-    expect(remainingCompletionXp(progress, 'dsa-1')).toBe(95);
+    expect(liveLessonsForSubject('dsa-1')).toHaveLength(7);
+    expect(remainingCompletionXp(progress, 'dsa-1')).toBe(200);
+  });
+
+  it('registers the Stack, Queue, and Deque Labs with routes, rewards, and recovery evidence', () => {
+    const expectations = [
+      {
+        completionId: 'stack-lab',
+        slug: 'stack',
+        title: 'Stack Lab',
+        tags: [
+          'peek-vs-pop',
+          'underflow-vs-empty',
+          'capacity-vs-size',
+          'amortized-vs-worst',
+          'pointer-update-order',
+          'off-by-one'
+        ]
+      },
+      {
+        completionId: 'queue-lab',
+        slug: 'queue',
+        title: 'Queue Lab',
+        tags: [
+          'queue-front-rear',
+          'queue-shift-cost',
+          'rear-pointer',
+          'underflow-vs-empty',
+          'stack-vs-queue'
+        ]
+      },
+      {
+        completionId: 'deque-lab',
+        slug: 'deque',
+        title: 'Deque Lab',
+        tags: ['deque-end-confusion', 'deque-overflow-underflow', 'peek-vs-pop']
+      }
+    ];
+    for (const expected of expectations) {
+      const lesson = LIVE_LESSONS.find(
+        (candidate) => candidate.completionId === expected.completionId
+      );
+      expect(lesson, expected.completionId).toMatchObject({
+        subject: 'dsa-1',
+        slug: expected.slug,
+        title: expected.title,
+        href: `/lesson/dsa-1/${expected.slug}`,
+        completionXp: 35
+      });
+      expect(lesson?.recovery.misconceptionTags, expected.completionId).toEqual(expected.tags);
+    }
   });
 
   it('registers the complete Array Lab route, reward, and recovery evidence', () => {
@@ -85,7 +134,10 @@ describe('live lesson registry', () => {
         'binary-search': 80,
         'sorting-arena': 140,
         'linked-list-lab': 90,
-        'array-lab': 90
+        'array-lab': 90,
+        'stack-lab': 90,
+        'queue-lab': 90,
+        'deque-lab': 90
       }
     };
     expect(subjectMastery(progress, 'dsa-1')).toBe(90);

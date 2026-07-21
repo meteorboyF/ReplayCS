@@ -45,7 +45,9 @@ describe('deque operation execution coverage', () => {
       expect(lesson.steps.length, variant.id).toBeGreaterThan(0);
       expect(JSON.stringify(repeated), variant.id).toBe(JSON.stringify(lesson));
       expect(lesson.supportedLanguages, variant.id).toEqual(['c', 'cpp', 'java', 'python']);
-      expect(finalStep?.complexityEvidence?.cumulativeOperationCount, variant.id).toBeGreaterThan(0);
+      expect(finalStep?.complexityEvidence?.cumulativeOperationCount, variant.id).toBeGreaterThan(
+        0
+      );
       expect(finalStep?.complexityEvidence?.timeComplexity, variant.id).toBeDefined();
 
       for (const language of lesson.supportedLanguages) {
@@ -59,6 +61,14 @@ describe('deque operation execution coverage', () => {
         ).toBe(true);
       }
 
+      const predictionStep = lesson.steps.find((step) => step.prediction);
+      expect(predictionStep, `${variant.id}:has-prediction`).toBeDefined();
+      expect(predictionStep?.metadata?.mistake, `${variant.id}:has-mistake`).toBeDefined();
+      expect(
+        lesson.steps.at(-1)?.complexityEvidence?.assumptions.length,
+        `${variant.id}:assumptions`
+      ).toBeGreaterThan(0);
+
       lesson.steps.forEach((step, index) => {
         expect(step.index, `${variant.id}:step-${index}`).toBe(index);
         expect(step.complexityEvidence, `${variant.id}:step-${index}`).toBeDefined();
@@ -69,25 +79,33 @@ describe('deque operation execution coverage', () => {
 
   it('makes circular array push-front trigger resize properly when full', () => {
     const normalLesson = createDequeLesson(
-      configFor({ id: 'push-front-circular-array', operation: 'push-front', backing: 'circular-array' })
+      configFor({
+        id: 'push-front-circular-array',
+        operation: 'push-front',
+        backing: 'circular-array'
+      })
     );
     // Force a resize
     const resizeLesson = createDequeLesson({
-        ...configFor({ id: 'push-front-circular-array', operation: 'push-front', backing: 'circular-array' }),
-        capacity: 3, // Full capacity
-        values: [10, 20, 30]
+      ...configFor({
+        id: 'push-front-circular-array',
+        operation: 'push-front',
+        backing: 'circular-array'
+      }),
+      capacity: 3, // Full capacity
+      values: [10, 20, 30]
     });
     const normalEvidence = normalLesson.steps.at(-1)?.complexityEvidence;
     const resizeEvidence = resizeLesson.steps.at(-1)?.complexityEvidence;
 
     if (normalEvidence?.timeComplexity === 'O(1)') {
-        // Just verify normal case
-        expect(normalEvidence?.timeComplexity).toBe('O(1)');
+      // Just verify normal case
+      expect(normalEvidence?.timeComplexity).toBe('O(1)');
     }
-    
+
     // Depending on trace builder exact implementation, this might report O(n). Just ensure they differ in steps or report O(n).
     if (resizeEvidence?.timeComplexity === 'O(n)') {
-        expect(resizeEvidence?.timeComplexity).toBe('O(n)');
+      expect(resizeEvidence?.timeComplexity).toBe('O(n)');
     }
   });
 });

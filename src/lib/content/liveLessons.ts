@@ -86,6 +86,55 @@ const definitions: readonly LiveLessonDefinition[] = [
     }
   },
   {
+    completionId: 'stack-lab',
+    subject: 'dsa-1',
+    slug: 'stack',
+    completionXp: 35,
+    recovery: {
+      title: 'Stack Lab Recovery',
+      href: '/lesson/dsa-1/stack',
+      reason: 'Replay the first top-of-stack, capacity, or pointer-order divergence.',
+      misconceptionTags: [
+        'peek-vs-pop',
+        'underflow-vs-empty',
+        'capacity-vs-size',
+        'amortized-vs-worst',
+        'pointer-update-order',
+        'off-by-one'
+      ]
+    }
+  },
+  {
+    completionId: 'queue-lab',
+    subject: 'dsa-1',
+    slug: 'queue',
+    completionXp: 35,
+    recovery: {
+      title: 'Queue Lab Recovery',
+      href: '/lesson/dsa-1/queue',
+      reason: 'Replay the first front-versus-rear, shifting, or wrap-around divergence.',
+      misconceptionTags: [
+        'queue-front-rear',
+        'queue-shift-cost',
+        'rear-pointer',
+        'underflow-vs-empty',
+        'stack-vs-queue'
+      ]
+    }
+  },
+  {
+    completionId: 'deque-lab',
+    subject: 'dsa-1',
+    slug: 'deque',
+    completionXp: 35,
+    recovery: {
+      title: 'Deque Lab Recovery',
+      href: '/lesson/dsa-1/deque',
+      reason: 'Replay the first end-selection or peek-versus-pop divergence.',
+      misconceptionTags: ['deque-end-confusion', 'deque-overflow-underflow', 'peek-vs-pop']
+    }
+  },
+  {
     completionId: 'graph-explorer',
     subject: 'dsa-2',
     slug: 'graph-explorer',

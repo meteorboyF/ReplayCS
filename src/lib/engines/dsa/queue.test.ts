@@ -46,7 +46,9 @@ describe('queue operation execution coverage', () => {
       expect(lesson.steps.length, variant.id).toBeGreaterThan(0);
       expect(JSON.stringify(repeated), variant.id).toBe(JSON.stringify(lesson));
       expect(lesson.supportedLanguages, variant.id).toEqual(['c', 'cpp', 'java', 'python']);
-      expect(finalStep?.complexityEvidence?.cumulativeOperationCount, variant.id).toBeGreaterThan(0);
+      expect(finalStep?.complexityEvidence?.cumulativeOperationCount, variant.id).toBeGreaterThan(
+        0
+      );
       expect(finalStep?.complexityEvidence?.timeComplexity, variant.id).toBeDefined();
 
       for (const language of lesson.supportedLanguages) {
@@ -60,12 +62,40 @@ describe('queue operation execution coverage', () => {
         ).toBe(true);
       }
 
+      const predictionStep = lesson.steps.find((step) => step.prediction);
+      expect(predictionStep, `${variant.id}:has-prediction`).toBeDefined();
+      expect(predictionStep?.metadata?.mistake, `${variant.id}:has-mistake`).toBeDefined();
+      expect(
+        lesson.steps.at(-1)?.complexityEvidence?.assumptions.length,
+        `${variant.id}:assumptions`
+      ).toBeGreaterThan(0);
+
       lesson.steps.forEach((step, index) => {
         expect(step.index, `${variant.id}:step-${index}`).toBe(index);
         expect(step.complexityEvidence, `${variant.id}:step-${index}`).toBeDefined();
         expect(() => JSON.stringify(step), `${variant.id}:step-${index}`).not.toThrow();
       });
     }
+  });
+
+  it('turns linked-queue enqueue from O(1) with a rear pointer into O(n) without one', () => {
+    const withRear = createQueueLesson({
+      operation: 'enqueue',
+      backing: 'linked-list',
+      values: [10, 20, 30],
+      newValue: 40,
+      capacity: 5
+    });
+    const withoutRear = createQueueLesson({
+      operation: 'enqueue',
+      backing: 'linked-list',
+      values: [10, 20, 30],
+      newValue: 40,
+      capacity: -1
+    });
+    expect(withRear.steps.at(-1)?.complexityEvidence?.timeComplexity).toBe('O(1)');
+    expect(withoutRear.steps.at(-1)?.complexityEvidence?.timeComplexity).toBe('O(n)');
+    expect(withoutRear.steps.length).toBeGreaterThan(withRear.steps.length);
   });
 
   it('makes naive dequeue shift operation O(n) and circular dequeue O(1)', () => {

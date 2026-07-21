@@ -85,9 +85,7 @@
     progress = loadProgress();
     language = progress.preferredLanguage;
     try {
-      const stored: unknown = JSON.parse(
-        localStorage.getItem('replaycs-deque-operations') ?? '[]'
-      );
+      const stored: unknown = JSON.parse(localStorage.getItem('replaycs-deque-operations') ?? '[]');
       completedOperations = [
         ...new Set(
           (Array.isArray(stored) ? stored : []).filter(
@@ -130,10 +128,7 @@
 
   function parseValues(validate = true) {
     const pieces = valuesText.split(',').map((value) => value.trim());
-    if (
-      pieces.some((value) => value === '' || !/^-?\d+$/.test(value)) ||
-      pieces.length > 8
-    ) {
+    if (pieces.some((value) => value === '' || !/^-?\d+$/.test(value)) || pieces.length > 8) {
       if (validate) inputError = 'Enter up to 8 comma-separated whole numbers.';
       return [...(DEFAULT_DEQUE_CONFIG.values ?? [])];
     }
@@ -152,6 +147,7 @@
     try {
       lesson = createDequeLesson({
         operation,
+        backing,
         values,
         newValue
       });
@@ -255,20 +251,21 @@
       const inferredStateKey = firstMutation?.entityId ?? 'front';
       const stateKey = authored?.stateKey ?? inferredStateKey;
       const actual = String(authored?.correctAnswer ?? step.prediction.correctAnswer);
-      mistake = {
+      const attempt: MistakeAttempt = {
         evidenceId,
         stepId: step.id,
         prompt: authored?.prompt ?? step.prediction.prompt,
         predicted: answer,
         actual,
         explanation: authored?.explanation ?? step.prediction.explanation,
-        tag: authored?.tag ?? 'deque-update-order',
+        tag: authored?.tag ?? 'deque-end-confusion',
         variableLabel: authored?.variableLabel ?? stateKey,
         stateKey,
         recoveryPrompt:
           authored?.recoveryPrompt ?? `Recovery challenge: enter the correct ${stateKey} value.`
       };
-      progress = recordMisconception(progress, evidenceId, mistake.tag);
+      mistake = attempt;
+      progress = recordMisconception(progress, evidenceId, attempt.tag);
     }
     saveProgress(progress);
   }
@@ -325,7 +322,7 @@
   }
 
   function elementCount(state: Record<string, TraceValue>) {
-    return Array.isArray(state.elements) ? state.elements.length : 0;
+    return typeof state.size === 'number' ? state.size : 0;
   }
 </script>
 
@@ -374,11 +371,25 @@
       {/each}
     </select></label
   >
+  <label
+    >Backing
+    <select
+      aria-label="Backing"
+      value={backing}
+      onchange={(event) => {
+        backing = event.currentTarget.value as DequeBacking;
+        buildTrace();
+      }}
+    >
+      <option value="circular-array">Circular array</option>
+      <option value="linked-list">Doubly linked list</option>
+    </select></label
+  >
   <label class="values-field"
     >Current deque
     <input bind:value={valuesText} aria-describedby="list-help list-error" />
   </label>
-  {#if String(operation).startsWith('insert')}
+  {#if String(operation).startsWith('push')}
     <label>New value<input type="number" bind:value={newValue} /></label>
   {/if}
   <button class="primary" type="submit">Build deterministic trace</button>

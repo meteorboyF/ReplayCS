@@ -12,6 +12,7 @@
     DEFAULT_STACK_CONFIG,
     STACK_OPERATIONS,
     createStackLesson,
+    type StackBacking,
     type StackConfig,
     type StackOperation,
     type StackOperationMetadata
@@ -45,9 +46,12 @@
   const operationCount = operationCompletionKeys.length;
   const languages: SupportedLanguage[] = ['c', 'cpp', 'java', 'python'];
   const complexityRows = [
-    ['Push', 'All cases', 'O(1)', 'O(1)'],
-    ['Pop', 'All cases', 'O(1)', 'O(1)'],
-    ['Peek', 'All cases', 'O(1)', 'O(1)']
+    ['Push', 'Array / linked list, not full', 'O(1)', 'O(1)'],
+    ['Push', 'Dynamic array, resize (full)', 'O(n)', 'O(n)'],
+    ['Push', 'Dynamic array, amortized', 'O(1)', 'O(1)'],
+    ['Pop', 'All backings', 'O(1)', 'O(1)'],
+    ['Peek', 'All backings', 'O(1)', 'O(1)'],
+    ['Search', 'Distance from top', 'O(n)', 'O(1)']
   ];
   const mistakeClinic = [
     ['stack-overflow', 'Pushing to full stack', 'push'],
@@ -55,8 +59,10 @@
   ] as const;
 
   let operation = $state<StackOperation>(DEFAULT_STACK_CONFIG.operation);
+  let backing = $state<StackBacking>(DEFAULT_STACK_CONFIG.backing);
   let valuesText = $state(DEFAULT_STACK_CONFIG.values?.join(', ') ?? '');
   let newValue = $state(DEFAULT_STACK_CONFIG.newValue ?? 99);
+  let target = $state(DEFAULT_STACK_CONFIG.target ?? 20);
   let lesson = $state(createStackLesson(config()));
   let index = $state(0);
   let language = $state<SupportedLanguage>('cpp');
@@ -82,9 +88,7 @@
     progress = loadProgress();
     language = progress.preferredLanguage;
     try {
-      const stored: unknown = JSON.parse(
-        localStorage.getItem('replaycs-stack-operations') ?? '[]'
-      );
+      const stored: unknown = JSON.parse(localStorage.getItem('replaycs-stack-operations') ?? '[]');
       completedOperations = [
         ...new Set(
           (Array.isArray(stored) ? stored : []).filter(
@@ -117,19 +121,21 @@
   }
 
   function config(): StackConfig {
+    const values = parseValues(false);
     return {
       operation,
-      values: parseValues(false),
-      newValue
+      backing,
+      values,
+      newValue,
+      target,
+      // A full dynamic array forces the O(n) resize push; array stays fixed-capacity.
+      capacity: backing === 'dynamic-array' ? values.length : values.length + 2
     };
   }
 
   function parseValues(validate = true) {
     const pieces = valuesText.split(',').map((value) => value.trim());
-    if (
-      pieces.some((value) => value === '' || !/^-?\d+$/.test(value)) ||
-      pieces.length > 8
-    ) {
+    if (pieces.some((value) => value === '' || !/^-?\d+$/.test(value)) || pieces.length > 8) {
       if (validate) inputError = 'Enter up to 8 comma-separated whole numbers.';
       return [...(DEFAULT_STACK_CONFIG.values ?? [])];
     }
@@ -148,8 +154,11 @@
     try {
       lesson = createStackLesson({
         operation,
+        backing,
         values,
-        newValue
+        newValue,
+        target,
+        capacity: backing === 'dynamic-array' ? values.length : values.length + 2
       });
       index = 0;
       submitted = [];
@@ -251,20 +260,21 @@
       const inferredStateKey = firstMutation?.entityId ?? 'top';
       const stateKey = authored?.stateKey ?? inferredStateKey;
       const actual = String(authored?.correctAnswer ?? step.prediction.correctAnswer);
-      mistake = {
+      const attempt: MistakeAttempt = {
         evidenceId,
         stepId: step.id,
         prompt: authored?.prompt ?? step.prediction.prompt,
         predicted: answer,
         actual,
         explanation: authored?.explanation ?? step.prediction.explanation,
-        tag: authored?.tag ?? 'stack-update-order',
+        tag: authored?.tag ?? 'peek-vs-pop',
         variableLabel: authored?.variableLabel ?? stateKey,
         stateKey,
         recoveryPrompt:
           authored?.recoveryPrompt ?? `Recovery challenge: enter the correct ${stateKey} value.`
       };
-      progress = recordMisconception(progress, evidenceId, mistake.tag);
+      mistake = attempt;
+      progress = recordMisconception(progress, evidenceId, attempt.tag);
     }
     saveProgress(progress);
   }
@@ -321,7 +331,7 @@
   }
 
   function elementCount(state: Record<string, TraceValue>) {
-    return Array.isArray(state.elements) ? state.elements.length : 0;
+    return typeof state.size === 'number' ? state.size : 0;
   }
 </script>
 
@@ -370,6 +380,21 @@
       {/each}
     </select></label
   >
+  <label class="operation-field"
+    >Backing
+    <select
+      aria-label="Backing"
+      value={backing}
+      onchange={(event) => {
+        backing = event.currentTarget.value as StackBacking;
+        buildTrace();
+      }}
+    >
+      <option value="array">Fixed array</option>
+      <option value="dynamic-array">Dynamic array (resize)</option>
+      <option value="linked-list">Linked list</option>
+    </select></label
+  >
   <label class="values-field"
     >Current stack
     <input bind:value={valuesText} aria-describedby="list-help list-error" />
@@ -377,8 +402,13 @@
   {#if String(operation) === 'push'}
     <label>New value<input type="number" bind:value={newValue} /></label>
   {/if}
+  {#if String(operation) === 'search'}
+    <label>Target<input type="number" bind:value={target} /></label>
+  {/if}
   <button class="primary" type="submit">Build deterministic trace</button>
-  <p id="list-help">Enter comma-separated values (bottom to top).</p>
+  <p id="list-help">
+    Enter comma-separated values (bottom to top). A full dynamic array makes push resize in O(n).
+  </p>
   {#if inputError}<p id="list-error" class="error" role="alert">{inputError}</p>{/if}
 </form>
 
