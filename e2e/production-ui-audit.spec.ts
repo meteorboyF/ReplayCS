@@ -20,6 +20,7 @@ const routes = [
   '/lesson/dsa-1/binary-search',
   '/lesson/dsa-1/bst',
   '/lesson/dsa-1/strings',
+  '/lesson/dsa-1/recursion',
   '/lesson/dsa-2/graph-explorer',
   '/lesson/dbms/query-pipeline',
   '/lesson/operating-systems/cpu-scheduling',

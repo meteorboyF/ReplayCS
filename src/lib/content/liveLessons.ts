@@ -194,6 +194,18 @@ const definitions: readonly LiveLessonDefinition[] = [
     }
   },
   {
+    completionId: 'recursion-lab',
+    subject: 'dsa-1',
+    slug: 'recursion',
+    completionXp: 40,
+    recovery: {
+      title: 'Recursion Lab Recovery',
+      href: '/lesson/dsa-1/recursion',
+      reason: 'Replay the first base-case, child-call, or unwind divergence.',
+      misconceptionTags: ['recursive-base-case', 'loop-boundary']
+    }
+  },
+  {
     completionId: 'graph-explorer',
     subject: 'dsa-2',
     slug: 'graph-explorer',
