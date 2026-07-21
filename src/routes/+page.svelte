@@ -75,7 +75,7 @@
   <p class="eyebrow">Curriculum</p>
   <h2>From searches to packets.</h2>
   <div class="cards subjects">
-    {#each [['DSA I', 'Searches, sorting, arrays, linked lists, stacks, queues, deques, and hash tables traced line by line', '/learn/dsa-1', '9 labs live'], ['DSA II', 'BFS, iterative DFS, and recursive DFS', '/learn/dsa-2', 'Graph lab live'], ['DBMS', 'Trace joins, filters, grouping, aggregates, sorting, and limits', '/learn/dbms', 'Pipeline live'], ['Operating Systems', 'Compare five CPU scheduling policies and exact metrics', '/learn/operating-systems', 'Scheduling live'], ['Networks', 'Trace cache, DNS, ARP, TCP, TLS, HTTP, and rendering', '/learn/computer-networks', 'Packet lab live']] as s}<a
+    {#each [['DSA I', 'Searches, sorting, arrays, linked lists, stacks, queues, deques, hash tables, and trees traced line by line', '/learn/dsa-1', '10 labs live'], ['DSA II', 'BFS, iterative DFS, and recursive DFS', '/learn/dsa-2', 'Graph lab live'], ['DBMS', 'Trace joins, filters, grouping, aggregates, sorting, and limits', '/learn/dbms', 'Pipeline live'], ['Operating Systems', 'Compare five CPU scheduling policies and exact metrics', '/learn/operating-systems', 'Scheduling live'], ['Networks', 'Trace cache, DNS, ARP, TCP, TLS, HTTP, and rendering', '/learn/computer-networks', 'Packet lab live']] as s}<a
         class="card panel"
         href={s[2]}
         ><span class="pill">{s[3]}</span>
