@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { arenaChallenges } from '$lib/challenges/arena';
   import { recommendNext } from '$lib/progress/recommendations';
   import {
     accuracy,
@@ -40,13 +39,6 @@
       ? Math.max(progress.predictionAttempts, checkpointEvidence.length) / checkpointEvidence.length
       : null
   );
-  const bossIds: ReadonlySet<string> = new Set(arenaChallenges.map((challenge) => challenge.id));
-  let completedBosses = $derived(
-    progress.completedBossChallenges.filter((id) => bossIds.has(id)).length
-  );
-  const totalBosses = arenaChallenges.length;
-  let bossProgress = $derived(Math.round((completedBosses / totalBosses) * 100));
-
   const languageLabels: Record<SupportedLanguage, string> = {
     c: 'C',
     cpp: 'C++',
@@ -255,36 +247,19 @@
 </div>
 
 <div class="dashboard-grid learning-history">
-  <section class="panel arena-progress" data-testid="boss-progress">
+  <section class="panel arena-progress">
     <div class="section-head">
       <div>
-        <p class="eyebrow">Challenge Arena</p>
-        <h2>Boss progress</h2>
+        <p class="eyebrow">Scenario Gallery</p>
+        <h2>Jump into a trace</h2>
       </div>
-      <strong>{completedBosses}/{totalBosses}</strong>
-    </div>
-    <div
-      class="arena-meter"
-      role="progressbar"
-      aria-label="Bosses cleared"
-      aria-valuemin="0"
-      aria-valuemax={totalBosses}
-      aria-valuenow={completedBosses}
-    >
-      <span style={`width:${bossProgress}%`}></span>
     </div>
     <p>
-      {#if completedBosses === totalBosses}
-        Every subject boss is cleared. Replay one to keep the trace sharp.
-      {:else if completedBosses > 0}
-        {completedBosses} of {totalBosses} subject bosses cleared.
-      {:else}
-        No bosses cleared yet. Each boss combines two prediction checkpoints.
-      {/if}
+      Hand-picked executions — dynamic-array resizes, hash collisions, worst-case searches, Round
+      Robin scheduling, LEFT JOINs, and cold-cache packet journeys — each opening straight into its
+      visual trace.
     </p>
-    <a href="/challenges"
-      >{completedBosses === totalBosses ? 'Replay a boss' : 'Open Challenge Arena'} →</a
-    >
+    <a href="/challenges" data-testid="scenario-gallery-link">Open the Scenario Gallery →</a>
   </section>
 
   <section class="panel language-usage" data-testid="language-usage">
@@ -516,10 +491,6 @@
   .activity {
     padding: 1.25rem;
   }
-  .arena-progress .section-head > strong {
-    color: var(--primary);
-    font-size: 1.5rem;
-  }
   .arena-progress p {
     color: var(--muted);
     font-size: 0.82rem;
@@ -528,17 +499,12 @@
     color: var(--primary);
     font-size: 0.8rem;
   }
-  .arena-meter,
   .language-bar {
     height: 9px;
     overflow: hidden;
     border-radius: 99px;
     background: var(--border);
   }
-  .arena-meter {
-    margin-top: 1rem;
-  }
-  .arena-meter span,
   .language-bar span {
     display: block;
     height: 100%;

@@ -71,13 +71,6 @@ test.describe('progress evidence integrity', () => {
     await expect(page.getByTestId('average-attempts')).toContainText('1.5');
     await expect(page.getByTestId('hints-used')).toContainText('3');
 
-    const bossProgress = page.getByTestId('boss-progress');
-    await expect(bossProgress).toContainText('2/5');
-    await expect(bossProgress.getByRole('progressbar', { name: 'Bosses cleared' })).toHaveAttribute(
-      'aria-valuenow',
-      '2'
-    );
-
     const languageUsage = page.getByTestId('language-usage');
     await expect(languageUsage).toContainText('6 recorded');
     await expect(languageUsage).toContainText('C++');
@@ -105,7 +98,6 @@ test.describe('progress evidence integrity', () => {
     await expect(page.getByTestId('average-attempts')).toContainText(
       'Make a prediction to start measuring'
     );
-    await expect(page.getByTestId('boss-progress')).toContainText('No bosses cleared yet');
     await expect(page.getByTestId('language-usage')).toContainText(
       'No language interactions recorded yet'
     );

@@ -3,26 +3,28 @@
 ## Last updated
 
 - Date: 2026-07-21
-- Local time: 23:00 (+06)
+- Local time: 23:35 (+06)
 - Updated by: Development session
 - Repository: https://github.com/meteorboyF/ReplayCS.git
 - Production: https://replaycs.vercel.app
-- Current branch: `refactor/visualizer-first-rescue` (renamed locally from `claude/session-521cb8`; commits unchanged)
-- Current commit: `6d6506e` (pre-publish; will advance with this doc update)
-- Remote main commit: `c17f6f5`
-- Latest production commit: unknown this session (not yet deployed — publish in progress)
+- Current branch: `refactor/scenario-gallery` (off merged main; Phase 0 branch `refactor/visualizer-first-rescue` merged via PR #19)
+- Current commit: branch `refactor/scenario-gallery` (Scenario Gallery work; see Git history)
+- Remote main commit: `22654b9` (merge of PR #19)
+- Latest production commit: `22654b9` — deployed to Vercel prod, alias `replaycs.vercel.app` → `replaycs-lc8ho0oo2-meteorboy-f.vercel.app`
 - Worktree status: clean
-- CI status: local gate green (see Testing status)
-- Production health: not verified this session (deploy pending)
-- Open blockers: none — publishing Phase 0 now (push → PR → merge → deploy)
+- CI status: GitHub Actions "Check, test, build, and browser smoke" PASSED on PR #19; local gate green
+- Production health: deployment Ready (Vercel); landing page serves the new build (title verified). Live per-route click-through NOT possible from this sandbox (production domain gates browser read/drive behind per-action approval; plain curl egress blocked). Behavior verified via CI browser smoke + local Playwright 31/31.
+- Open blockers: none for Phase 0 (published + deployed). Manual production click-through of all 15 routes remains for a human/interactive session.
 
 ## Current session objective
 
-> Phase 0 product rescue: remove prediction, Learn/Guided/Challenge modes, and the AI mentor from every
-> lesson; rebuild the shared visual-first workspace; de-predict the six bespoke lesson pages; remove
-> Challenges from the primary nav; and get the full local gate (check/lint/vitest/build/playwright) green.
+> Phase 0 (DONE — merged PR #19, deployed): visualizer-first rescue. Now: post-Phase-0 tasks — convert
+> `/challenges` to a Scenario Gallery, add a synchronized four-language code trace to Sorting Arena,
+> remove dead prediction/mentor architecture, align the Progress dashboard with visual learning, build
+> the isolated `/study-recap` GPT feature, and start the Strings and Recursion labs.
 
-This objective is **complete** on branch `refactor/visualizer-first-rescue`. Not yet merged to `main` or deployed.
+Phase 0 is merged (`22654b9`) and deployed to `replaycs.vercel.app`. Scenario Gallery (Task 1) is
+implemented on branch `refactor/scenario-gallery`.
 
 ## Product direction (active rules — do not restore rejected features)
 
@@ -85,16 +87,16 @@ _None — session objective complete on branch._
 
 ## Needs rework (known follow-ups, not blocking Phase 0)
 
-### /challenges route + boss-arena subsystem still exists
+### /challenges → Scenario Gallery — DONE (branch `refactor/scenario-gallery`)
 
-- Current problem: the prediction-based Challenge Arena route (`src/routes/challenges/+page.svelte`), its
-  engine (`src/lib/challenges/arena.ts`), the Progress page "Challenge Arena" section
-  (`src/routes/progress/+page.svelte` lines ~261–286), and `e2e/challenge-arena.spec.ts` /
-  `e2e/progress-integrity.spec.ts` remain. Only the primary-nav link was removed.
-- Required: either delete the route/engine/tests, or convert `/challenges` into a non-guessing Scenario
-  Gallery of trace presets per the brief (section 2). Then prune boss/prediction fields from the Progress
-  page and progress store.
-- Priority: medium.
+- `/challenges` is now a non-guessing Scenario Gallery: `src/lib/content/scenarioGallery.ts` (11 curated
+  presets) + rewritten `src/routes/challenges/+page.svelte` (cards linking directly to trace presets, no
+  questions/XP/answers). Deleted `src/lib/challenges/arena.ts`, `arena.test.ts`, `e2e/challenge-arena.spec.ts`.
+  Progress page boss section replaced with a Scenario Gallery link; `e2e/scenario-gallery.spec.ts` added;
+  `e2e/progress-integrity.spec.ts` boss assertions removed.
+- RESIDUAL (Task: Progress alignment): `src/lib/progress/store.ts` still exports `completeBossChallenge` /
+  serializes `completedBossChallenges`, and the Progress page still shows prediction-centric metrics
+  (accuracy, streak, hearts, first-attempt accuracy). Remove/realign in the Progress dashboard task.
 
 ### Sorting Arena has no synchronized four-language code panel
 
@@ -172,25 +174,25 @@ Summary`, `controls` snippet, `visual` snippet, optional `about`. Do NOT add gat
 - Replay My Mistake in lessons — REMOVED.
 - Lesson AI mentor / "Explain this step" — REMOVED.
 - Prediction/lock gating of playback and reveals — REMOVED.
-- Challenges in primary nav — REMOVED (route still exists, awaiting rework).
+- Challenges in primary nav — REMOVED.
+- Challenge Arena prediction/boss engine (`arena.ts`) — REMOVED; `/challenges` is now a Scenario Gallery.
 
 ## Testing status
 
 ```
 git diff --check:   clean
-npm run check:      0 errors, 0 warnings (539 files)
+npm run check:      0 errors, 0 warnings (538 files)
 npm run lint:       clean (prettier --check)
-npx vitest run:     211 passed / 211 (21 files)
+npx vitest run:     206 passed / 206 (20 files)  # arena.test.ts (5) removed with the arena engine
 npm run build:      success (@sveltejs/adapter-vercel)
-npx playwright test: 31 passed / 31
-Production smoke:   NOT run (no deploy this session)
+npx playwright test: 30 passed / 30  # -3 challenge-arena, +2 scenario-gallery
 ```
 
 - Date run: 2026-07-21
-- Commit tested: `3841a9b`
+- Commit tested: Scenario Gallery branch tip (`refactor/scenario-gallery`)
 - Failing tests: none
 - Pre-existing failures: none observed
-- Production tested: no
+- Production tested: Phase 0 deployed (`22654b9`); Scenario Gallery deploy pending this task's merge
 
 ## Git history for this session
 
@@ -202,32 +204,35 @@ Production smoke:   NOT run (no deploy this session)
 | a517868 | refactor/visualizer-first-rescue | de-predict SQL Query Pipeline                 | no     | no     | no         |
 | a904678 | refactor/visualizer-first-rescue | de-predict CPU Scheduling                     | no     | no     | no         |
 | c900327 | refactor/visualizer-first-rescue | de-predict Packet Journey                     | no     | no     | no         |
-| 4865f5a | refactor/visualizer-first-rescue | remove Challenges from primary nav            | no     | no     | no         |
-| 3841a9b | refactor/visualizer-first-rescue | align e2e specs with visualizer-first product | no     | no     | no         |
+| 4865f5a | refactor/visualizer-first-rescue | remove Challenges from primary nav            | yes    | yes    | yes        |
+| 3841a9b | refactor/visualizer-first-rescue | align e2e specs with visualizer-first product | yes    | yes    | yes        |
+| 6d6506e | refactor/visualizer-first-rescue | add PROGRESS.md handoff                       | yes    | yes    | yes        |
+| c903075 | refactor/visualizer-first-rescue | branch-rename doc update                      | yes    | yes    | yes        |
+| 22654b9 | main                             | Merge PR #19                                  | yes    | —      | yes        |
 
-Recovery tag `replaycs-before-visualizer-rescue` created locally at `c17f6f5` (not pushed).
+(All eight Phase 0 code/test/doc commits are contained in PR #19 → merge `22654b9`.)
+
+Recovery tag `replaycs-before-visualizer-rescue` at `c17f6f5` — pushed to origin.
 
 ## Deployment history
 
-_None this session. Production still at its previous (pre-branch) commit._
+| Date       | Commit  | Environment | URL                                          | Health | Routes verified                    | Notes                                                             |
+| ---------- | ------- | ----------- | -------------------------------------------- | ------ | ---------------------------------- | ----------------------------------------------------------------- |
+| 2026-07-21 | 22654b9 | production  | replaycs.vercel.app → replaycs-lc8ho0oo2-... | Ready  | landing (title) + CI browser smoke | Live click-through of all 15 routes blocked in sandbox (approval) |
 
 ## Current blockers
 
-### Branch not pushed / merged / deployed
-
-- Impact: the visualizer-first rescue is only on the local worktree branch `refactor/visualizer-first-rescue`.
-- Cause: session scoped to implementation + local gate; push/merge/deploy left to the maintainer to review.
-- What was tried: full local gate is green.
-- Required user action: review the branch, then push, open a PR, merge to `main`, and deploy via the
-  ReplayCS-deploy worktree (`git pull --ff-only origin main && npx vercel deploy --prod --yes`).
-- Can other work continue: yes (further Phase 1+ topics build on this branch).
-- Safe next step after resolution: verify the six flagship routes + shell lessons in production, desktop
-  and mobile, and check the console.
+_None blocking. One residual verification gap:_ a live human click-through of all 15 production routes was
+not possible from this sandbox because the production domain gates the browser read/screenshot/drive tools
+behind per-action approval and plain curl egress is blocked. Behavior was instead verified by the GitHub
+Actions "browser smoke" Playwright run on the merged code and the local Playwright 31/31 run (which builds
+and previews the production bundle, including 390px mobile checks). A human should do a final manual
+click-through of the 15 routes in a browser.
 
 ## Immediate next actions
 
-1. Push `refactor/visualizer-first-rescue`, open a PR, merge to `main`, deploy to Vercel prod, verify the six flagship
-   routes render code+visual+state+complexity with working Next/Play and no lock UI (desktop + 390px).
+1. (DONE) Phase 0 pushed, PR #19 merged to `main` (`22654b9`), deployed to Vercel prod (`replaycs.vercel.app`).
+   Remaining: human manual click-through of all 15 production routes (sandbox could not drive the live site).
 2. Resolve `/challenges`: convert `src/routes/challenges/+page.svelte` into a non-guessing Scenario Gallery
    OR delete the route + `src/lib/challenges/arena.ts` + `e2e/challenge-arena.spec.ts`, and prune the boss/
    prediction section from `src/routes/progress/+page.svelte` and `e2e/progress-integrity.spec.ts`.
