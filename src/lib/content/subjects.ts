@@ -54,6 +54,12 @@ export const subjects = {
         status: 'live',
         detail:
           'Hash keys into buckets, chase collisions through chains and probes, and rehash on resize.'
+      },
+      {
+        title: 'Search Lab',
+        slug: 'search-lab',
+        status: 'live',
+        detail: 'Race linear, binary (loop and recursion), BST, and hash search on the same data.'
       }
     ]
   },

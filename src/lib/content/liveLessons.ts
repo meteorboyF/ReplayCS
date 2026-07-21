@@ -152,6 +152,18 @@ const definitions: readonly LiveLessonDefinition[] = [
     }
   },
   {
+    completionId: 'search-lab',
+    subject: 'dsa-1',
+    slug: 'search-lab',
+    completionXp: 35,
+    recovery: {
+      title: 'Search Lab Recovery',
+      href: '/lesson/dsa-1/search-lab',
+      reason: 'Replay the first halving, descent, or bucket-selection divergence.',
+      misconceptionTags: ['loop-boundary', 'recursive-base-case', 'hash-vs-bucket', 'off-by-one']
+    }
+  },
+  {
     completionId: 'graph-explorer',
     subject: 'dsa-2',
     slug: 'graph-explorer',

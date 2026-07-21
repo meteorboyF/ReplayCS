@@ -7,7 +7,16 @@ import {
   type SortingAlgorithm
 } from './sorting';
 
-const algorithms: SortingAlgorithm[] = ['bubble', 'selection', 'insertion'];
+const algorithms: SortingAlgorithm[] = [
+  'bubble',
+  'selection',
+  'insertion',
+  'merge',
+  'quick',
+  'heap',
+  'counting',
+  'radix'
+];
 
 describe('sorting input validation', () => {
   it('parses signed, spaced, comma-separated integers', () => {
@@ -96,16 +105,70 @@ describe('deterministic sorting traces', () => {
     expect(insertionMark?.sortedIndices).toEqual([0, 1]);
   });
 
-  it('exposes accurate stability and complexity labels', () => {
+  it('exposes accurate stability, in-place, and complexity labels', () => {
     expect(SORTING_ALGORITHMS.bubble.stable).toBe(true);
     expect(SORTING_ALGORITHMS.selection.stable).toBe(false);
     expect(SORTING_ALGORITHMS.insertion.stable).toBe(true);
+    expect(SORTING_ALGORITHMS.merge.stable).toBe(true);
+    expect(SORTING_ALGORITHMS.quick.stable).toBe(false);
+    expect(SORTING_ALGORITHMS.heap.stable).toBe(false);
+    expect(SORTING_ALGORITHMS.counting.stable).toBe(true);
+    expect(SORTING_ALGORITHMS.radix.stable).toBe(true);
+    expect(SORTING_ALGORITHMS.merge.inPlace).toBe(false);
+    expect(SORTING_ALGORITHMS.quick.inPlace).toBe(true);
+    expect(SORTING_ALGORITHMS.heap.inPlace).toBe(true);
+    expect(SORTING_ALGORITHMS.counting.inPlace).toBe(false);
     expect(SORTING_ALGORITHMS.bubble.complexity.worst).toBe('O(n²)');
     expect(SORTING_ALGORITHMS.insertion.complexity.best).toBe('O(n)');
+    expect(SORTING_ALGORITHMS.merge.complexity.worst).toBe('O(n log n)');
+    expect(SORTING_ALGORITHMS.quick.complexity.worst).toBe('O(n²)');
+    expect(SORTING_ALGORITHMS.heap.complexity.space).toBe('O(1)');
+    expect(SORTING_ALGORITHMS.counting.complexity.worst).toBe('O(n + k)');
+  });
+
+  it('shows the merge buffer and count array as auxiliary views', () => {
+    const merge = createSortingTrace('merge', [3, 1, 4, 2]);
+    const mergeBufferStep = merge.steps.find((step) =>
+      step.auxiliary?.some((view) => view.label === 'left run')
+    );
+    expect(mergeBufferStep).toBeDefined();
+
+    const counting = createSortingTrace('counting', [3, 1, 4, 2]);
+    const countStep = counting.steps.find((step) =>
+      step.auxiliary?.some((view) => view.label.startsWith('count['))
+    );
+    expect(countStep).toBeDefined();
+    const outputStep = counting.steps.find((step) =>
+      step.auxiliary?.some((view) => view.label === 'output')
+    );
+    expect(outputStep).toBeDefined();
+  });
+
+  it('counts zero comparisons for the non-comparison sorts', () => {
+    expect(createSortingTrace('counting', [5, 2, 8, 2]).steps.at(-1)?.metrics.comparisons).toBe(0);
+    expect(createSortingTrace('radix', [170, 45, 75, 90]).steps.at(-1)?.metrics.comparisons).toBe(
+      0
+    );
+  });
+
+  it('fixes each quick-sort pivot in its final position', () => {
+    const trace = createSortingTrace('quick', [5, 2, 8, 1]);
+    const firstPivotStep = trace.steps.find(
+      (step) => step.event === 'mark-sorted' && step.title.includes('FINAL')
+    );
+    expect(firstPivotStep).toBeDefined();
+    // First pivot is 1 (last element); after partition it lands at index 0.
+    expect(firstPivotStep?.values[firstPivotStep.sortedIndices[0]]).toBe(1);
+  });
+
+  it('handles negative keys in counting and radix sort via the documented shift', () => {
+    expect(createSortingTrace('counting', [4, -1, 4, 2, 0]).result).toEqual([-1, 0, 2, 4, 4]);
+    expect(createSortingTrace('radix', [4, -1, 4, 2, 0]).result).toEqual([-1, 0, 2, 4, 4]);
   });
 
   it('rejects traces outside the supported arena bounds', () => {
     expect(() => createSortingTrace('bubble', [1])).toThrow(RangeError);
     expect(() => createSortingTrace('bubble', [1, Number.NaN])).toThrow(TypeError);
+    expect(() => createSortingTrace('counting', [0, 1000])).toThrow(/count array/);
   });
 });

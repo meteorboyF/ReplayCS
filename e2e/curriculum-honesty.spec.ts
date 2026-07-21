@@ -11,7 +11,8 @@ const subjects = [
       'Stack Lab',
       'Queue Lab',
       'Deque Lab',
-      'Hash Table Lab'
+      'Hash Table Lab',
+      'Search Lab'
     ]
   },
   { path: '/learn/dsa-2', liveLessons: ['Graph Explorer'] },
