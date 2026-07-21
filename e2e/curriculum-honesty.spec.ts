@@ -14,7 +14,8 @@ const subjects = [
       'Hash Table Lab',
       'Search Lab',
       'BST Lab',
-      'Strings Lab'
+      'Strings Lab',
+      'Recursion Lab'
     ]
   },
   { path: '/learn/dsa-2', liveLessons: ['Graph Explorer'] },

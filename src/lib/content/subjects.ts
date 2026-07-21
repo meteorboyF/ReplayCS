@@ -73,6 +73,12 @@ export const subjects = {
         status: 'live',
         detail:
           'Trace character reads, copies, allocations, immutable growth, and builder capacity.'
+      },
+      {
+        title: 'Recursion Lab',
+        slug: 'recursion',
+        status: 'live',
+        detail: 'Trace call frames, base cases, unwinding, recurrence levels, and stack depth.'
       }
     ]
   },

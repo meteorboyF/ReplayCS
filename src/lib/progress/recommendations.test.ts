@@ -41,6 +41,7 @@ describe('adaptive recommendations', () => {
       'search-lab',
       'bst-lab',
       'strings-lab',
+      'recursion-lab',
       'cpu-scheduling',
       'packet-journey'
     ]);
@@ -62,6 +63,7 @@ describe('adaptive recommendations', () => {
           'search-lab',
           'bst-lab',
           'strings-lab',
+          'recursion-lab',
           'graph-explorer'
         ]
       }).href

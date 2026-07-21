@@ -3,16 +3,16 @@
 ## Current status
 
 - Updated: 2026-07-22 (+06)
-- Working branch: `feat/strings-lab`
-- Working baseline: `4e9310b` (`origin/main`, merge of PR #34)
+- Working branch: `feat/recursion-lab`
+- Working baseline: `2f7e827` (`origin/main`, merge of PR #35)
 - Teammate UI baseline: `d007dce` (PR #33, light-first theme and theme toggle), layered on the earlier `e75d3a9` redesign
-- Production commit: `4e9310b`
+- Production commit: `2f7e827`
 - Production: https://replaycs.vercel.app
-- Deployment: `dpl_HcX8sThH4wL3N9z5mqBWz3nfCJ6x` (`READY`)
-- Stable deployment URL: https://replaycs-bf3kokpeo-meteorboy-f.vercel.app
+- Deployment: `dpl_AU7XKKxtK4EbDvFYeZXBnafVBm4g` (`READY`)
+- Stable deployment URL: https://replaycs-lq6n66ti2-meteorboy-f.vercel.app
 - Recovery branch: `origin/feat/study-recap` at `2fb3489`
-- Worktree: Strings Lab implementation and regression coverage are in progress; local `.claude/` is untracked and must not be committed.
-- Immediate next action: complete the Strings full gate, merge/deploy it, then build Recursion Lab from current main.
+- Worktree: Recursion Lab implementation and regression coverage are in progress; local `.claude/` is untracked and must not be committed.
+- Immediate next action: complete the Recursion full gate, merge/deploy it, and verify the resulting production milestone.
 
 ## Current teammate UI contract
 
@@ -51,8 +51,8 @@ The only product regression found was the Sorting Arena setup form extending the
 - Study Recap: complete, merged in PR #31, and deployed from `1c99536`. The deterministic generator, server-only optional model rewrite, strict validation/schema, request size limit, timeout, safe fallback, English/Bangla and concise/exam-ready controls, subject/topic selection, teammate-style Progress CTA, and responsive page are implemented.
 - Progress-store cleanup: complete in PR #32 and deployed from `3003dd4`. Version 4 removes obsolete prediction-era dependencies while accepting versions 1–4 and safely ignoring legacy stored properties.
 - Light-theme regression repair: complete in PR #34 and deployed from `4e9310b`. The public Complexity Lab passes behavior and serious/critical WCAG checks (2/2).
-- Strings Lab: implemented locally with nine operations, bounded inputs, C/C++/Java/Python semantic source mapping, character/allocation/copy/capacity visualization, cumulative work evidence, best/worst search, immutable O(n²) versus builder O(n), curriculum wiring, and mobile/language-preservation tests. Full gate: check/lint clean, 205/205 unit/API tests, build pass, and 146/146 browser tests.
-- Recursion Lab: not started.
+- Strings Lab: complete in PR #35 and deployed from `2f7e827`. It passed 205/205 unit/API and 146/146 browser tests before merge. Vercel is `READY`; this runner's post-deploy public navigation timed out at the alias before page load.
+- Recursion Lab: implemented locally with six bounded scenarios, actual call/base/work/return events, four synchronized languages, call stack and level-width visualization, accumulating call/completion/depth/work counters, return values, repeated-subproblem evidence, four recurrence families, and recursive-versus-iterative space comparison. Full gate: check/lint clean, 208/208 unit/API tests, build pass, and 154/154 browser tests.
 
 ## Validation
 
@@ -82,8 +82,8 @@ UI milestone `e298072`:
 4. Study Recap transplant/adaptation: complete (PR #31, production `1c99536`).
 5. Compatibility-safe progress-store cleanup: complete (PR #32, production `3003dd4`).
 6. Light-theme accessibility regression: complete (PR #34, production `4e9310b`, public verification 2/2).
-7. Strings Lab: implemented locally; full gate green and ready for PR.
-8. Recursion Lab: pending.
+7. Strings Lab: complete (PR #35, production `2f7e827`).
+8. Recursion Lab: implemented locally; full gate green and ready for PR.
 
 ## Blockers
 

@@ -22,8 +22,8 @@ describe('live lesson registry', () => {
 
   it('derives remaining completion XP from live metadata and completion state', () => {
     const progress = { ...createEmptyProgress(), completed: ['binary-search'] };
-    expect(liveLessonsForSubject('dsa-1')).toHaveLength(11);
-    expect(remainingCompletionXp(progress, 'dsa-1')).toBe(355);
+    expect(liveLessonsForSubject('dsa-1')).toHaveLength(12);
+    expect(remainingCompletionXp(progress, 'dsa-1')).toBe(395);
   });
 
   it('registers the complete Hash Table Lab route, reward, and recovery evidence', () => {
@@ -163,7 +163,8 @@ describe('live lesson registry', () => {
         'hash-table-lab': 90,
         'search-lab': 90,
         'bst-lab': 90,
-        'strings-lab': 90
+        'strings-lab': 90,
+        'recursion-lab': 90
       }
     };
     expect(subjectMastery(progress, 'dsa-1')).toBe(90);
