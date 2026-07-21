@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import CodePane from '$lib/components/code/CodePane.svelte';
   import TraceControls from '$lib/components/trace/TraceControls.svelte';
   import {
     SORTING_ALGORITHMS,
@@ -8,7 +9,14 @@
     type SortingAlgorithm,
     type SortingTrace
   } from '$lib/engines/dsa/sorting';
-  import { completeLesson, loadProgress, saveProgress } from '$lib/progress/store';
+  import { SORTING_SOURCE, sortingSemanticFor } from '$lib/engines/dsa/sortingSource';
+  import {
+    completeLesson,
+    loadProgress,
+    recordLanguageUse,
+    saveProgress
+  } from '$lib/progress/store';
+  import type { SupportedLanguage } from '$lib/trace/types';
 
   const algorithmOrder: SortingAlgorithm[] = [
     'bubble',
@@ -29,16 +37,27 @@
   let index = $state(0);
   let playing = $state(false);
   let progress = $state(loadProgress());
+  let language = $state<SupportedLanguage>('cpp');
   let timer: ReturnType<typeof setInterval> | undefined;
 
   let step = $derived(trace.steps[index]);
   let info = $derived(SORTING_ALGORITHMS[algorithm]);
   let completed = $derived(progress.completed.includes('sorting-arena'));
+  // The active source line follows the current step's event across all four languages.
+  let activeSemantic = $derived(sortingSemanticFor(step.event));
 
   onMount(() => {
     progress = loadProgress();
+    language = progress.preferredLanguage;
     return () => clearInterval(timer);
   });
+
+  // Switching language never touches the trace, step, counters, or playback.
+  function selectLanguage(next: SupportedLanguage) {
+    language = next;
+    progress = recordLanguageUse(progress, next);
+    saveProgress(progress);
+  }
 
   function stopPlayback() {
     playing = false;
@@ -106,7 +125,7 @@
   <title>Sorting Arena · ReplayCS</title>
   <meta
     name="description"
-    content="Compare Bubble, Selection, and Insertion Sort with deterministic step-by-step traces."
+    content="Step through eight sorting algorithms with synchronized C, C++, Java, and Python source and deterministic operation counts."
   />
 </svelte:head>
 
@@ -160,6 +179,15 @@
 </section>
 
 <div class="arena-grid">
+  <div class="code-column">
+    <CodePane
+      source={SORTING_SOURCE[algorithm]}
+      {language}
+      {activeSemantic}
+      onlanguage={selectLanguage}
+    />
+  </div>
+
   <section class="stage panel" aria-labelledby="stage-title">
     <div class="stage-head">
       <div>
@@ -374,9 +402,17 @@
   }
   .arena-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.65fr) minmax(270px, 0.75fr);
+    grid-template-columns: minmax(280px, 0.85fr) minmax(340px, 1.5fr) minmax(240px, 0.7fr);
     gap: 1rem;
     align-items: start;
+  }
+  .code-column {
+    min-width: 0;
+    position: sticky;
+    top: 0.5rem;
+  }
+  .code-column :global(.code-panel) {
+    max-height: 78vh;
   }
   .stage {
     min-width: 0;
@@ -608,6 +644,18 @@
   }
   .complexity code {
     color: var(--primary);
+  }
+  @media (max-width: 1100px) {
+    .arena-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(240px, 0.7fr);
+    }
+    .code-column {
+      grid-column: 1 / -1;
+      position: static;
+    }
+    .code-column :global(.code-panel) {
+      max-height: 42vh;
+    }
   }
   @media (max-width: 900px) {
     .setup,
