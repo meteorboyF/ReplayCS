@@ -182,6 +182,18 @@ const definitions: readonly LiveLessonDefinition[] = [
     }
   },
   {
+    completionId: 'strings-lab',
+    subject: 'dsa-1',
+    slug: 'strings',
+    completionXp: 40,
+    recovery: {
+      title: 'Strings Lab Recovery',
+      href: '/lesson/dsa-1/strings',
+      reason: 'Replay the first character comparison, copy, or capacity change.',
+      misconceptionTags: ['index-vs-value', 'loop-boundary', 'amortized-vs-worst']
+    }
+  },
+  {
     completionId: 'graph-explorer',
     subject: 'dsa-2',
     slug: 'graph-explorer',

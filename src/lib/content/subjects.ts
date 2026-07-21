@@ -66,6 +66,13 @@ export const subjects = {
         slug: 'bst',
         status: 'live',
         detail: 'Search, insert, delete, traverse, and measure a binary search tree node by node.'
+      },
+      {
+        title: 'Strings Lab',
+        slug: 'strings',
+        status: 'live',
+        detail:
+          'Trace character reads, copies, allocations, immutable growth, and builder capacity.'
       }
     ]
   },
