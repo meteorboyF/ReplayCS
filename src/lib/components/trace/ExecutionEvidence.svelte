@@ -199,12 +199,12 @@
     border: 1px solid var(--border);
     border-radius: 8px;
     text-align: center;
-    color: #53647b;
+    color: var(--muted);
   }
   .counts div.nonzero {
     color: var(--text);
-    border-color: #2dd4bf55;
-    background: #2dd4bf08;
+    border-color: color-mix(in srgb, var(--primary) 33%, transparent);
+    background: color-mix(in srgb, var(--primary) 3%, transparent);
   }
   .counts b {
     font: 0.8rem var(--mono);
@@ -225,7 +225,7 @@
     gap: 0.3rem;
     padding: 0.6rem;
     border-radius: 9px;
-    background: #07111f88;
+    background: var(--bg);
   }
   .transition > div > span,
   .mutations > span {

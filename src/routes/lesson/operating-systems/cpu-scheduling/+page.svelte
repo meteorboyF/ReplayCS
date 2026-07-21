@@ -787,10 +787,10 @@ Gamma, 0, 3, 1`,
     align-content: center;
     gap: 0.2rem;
     padding: 0.6rem;
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border: 1px solid var(--border);
     border-radius: 8px;
     background: rgba(45, 212, 191, 0.18);
-    color: #d9fffa;
+    color: var(--text);
   }
   .gantt-segment + .gantt-segment {
     margin-left: 0.25rem;

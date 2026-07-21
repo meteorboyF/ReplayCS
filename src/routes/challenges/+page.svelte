@@ -112,13 +112,13 @@
     border-top-color: #a78bfa;
   }
   .card.accent-amber {
-    border-top-color: #fbbf24;
+    border-top-color: var(--warning);
   }
   .card.accent-green {
-    border-top-color: #4ade80;
+    border-top-color: var(--success);
   }
   .card.accent-blue {
-    border-top-color: #60a5fa;
+    border-top-color: var(--accent);
   }
   .card-head {
     display: flex;

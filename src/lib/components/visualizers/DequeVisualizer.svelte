@@ -164,11 +164,11 @@
     padding: 0.45rem 0.55rem;
     border: 1px solid var(--border);
     border-radius: 9px;
-    background: #07111f88;
+    background: var(--bg);
   }
   .scalar-dock > div.active {
-    border-color: #2dd4bf66;
-    background: #2dd4bf0b;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
   }
   .scalar-dock span,
   .node-id {
@@ -201,9 +201,9 @@
     gap: 0.15rem;
     justify-items: center;
     padding: 0.55rem 0.3rem 0.4rem;
-    border: 2px solid #334155;
+    border: 2px solid var(--border);
     border-radius: 10px;
-    background: #0a1727;
+    background: var(--surface);
     transition: 160ms ease;
   }
   .slot small {
@@ -214,8 +214,8 @@
     font: 1.15rem var(--mono);
   }
   .slot.live {
-    border-color: #2dd4bf66;
-    background: #2dd4bf0a;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
   }
   .slot.spare {
     border-style: dashed;
@@ -223,15 +223,15 @@
   }
   .slot.front {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px #2dd4bf18;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 9%, transparent);
   }
   .slot.rear {
     border-color: var(--secondary);
   }
   .slot.front.rear {
     box-shadow:
-      0 0 0 3px #2dd4bf18,
-      0 0 0 6px #9b7cff14;
+      0 0 0 3px color-mix(in srgb, var(--primary) 9%, transparent),
+      0 0 0 6px color-mix(in srgb, var(--secondary) 8%, transparent);
   }
   .slot.reading {
     border-color: var(--warning);
@@ -239,7 +239,7 @@
   }
   .slot.writing {
     border-color: var(--success);
-    box-shadow: 0 0 0 4px #4ade8018;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 9%, transparent);
     transform: translateY(-4px);
   }
   .pointer-tags {
@@ -258,11 +258,11 @@
   }
   .pointer-tags .front-tag {
     background: var(--primary);
-    color: #04231f;
+    color: var(--primary-contrast);
   }
   .pointer-tags .rear-tag {
     background: var(--secondary);
-    color: #150b2e;
+    color: var(--raised);
   }
   .marks {
     position: absolute;
@@ -306,9 +306,9 @@
     display: grid;
     gap: 0.25rem;
     padding: 0.6rem;
-    border: 2px solid #334155;
+    border: 2px solid var(--border);
     border-radius: 13px;
-    background: #0a1727;
+    background: var(--surface);
     transition: 160ms ease;
   }
   article strong {
@@ -325,7 +325,7 @@
   }
   article.front-node {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px #2dd4bf18;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 9%, transparent);
   }
   article.rear-node {
     border-color: var(--secondary);
@@ -353,12 +353,12 @@
   article .front-badge {
     left: 8px;
     background: var(--primary);
-    color: #04231f;
+    color: var(--primary-contrast);
   }
   article .rear-badge {
     right: 8px;
     background: var(--secondary);
-    color: #150b2e;
+    color: var(--raised);
   }
   .arrow {
     width: 40px;

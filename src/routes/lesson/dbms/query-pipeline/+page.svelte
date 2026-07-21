@@ -335,7 +335,7 @@
     gap: 1.5rem;
     align-items: center;
     padding: 1rem;
-    border-color: #fbbf2450;
+    border-color: color-mix(in srgb, var(--warning) 31%, transparent);
   }
   .scenario-picker h2,
   .query h2,
@@ -389,7 +389,7 @@
   }
   .safe-badge {
     color: var(--success);
-    border-color: #4ade8055;
+    border-color: color-mix(in srgb, var(--success) 33%, transparent);
   }
   .query pre {
     overflow: auto;
@@ -397,8 +397,8 @@
     padding: 0.85rem;
     border: 1px solid var(--border);
     border-radius: 11px;
-    background: #07111f;
-    color: #f5d89f;
+    background: var(--bg);
+    color: var(--text);
     font: 0.75rem/1.6 var(--mono);
   }
   .query > p {
@@ -425,13 +425,13 @@
   .mini-pipeline span {
     padding: 0.3rem 0.38rem;
     border-radius: 6px;
-    background: #2dd4bf13;
+    background: color-mix(in srgb, var(--primary) 7%, transparent);
     color: var(--primary);
     font: 600 0.57rem var(--mono);
     white-space: nowrap;
   }
   .physical-model {
-    border-color: #9b7cff55;
+    border-color: color-mix(in srgb, var(--secondary) 33%, transparent);
   }
   .physical-model > strong {
     color: var(--secondary);
@@ -533,7 +533,7 @@
     background: #291b02;
   }
   .pipeline button.done {
-    border-color: #4ade8066;
+    border-color: color-mix(in srgb, var(--success) 40%, transparent);
   }
   .pipeline i {
     color: var(--muted);
@@ -541,7 +541,7 @@
   }
   .trace {
     padding: 1rem;
-    border-color: #fbbf2455;
+    border-color: color-mix(in srgb, var(--warning) 33%, transparent);
   }
   .trace-head h2 {
     margin: 0.35rem 0;
@@ -576,7 +576,7 @@
   }
   .stage-description {
     margin: 0.2rem 0 0.75rem;
-    color: #dce7f5;
+    color: var(--text);
     line-height: 1.55;
   }
   .teaching-point {
@@ -586,7 +586,7 @@
     margin-bottom: 1rem;
     padding: 0.65rem 0.75rem;
     border-left: 3px solid var(--warning);
-    background: #fbbf240a;
+    background: color-mix(in srgb, var(--warning) 4%, transparent);
   }
   .teaching-point span {
     color: var(--warning);
@@ -632,13 +632,13 @@
   .relation-arrow span {
     padding: 0.25rem;
     border-radius: 5px;
-    background: #fbbf2411;
+    background: color-mix(in srgb, var(--warning) 7%, transparent);
     font: 0.55rem var(--mono);
   }
   .trace :global(.controls) {
     margin-top: 0.8rem;
     border-radius: 12px;
-    background: #07111f99;
+    background: var(--bg);
   }
   .final-result {
     min-width: 0;
@@ -647,7 +647,7 @@
   }
   .result-count {
     color: var(--warning);
-    border-color: #fbbf2455;
+    border-color: color-mix(in srgb, var(--warning) 33%, transparent);
   }
   .complete-message,
   .finish-hint {

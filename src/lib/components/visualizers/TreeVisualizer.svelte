@@ -130,11 +130,11 @@
     padding: 0.45rem 0.55rem;
     border: 1px solid var(--border);
     border-radius: 9px;
-    background: #07111f88;
+    background: var(--bg);
   }
   .scalar-dock > div.active {
-    border-color: #2dd4bf66;
-    background: #2dd4bf0b;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
   }
   .scalar-dock span {
     color: var(--muted);
@@ -158,7 +158,7 @@
     pointer-events: none;
   }
   .edges line {
-    stroke: #334155;
+    stroke: var(--border);
     stroke-width: 0.4;
     vector-effect: non-scaling-stroke;
   }
@@ -177,9 +177,9 @@
     width: 46px;
     height: 46px;
     place-content: center;
-    border: 2px solid #334155;
+    border: 2px solid var(--border);
     border-radius: 50%;
-    background: #0a1727;
+    background: var(--surface);
     transition: 160ms ease;
     z-index: 1;
   }
@@ -194,16 +194,16 @@
     border-color: var(--primary);
   }
   .node.visited {
-    background: #2dd4bf12;
+    background: color-mix(in srgb, var(--primary) 7%, transparent);
   }
   .node.current {
     border-color: var(--warning);
-    box-shadow: 0 0 0 4px #fbbf2422;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--warning) 13%, transparent);
     transform: scale(1.08);
   }
   .node.successor {
     border-color: var(--secondary);
-    box-shadow: 0 0 0 3px #9b7cff22;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--secondary) 13%, transparent);
   }
   .node.allocated {
     border-color: var(--success);
@@ -244,8 +244,8 @@
     border-color: var(--warning);
   }
   .legend i.l-visited {
-    border-color: #2dd4bf88;
-    background: #2dd4bf22;
+    border-color: color-mix(in srgb, var(--primary) 53%, transparent);
+    background: color-mix(in srgb, var(--primary) 13%, transparent);
   }
   .legend i.l-queued {
     border-color: var(--accent);

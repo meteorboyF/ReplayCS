@@ -1,6 +1,31 @@
 <script lang="ts">
   import '../app.css';
+  import { onMount } from 'svelte';
   let { children } = $props();
+
+  let theme = $state<'light' | 'dark'>('light');
+
+  onMount(() => {
+    try {
+      theme = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
+    } catch (e) {
+      theme = 'light';
+    }
+  });
+
+  function toggleTheme() {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    if (theme === 'dark') {
+      document.documentElement.dataset.theme = 'dark';
+    } else {
+      delete document.documentElement.dataset.theme;
+    }
+    try {
+      localStorage.setItem('theme', theme);
+    } catch (e) {
+      /* ignore */
+    }
+  }
 </script>
 
 <svelte:head
@@ -18,6 +43,15 @@
     ><a class="judge-link" href="/judge-demo">Judge Demo</a><a href="/progress">Progress</a><a
       href="/about">About</a
     >
+    <button
+      class="theme-toggle"
+      type="button"
+      onclick={toggleTheme}
+      aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+      title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+    >
+      {theme === 'dark' ? '☀️' : '🌙'}
+    </button>
   </nav>
 </header>
 <main id="main-content" tabindex="-1">{@render children()}</main>

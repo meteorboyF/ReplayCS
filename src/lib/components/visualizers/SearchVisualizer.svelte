@@ -169,11 +169,11 @@
     padding: 0.45rem 0.55rem;
     border: 1px solid var(--border);
     border-radius: 9px;
-    background: #07111f88;
+    background: var(--bg);
   }
   .scalar-dock > div.active {
-    border-color: #2dd4bf66;
-    background: #2dd4bf0b;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
   }
   .scalar-dock span {
     color: var(--muted);
@@ -197,9 +197,9 @@
     gap: 0.15rem;
     justify-items: center;
     padding: 0.55rem 0.3rem 0.4rem;
-    border: 2px solid #2dd4bf55;
+    border: 2px solid color-mix(in srgb, var(--primary) 33%, transparent);
     border-radius: 10px;
-    background: #2dd4bf08;
+    background: color-mix(in srgb, var(--primary) 3%, transparent);
     transition: 160ms ease;
   }
   .cell small {
@@ -217,11 +217,11 @@
   }
   .cell.compared {
     border-color: var(--warning);
-    background: #fbbf2412;
+    background: color-mix(in srgb, var(--warning) 7%, transparent);
   }
   .cell.mid {
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px #2dd4bf18;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 9%, transparent);
     transform: translateY(-4px);
   }
   .cell.cursor {
@@ -241,11 +241,11 @@
   }
   .tags .mid-tag {
     background: var(--primary);
-    color: #04231f;
+    color: var(--primary-contrast);
   }
   .tags .cursor-tag {
     background: var(--secondary);
-    color: #150b2e;
+    color: var(--raised);
   }
   .tree {
     display: grid;
@@ -259,9 +259,9 @@
     gap: 0.1rem;
     min-width: 44px;
     padding: 0.35rem 0.3rem;
-    border: 2px solid #334155;
+    border: 2px solid var(--border);
     border-radius: 10px;
-    background: #0a1727;
+    background: var(--surface);
     transition: 160ms ease;
   }
   .tree-node b {
@@ -273,11 +273,11 @@
   }
   .tree-node.compared {
     border-color: var(--warning);
-    background: #fbbf2412;
+    background: color-mix(in srgb, var(--warning) 7%, transparent);
   }
   .tree-node.current {
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px #2dd4bf18;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 9%, transparent);
   }
   .tree-note {
     margin: 0;
@@ -298,9 +298,9 @@
     gap: 0.25rem;
     justify-items: center;
     padding: 0.45rem 0.25rem 0.4rem;
-    border: 2px solid #334155;
+    border: 2px solid var(--border);
     border-radius: 10px;
-    background: #0a1727;
+    background: var(--surface);
   }
   .bucket small {
     color: var(--muted);
@@ -308,7 +308,7 @@
   }
   .bucket.home {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px #2dd4bf18;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 9%, transparent);
   }
   .chain {
     display: grid;
@@ -318,9 +318,9 @@
   .chain b {
     min-width: 34px;
     padding: 0.2rem 0.3rem;
-    border: 1px solid #2dd4bf44;
+    border: 1px solid color-mix(in srgb, var(--primary) 27%, transparent);
     border-radius: 7px;
-    background: #2dd4bf0a;
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
     text-align: center;
     font: 0.85rem var(--mono);
   }
@@ -332,11 +332,11 @@
   }
   .chain b.compared {
     border-color: var(--warning);
-    background: #fbbf2415;
+    background: color-mix(in srgb, var(--warning) 8%, transparent);
   }
   .chain b.cursor {
     border-color: var(--secondary);
-    box-shadow: 0 0 0 3px #9b7cff18;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--secondary) 9%, transparent);
   }
   .legend {
     display: flex;

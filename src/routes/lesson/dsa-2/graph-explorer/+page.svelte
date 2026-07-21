@@ -607,7 +607,7 @@
       stroke-width 180ms ease;
   }
   line.tree {
-    stroke: #2dd4bf88;
+    stroke: color-mix(in srgb, var(--primary) 53%, transparent);
     stroke-width: 5;
   }
   line.active-edge {
@@ -618,7 +618,7 @@
     fill: #71859f;
   }
   g circle {
-    fill: #12243a;
+    fill: var(--surface);
     stroke: #526780;
     stroke-width: 3;
     transition:
@@ -631,11 +631,11 @@
     font-weight: 800;
   }
   g.visited circle {
-    fill: #123c3c;
+    fill: var(--surface);
     stroke: var(--primary);
   }
   g.frontier circle {
-    fill: #2c2450;
+    fill: var(--raised);
     stroke: var(--secondary);
   }
   g.inspecting circle {
@@ -669,7 +669,7 @@
     display: inline-block;
     width: 22px;
     height: 4px;
-    background: #2dd4bf88;
+    background: color-mix(in srgb, var(--primary) 53%, transparent);
   }
   .frontiers {
     display: grid;
@@ -682,7 +682,7 @@
   }
   .frontier-card.active-frontier {
     opacity: 1;
-    border-color: #2dd4bf77;
+    border-color: color-mix(in srgb, var(--primary) 47%, transparent);
   }
   .frontier-card > div {
     display: flex;
@@ -724,7 +724,7 @@
     font-size: 1.6rem;
   }
   .explanation {
-    color: #dce7f5;
+    color: var(--text);
     line-height: 1.6;
     min-height: 4.8em;
   }
@@ -735,7 +735,7 @@
     margin: 1rem 0;
   }
   .state-grid div {
-    background: #07111f88;
+    background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 9px;
     padding: 0.65rem;

@@ -332,7 +332,7 @@
   .duplicate-note {
     border-left: 3px solid var(--warning);
     padding: 0.55rem 0.8rem;
-    background: #fbbf240c;
+    background: color-mix(in srgb, var(--warning) 5%, transparent);
     font-size: 0.76rem;
   }
   .lab {
@@ -366,7 +366,7 @@
     font-size: 1.45rem;
   }
   .explain {
-    color: #dce7f5;
+    color: var(--text);
     line-height: 1.6;
   }
   .state {

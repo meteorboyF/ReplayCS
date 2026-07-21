@@ -136,7 +136,11 @@
     gap: 0.5rem;
     padding: 1.5rem;
     margin-bottom: 2rem;
-    background: linear-gradient(135deg, #2dd4bf1f, #8b5cf610);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary) 12%, transparent),
+      color-mix(in srgb, var(--secondary) 6%, transparent)
+    );
     border-color: color-mix(in oklab, var(--primary) 40%, var(--border));
   }
   .continue h2 {

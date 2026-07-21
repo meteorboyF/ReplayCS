@@ -332,8 +332,12 @@
   .tour-status {
     padding: 1.25rem;
     background:
-      radial-gradient(circle at 100% 0, #2dd4bf1c, transparent 48%),
-      linear-gradient(145deg, rgba(20, 37, 59, 0.98), rgba(14, 27, 45, 0.98));
+      radial-gradient(
+        circle at 100% 0,
+        color-mix(in srgb, var(--primary) 11%, transparent),
+        transparent 48%
+      ),
+      linear-gradient(145deg, var(--raised), var(--surface));
   }
 
   .status-top {
@@ -403,9 +407,9 @@
     width: 38px;
     aspect-ratio: 1;
     place-items: center;
-    border: 1px solid #2dd4bf66;
+    border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
     border-radius: 10px;
-    background: #2dd4bf10;
+    background: color-mix(in srgb, var(--primary) 6%, transparent);
     color: var(--primary);
     font-weight: 800;
   }
@@ -436,7 +440,7 @@
     aspect-ratio: 1;
     place-items: center;
     border-radius: 50%;
-    background: #38bdf81a;
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
     color: var(--accent);
     font-weight: 800;
   }
@@ -483,7 +487,7 @@
   }
 
   .tour-list > li.complete .stage {
-    border-color: #4ade8070;
+    border-color: color-mix(in srgb, var(--success) 44%, transparent);
   }
 
   .stage-rail {
@@ -492,7 +496,7 @@
     align-items: center;
     padding-top: 1.4rem;
     border-right: 1px solid var(--border);
-    background: #07111f55;
+    background: var(--bg);
   }
 
   .stage-rail span {
@@ -557,7 +561,7 @@
     padding: 0.75rem;
     border-left: 3px solid var(--accent);
     border-radius: 0 8px 8px 0;
-    background: #38bdf80c;
+    background: color-mix(in srgb, var(--accent) 5%, transparent);
     color: var(--muted);
     font-size: 0.82rem;
     line-height: 1.5;
@@ -604,12 +608,16 @@
     margin-top: 1.5rem;
     padding: 1.5rem;
     background:
-      radial-gradient(circle at 100% 0, #9b7cff1a, transparent 48%),
-      linear-gradient(145deg, rgba(20, 37, 59, 0.98), rgba(14, 27, 45, 0.98));
+      radial-gradient(
+        circle at 100% 0,
+        color-mix(in srgb, var(--secondary) 10%, transparent),
+        transparent 48%
+      ),
+      linear-gradient(145deg, var(--raised), var(--surface));
   }
 
   .finish.complete {
-    border-color: #4ade8070;
+    border-color: color-mix(in srgb, var(--success) 44%, transparent);
   }
 
   .finish h2 {

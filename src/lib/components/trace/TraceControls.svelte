@@ -54,7 +54,7 @@
     height: 42px;
     padding: 0;
     background: var(--primary);
-    color: #04231f;
+    color: var(--primary-contrast);
   }
   .controls input {
     flex: 1;

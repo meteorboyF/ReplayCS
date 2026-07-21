@@ -94,7 +94,7 @@
     padding: 1rem;
     border: 1px solid var(--border);
     border-radius: 14px;
-    background: #07111f77;
+    background: var(--bg);
   }
   .heading {
     display: flex;
@@ -107,7 +107,7 @@
   }
   .heading code {
     color: var(--secondary);
-    border: 1px solid #9b7cff55;
+    border: 1px solid color-mix(in srgb, var(--secondary) 33%, transparent);
     padding: 0.3rem 0.5rem;
     border-radius: 7px;
   }
@@ -132,13 +132,13 @@
   .growth span.visited {
     height: 76px;
     border-color: var(--primary);
-    background: #2dd4bf18;
+    background: color-mix(in srgb, var(--primary) 9%, transparent);
     color: var(--primary);
   }
   .growth span.resize {
     height: var(--resize-height);
     border-color: var(--secondary);
-    background: #9b7cff12;
+    background: color-mix(in srgb, var(--secondary) 7%, transparent);
     color: var(--secondary);
   }
   .growth b {
@@ -169,7 +169,7 @@
   .slots i,
   .frames i {
     padding: 0.35rem;
-    border: 1px solid #38bdf855;
+    border: 1px solid color-mix(in srgb, var(--accent) 33%, transparent);
     border-radius: 6px;
     color: var(--accent);
     font: 0.6rem var(--mono);
@@ -181,7 +181,7 @@
     flex-wrap: wrap;
   }
   .buffer-slots i {
-    border-color: #2dd4bf66;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
     color: var(--primary);
     transform: none;
   }

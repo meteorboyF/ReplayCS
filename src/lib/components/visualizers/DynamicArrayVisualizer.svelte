@@ -216,11 +216,11 @@
     padding: 0.45rem 0.55rem;
     border: 1px solid var(--border);
     border-radius: 9px;
-    background: #07111f88;
+    background: var(--bg);
   }
   .scalar-dock > div.active {
-    border-color: #2dd4bf66;
-    background: #2dd4bf0b;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
   }
   .scalar-dock span {
     color: var(--muted);
@@ -268,9 +268,9 @@
     gap: 0.15rem;
     justify-items: center;
     padding: 0.55rem 0.3rem 0.4rem;
-    border: 2px solid #334155;
+    border: 2px solid var(--border);
     border-radius: 10px;
-    background: #0a1727;
+    background: var(--surface);
     transition: 160ms ease;
   }
   .slot small {
@@ -281,13 +281,13 @@
     font: 1.15rem var(--mono);
   }
   .slot em {
-    color: #53647b;
+    color: var(--muted);
     font-size: 0.5rem;
     font-style: normal;
   }
   .slot.live {
-    border-color: #2dd4bf66;
-    background: #2dd4bf0a;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
   }
   .slot.spare {
     border-style: dashed;
@@ -298,12 +298,12 @@
   }
   .slot.shifted {
     border-color: var(--secondary);
-    background: #9b7cff12;
+    background: color-mix(in srgb, var(--secondary) 7%, transparent);
   }
   .slot.copied,
   .slot.copied-out {
     border-color: var(--accent);
-    background: #38bdf812;
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
   }
   .slot.copied-out {
     opacity: 0.55;
@@ -314,7 +314,7 @@
   }
   .slot.writing {
     border-color: var(--success);
-    box-shadow: 0 0 0 4px #4ade8018;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 9%, transparent);
     transform: translateY(-4px);
   }
   .marks {

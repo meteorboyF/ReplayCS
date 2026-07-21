@@ -318,7 +318,7 @@
   .subject-options button.selected {
     color: var(--primary);
     border-color: var(--primary);
-    background: #2dd4bf14;
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
   }
   .step-nav {
     display: flex;

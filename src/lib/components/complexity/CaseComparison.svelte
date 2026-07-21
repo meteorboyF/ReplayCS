@@ -123,7 +123,7 @@
   }
   thead th {
     color: var(--muted);
-    background: #07111faa;
+    background: var(--bg);
     font-size: 0.67rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -132,7 +132,7 @@
     border-bottom: 0;
   }
   tbody tr.selected {
-    background: #2dd4bf0a;
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
   }
   tbody th {
     min-width: 145px;

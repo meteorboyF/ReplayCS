@@ -26,14 +26,14 @@
   const instanceId = $props.id();
 
   const colors: Partial<Record<ComplexityClass, string>> = {
-    'O(1)': '#4ade80',
-    'O(log n)': '#2dd4bf',
-    'O(sqrt n)': '#38bdf8',
-    'O(n)': '#60a5fa',
-    'O(n log n)': '#9b7cff',
-    'O(n^2)': '#fbbf24',
+    'O(1)': 'var(--success)',
+    'O(log n)': 'var(--primary)',
+    'O(sqrt n)': 'var(--accent)',
+    'O(n)': 'var(--accent)',
+    'O(n log n)': 'var(--secondary)',
+    'O(n^2)': 'var(--warning)',
     'O(n^3)': '#fb923c',
-    'O(2^n)': '#fb7185',
+    'O(2^n)': 'var(--danger)',
     'O(n!)': '#f43f5e'
   };
   let chartLimit = $derived(Math.min(50, Math.max(2, Math.floor(maxInputSize))));
@@ -319,7 +319,7 @@
     padding: 0.35rem 0.5rem;
     border: 1px solid var(--border);
     border-radius: 8px;
-    background: #07111f66;
+    background: var(--bg);
   }
   .toggles label > span,
   .legend span::before {
@@ -339,7 +339,7 @@
     padding: 0.7rem;
     border: 1px solid var(--border);
     border-radius: 13px;
-    background: #07111f99;
+    background: var(--bg);
     overflow-x: auto;
   }
   svg {
@@ -348,7 +348,7 @@
     min-width: 520px;
   }
   svg line {
-    stroke: #60728a;
+    stroke: var(--muted);
     stroke-width: 1;
   }
   svg text {
@@ -391,8 +391,8 @@
     color: var(--muted);
   }
   .cap-warning {
-    border: 1px solid #fbbf2455;
-    background: #fbbf240a;
+    border: 1px solid color-mix(in srgb, var(--warning) 33%, transparent);
+    background: color-mix(in srgb, var(--warning) 4%, transparent);
     color: var(--warning);
   }
   .table-wrap {
