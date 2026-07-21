@@ -124,11 +124,11 @@
     padding: 0.45rem 0.55rem;
     border: 1px solid var(--border);
     border-radius: 9px;
-    background: #07111f88;
+    background: var(--bg);
   }
   .pointer-dock > div.active {
-    border-color: #2dd4bf66;
-    background: #2dd4bf0b;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
   }
   .pointer-dock span,
   .node-id {
@@ -159,9 +159,9 @@
     grid-template-rows: auto 1fr auto auto;
     gap: 0.3rem;
     padding: 0.65rem;
-    border: 2px solid #334155;
+    border: 2px solid var(--border);
     border-radius: 13px;
-    background: #0a1727;
+    background: var(--surface);
     transition: 180ms ease;
   }
   article strong {
@@ -178,12 +178,12 @@
   }
   article.current {
     border-color: var(--secondary);
-    box-shadow: 0 0 0 4px #9b7cff18;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--secondary) 9%, transparent);
     transform: translateY(-5px);
   }
   article.traversed {
-    background: #2dd4bf12;
-    border-color: #2dd4bf88;
+    background: color-mix(in srgb, var(--primary) 7%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 53%, transparent);
   }
   article.allocated {
     border-color: var(--success);
@@ -201,7 +201,7 @@
   }
   article.reconnected {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px #38bdf812;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 7%, transparent);
   }
   .arrow {
     width: 58px;

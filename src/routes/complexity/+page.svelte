@@ -431,8 +431,12 @@
     padding: 1rem;
     box-shadow: 0 28px 80px #0007;
     background:
-      radial-gradient(circle at 100% 0, #2dd4bf1d, transparent 44%),
-      linear-gradient(145deg, rgba(20, 37, 59, 0.98), rgba(14, 27, 45, 0.98));
+      radial-gradient(
+        circle at 100% 0,
+        color-mix(in srgb, var(--primary) 11%, transparent),
+        transparent 44%
+      ),
+      linear-gradient(145deg, var(--raised), var(--surface));
   }
 
   .terminal-bar {
@@ -510,9 +514,9 @@
     gap: 1rem;
     align-items: center;
     padding: 0.8rem;
-    border: 1px solid #2dd4bf55;
+    border: 1px solid color-mix(in srgb, var(--primary) 33%, transparent);
     border-radius: 10px;
-    background: #2dd4bf0c;
+    background: color-mix(in srgb, var(--primary) 5%, transparent);
   }
 
   .proof-result span {
@@ -599,17 +603,17 @@
     width: 2.7rem;
     height: 2.7rem;
     place-items: center;
-    border: 1px solid #2dd4bf66;
+    border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
     border-radius: 12px;
     color: var(--primary);
-    background: #2dd4bf0d;
+    background: color-mix(in srgb, var(--primary) 5%, transparent);
     font: 800 0.8rem var(--mono);
   }
 
   .clock-card .card-mark {
-    border-color: #fbbf2466;
+    border-color: color-mix(in srgb, var(--warning) 40%, transparent);
     color: var(--warning);
-    background: #fbbf240d;
+    background: color-mix(in srgb, var(--warning) 5%, transparent);
   }
 
   .measurement-grid h3 {
@@ -638,8 +642,8 @@
     align-items: start;
     margin-top: 1rem;
     padding: 1rem 1.2rem;
-    border-color: #38bdf855;
-    background: #38bdf80b;
+    border-color: color-mix(in srgb, var(--accent) 33%, transparent);
+    background: color-mix(in srgb, var(--accent) 4%, transparent);
   }
 
   .model-note > span {
@@ -746,16 +750,16 @@
   }
 
   .family summary:hover {
-    background: #2dd4bf08;
+    background: color-mix(in srgb, var(--primary) 3%, transparent);
   }
 
   .notation {
     justify-self: start;
     padding: 0.42rem 0.55rem;
-    border: 1px solid #2dd4bf55;
+    border: 1px solid color-mix(in srgb, var(--primary) 33%, transparent);
     border-radius: 9px;
     color: var(--primary);
-    background: #2dd4bf0b;
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
     font: 800 0.74rem var(--mono);
     white-space: nowrap;
   }
@@ -793,7 +797,7 @@
     min-width: 0;
     padding: 0.7rem;
     border-radius: 10px;
-    background: #07111f7a;
+    background: var(--bg);
   }
 
   .formula-row dt {
@@ -841,8 +845,12 @@
     margin-top: 2rem;
     padding: 1.5rem;
     background:
-      radial-gradient(circle at 0 100%, #9b7cff17, transparent 45%),
-      linear-gradient(145deg, rgba(20, 37, 59, 0.98), rgba(14, 27, 45, 0.98));
+      radial-gradient(
+        circle at 0 100%,
+        color-mix(in srgb, var(--secondary) 9%, transparent),
+        transparent 45%
+      ),
+      linear-gradient(145deg, var(--raised), var(--surface));
   }
 
   .closing h2 {

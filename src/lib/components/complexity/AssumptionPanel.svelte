@@ -28,9 +28,9 @@
 <style>
   .assumptions {
     padding: 0.9rem;
-    border: 1px solid #fbbf2444;
+    border: 1px solid color-mix(in srgb, var(--warning) 27%, transparent);
     border-radius: 13px;
-    background: #fbbf2408;
+    background: color-mix(in srgb, var(--warning) 3%, transparent);
   }
   .heading {
     display: flex;
@@ -51,7 +51,7 @@
   }
   li {
     margin: 0.45rem 0;
-    color: #dce7f5;
+    color: var(--text);
     line-height: 1.5;
   }
   li::marker {
@@ -66,6 +66,6 @@
   }
   .boundary {
     padding-top: 0.65rem;
-    border-top: 1px solid #fbbf2428;
+    border-top: 1px solid color-mix(in srgb, var(--warning) 16%, transparent);
   }
 </style>

@@ -63,7 +63,7 @@
     max-height: 420px;
     border: 1px solid var(--border);
     border-radius: 12px;
-    background: #07111f99;
+    background: var(--bg);
   }
   table {
     width: 100%;
@@ -92,8 +92,8 @@
     position: sticky;
     top: 0;
     z-index: 1;
-    color: #ffd48a;
-    background: #101e31;
+    color: var(--text);
+    background: var(--raised);
     font: 700 0.65rem var(--mono);
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -102,7 +102,7 @@
     border-bottom: 0;
   }
   tbody tr:hover {
-    background: #fbbf2409;
+    background: color-mix(in srgb, var(--warning) 4%, transparent);
   }
   .row-number {
     width: 2.4rem;

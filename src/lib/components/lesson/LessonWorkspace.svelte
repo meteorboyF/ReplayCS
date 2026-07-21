@@ -288,7 +288,7 @@
     margin-top: 0.25rem;
     border-radius: 99px;
     overflow: hidden;
-    background: #1e293b;
+    background: var(--raised);
   }
   .mastery i {
     display: block;

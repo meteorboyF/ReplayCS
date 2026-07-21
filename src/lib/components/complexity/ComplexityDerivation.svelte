@@ -61,9 +61,9 @@
   .heading > code {
     flex: none;
     padding: 0.45rem 0.65rem;
-    border: 1px solid #2dd4bf55;
+    border: 1px solid color-mix(in srgb, var(--primary) 33%, transparent);
     border-radius: 9px;
-    background: #2dd4bf0d;
+    background: color-mix(in srgb, var(--primary) 5%, transparent);
     color: var(--primary);
     font-weight: 800;
   }
@@ -74,7 +74,7 @@
     padding: 0.8rem;
     border: 1px solid var(--border);
     border-radius: 11px;
-    background: #07111f88;
+    background: var(--bg);
   }
   .formula span {
     color: var(--muted);
@@ -104,7 +104,7 @@
     place-items: center;
     width: 2rem;
     height: 2rem;
-    border: 1px solid #9b7cff66;
+    border: 1px solid color-mix(in srgb, var(--secondary) 40%, transparent);
     border-radius: 50%;
     color: var(--secondary);
     font: 0.75rem var(--mono);

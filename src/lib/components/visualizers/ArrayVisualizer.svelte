@@ -53,13 +53,13 @@
     padding: 1rem 0.2rem;
     border: 1px solid var(--accent);
     border-radius: 10px;
-    background: #38bdf810;
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
   }
   .array div.mid {
     border-color: var(--primary);
-    background: #2dd4bf30;
+    background: color-mix(in srgb, var(--primary) 19%, transparent);
     transform: translateY(-8px);
-    box-shadow: 0 12px 30px #2dd4bf30;
+    box-shadow: 0 12px 30px color-mix(in srgb, var(--primary) 19%, transparent);
   }
   .array div.discarded {
     opacity: 0.3;

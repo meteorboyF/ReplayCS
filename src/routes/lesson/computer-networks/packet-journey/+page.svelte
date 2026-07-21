@@ -463,7 +463,7 @@
     flex: 0 0 12px;
     border-radius: 50%;
     background: var(--success);
-    box-shadow: 0 0 0 5px #4ade8018;
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--success) 9%, transparent);
   }
 
   .disclaimer {
@@ -475,11 +475,11 @@
     align-items: baseline;
     margin: 0 0 1.2rem;
     padding: 0.72rem 0.9rem;
-    border: 1px solid #fbbf2455;
+    border: 1px solid color-mix(in srgb, var(--warning) 33%, transparent);
     border-radius: 12px;
-    background: rgba(30, 31, 35, 0.96);
+    background: var(--surface);
     box-shadow: 0 8px 24px #0006;
-    color: #f8e8b0;
+    color: var(--text);
     font-size: 0.78rem;
     line-height: 1.45;
   }
@@ -542,7 +542,7 @@
   .url-preview code {
     display: block;
     overflow: hidden;
-    color: #c8f7f0;
+    color: var(--text);
     font: 0.8rem var(--mono);
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -616,13 +616,13 @@
   }
 
   .event-strip button.visited {
-    border-color: #4ade8055;
+    border-color: color-mix(in srgb, var(--success) 33%, transparent);
     color: var(--success);
   }
 
   .event-strip button.active {
     border-color: var(--primary);
-    background: #2dd4bf18;
+    background: color-mix(in srgb, var(--primary) 9%, transparent);
     color: var(--primary);
   }
 
@@ -642,9 +642,9 @@
   .direction {
     display: inline-flex;
     padding: 0.35rem 0.65rem;
-    border: 1px solid #38bdf844;
+    border: 1px solid color-mix(in srgb, var(--accent) 27%, transparent);
     border-radius: 999px;
-    background: #38bdf811;
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
     color: var(--accent);
     font-size: 0.72rem;
     font-weight: 800;
@@ -686,7 +686,7 @@
   .branch-paths article.active {
     transform: translateY(-3px);
     border-color: var(--primary);
-    background: #2dd4bf12;
+    background: color-mix(in srgb, var(--primary) 7%, transparent);
     color: var(--text);
     box-shadow: 0 10px 24px #0005;
   }
@@ -786,7 +786,7 @@
     margin-top: 1rem;
     padding: 0.75rem;
     border-left: 3px solid var(--warning);
-    background: #fbbf240c;
+    background: color-mix(in srgb, var(--warning) 5%, transparent);
     color: var(--muted);
     font-size: 0.8rem;
     line-height: 1.5;
@@ -830,8 +830,8 @@
   .layer-chips span {
     padding: 0.3rem 0.5rem;
     border-radius: 7px;
-    background: #9b7cff14;
-    color: #cbbcff;
+    background: color-mix(in srgb, var(--secondary) 8%, transparent);
+    color: var(--secondary);
     font-size: 0.68rem;
   }
 
@@ -842,21 +842,21 @@
   }
 
   .direction {
-    border-color: #9b7cff44;
-    background: #9b7cff11;
-    color: #cbbcff;
+    border-color: color-mix(in srgb, var(--secondary) 27%, transparent);
+    background: color-mix(in srgb, var(--secondary) 7%, transparent);
+    color: var(--secondary);
     text-transform: capitalize;
   }
 
   .direction.decapsulate {
-    border-color: #4ade8044;
-    background: #4ade8011;
+    border-color: color-mix(in srgb, var(--success) 27%, transparent);
+    background: color-mix(in srgb, var(--success) 7%, transparent);
     color: var(--success);
   }
 
   .direction.replace-link {
-    border-color: #fbbf2444;
-    background: #fbbf2411;
+    border-color: color-mix(in srgb, var(--warning) 27%, transparent);
+    background: color-mix(in srgb, var(--warning) 7%, transparent);
     color: var(--warning);
   }
 
@@ -893,31 +893,31 @@
   .address-grid code,
   .assumptions code {
     overflow-wrap: anywhere;
-    color: #d8e8fa;
+    color: var(--text);
     font: 0.78rem/1.45 var(--mono);
   }
 
   .link-unit {
-    border-color: #2dd4bf66 !important;
-    background: #2dd4bf0b;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent) !important;
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
   }
 
   .network-unit {
     margin-inline: 1.1rem;
-    border-color: #38bdf866 !important;
-    background: #38bdf80b;
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent) !important;
+    background: color-mix(in srgb, var(--accent) 4%, transparent);
   }
 
   .transport-unit {
     margin-inline: 2.2rem;
-    border-color: #9b7cff66 !important;
-    background: #9b7cff0b;
+    border-color: color-mix(in srgb, var(--secondary) 40%, transparent) !important;
+    background: color-mix(in srgb, var(--secondary) 4%, transparent);
   }
 
   .application-unit {
     margin-inline: 3.3rem;
-    border-color: #fbbf2466 !important;
-    background: #fbbf240b;
+    border-color: color-mix(in srgb, var(--warning) 40%, transparent) !important;
+    background: color-mix(in srgb, var(--warning) 4%, transparent);
   }
 
   .unit-stack article.empty {
@@ -950,8 +950,8 @@
   }
 
   .scope-pill {
-    border-color: #fbbf2444;
-    background: #fbbf2411;
+    border-color: color-mix(in srgb, var(--warning) 27%, transparent);
+    background: color-mix(in srgb, var(--warning) 7%, transparent);
     color: var(--warning);
   }
 

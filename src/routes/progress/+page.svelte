@@ -332,7 +332,11 @@
     display: grid;
     justify-items: start;
     gap: 0.55rem;
-    background: linear-gradient(135deg, #2dd4bf1f, #8b5cf610);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary) 12%, transparent),
+      color-mix(in srgb, var(--secondary) 6%, transparent)
+    );
     border-color: color-mix(in oklab, var(--primary) 40%, var(--border));
   }
   .next-up h2 {
@@ -461,7 +465,7 @@
     height: 10px;
     border-radius: 50%;
     background: var(--primary);
-    box-shadow: 0 0 0 4px #2dd4bf18;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 9%, transparent);
   }
   .activity-mark.recovery {
     background: var(--warning);
@@ -469,7 +473,7 @@
   }
   .activity-mark.completion {
     background: var(--secondary);
-    box-shadow: 0 0 0 4px #8b5cf618;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--secondary) 9%, transparent);
   }
   .activity li > div:not(.activity-meta) {
     display: grid;

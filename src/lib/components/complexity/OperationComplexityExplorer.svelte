@@ -554,9 +554,9 @@
     flex: none;
     min-width: 150px;
     padding: 0.75rem;
-    border: 1px solid #2dd4bf55;
+    border: 1px solid color-mix(in srgb, var(--primary) 33%, transparent);
     border-radius: 13px;
-    background: #2dd4bf0b;
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
   }
   .headline-result span,
   .headline-result small {
@@ -574,7 +574,7 @@
     padding: 0.65rem 1rem;
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
-    background: #07111f55;
+    background: var(--bg);
     overflow-x: auto;
   }
   .mode-tabs button {
@@ -587,7 +587,7 @@
   }
   .mode-tabs button.active {
     border-color: var(--primary);
-    background: #2dd4bf10;
+    background: color-mix(in srgb, var(--primary) 6%, transparent);
     color: var(--primary);
   }
   .mode-panel {
@@ -626,7 +626,7 @@
     padding: 0.7rem;
     border: 1px solid var(--border);
     border-radius: 10px;
-    background: #07111f77;
+    background: var(--bg);
   }
   dt {
     color: var(--muted);
@@ -655,7 +655,7 @@
     padding: 1rem;
     border: 1px solid var(--border);
     border-radius: 13px;
-    background: #07111f77;
+    background: var(--bg);
   }
   .text-trace > p {
     line-height: 1.6;
@@ -678,7 +678,7 @@
     margin-top: 0.75rem;
     border: 1px solid var(--border);
     border-radius: 10px;
-    background: #07111f55;
+    background: var(--bg);
   }
   .state-transition summary {
     padding: 0.7rem;
@@ -719,7 +719,7 @@
   .step-explanation {
     padding: 0.75rem;
     border-left: 3px solid var(--primary);
-    background: #2dd4bf09;
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
     line-height: 1.55;
   }
   .work-evidence {
@@ -736,9 +736,9 @@
     gap: 0.3rem;
     min-width: 0;
     padding: 0.7rem;
-    border: 1px solid #2dd4bf45;
+    border: 1px solid color-mix(in srgb, var(--primary) 27%, transparent);
     border-radius: 10px;
-    background: #2dd4bf08;
+    background: color-mix(in srgb, var(--primary) 3%, transparent);
   }
   .work-evidence span {
     color: var(--muted);
@@ -761,10 +761,10 @@
     padding: 0.9rem;
     border: 1px solid var(--border);
     border-radius: 13px;
-    background: #07111f66;
+    background: var(--bg);
   }
   .variant-grid article.selected {
-    border-color: #2dd4bf77;
+    border-color: color-mix(in srgb, var(--primary) 47%, transparent);
   }
   .variant-grid h3 {
     font-size: 1rem;
@@ -796,9 +796,9 @@
   }
   .space-result {
     padding: 1rem;
-    border: 1px solid #9b7cff55;
+    border: 1px solid color-mix(in srgb, var(--secondary) 33%, transparent);
     border-radius: 13px;
-    background: #9b7cff08;
+    background: color-mix(in srgb, var(--secondary) 3%, transparent);
   }
   .space-result strong {
     display: block;
@@ -814,15 +814,15 @@
   }
   .space-cases button.selected {
     border-color: var(--primary);
-    background: #2dd4bf0e;
+    background: color-mix(in srgb, var(--primary) 5%, transparent);
   }
   .challenge {
     max-width: 760px;
     margin: auto;
     padding: 1rem;
-    border: 1px solid #fbbf2455;
+    border: 1px solid color-mix(in srgb, var(--warning) 33%, transparent);
     border-radius: 14px;
-    background: #fbbf2407;
+    background: color-mix(in srgb, var(--warning) 3%, transparent);
   }
   .challenge h3 {
     font-size: 1.35rem;
@@ -852,7 +852,7 @@
     padding: 0.65rem;
     border: 1px solid var(--border);
     border-radius: 9px;
-    background: #07111f88;
+    background: var(--bg);
     font: 0.8rem var(--mono);
   }
   .challenge input {

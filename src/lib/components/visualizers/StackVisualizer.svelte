@@ -172,11 +172,11 @@
     padding: 0.45rem 0.55rem;
     border: 1px solid var(--border);
     border-radius: 9px;
-    background: #07111f88;
+    background: var(--bg);
   }
   .scalar-dock > div.active {
-    border-color: #2dd4bf66;
-    background: #2dd4bf0b;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
   }
   .scalar-dock span,
   .node-id {
@@ -220,9 +220,9 @@
     gap: 0.5rem;
     min-height: 44px;
     padding: 0.4rem 0.7rem;
-    border: 2px solid #334155;
+    border: 2px solid var(--border);
     border-radius: 10px;
-    background: #0a1727;
+    background: var(--surface);
     transition: 160ms ease;
   }
   .slot small {
@@ -239,8 +239,8 @@
     font-style: normal;
   }
   .slot.live {
-    border-color: #2dd4bf66;
-    background: #2dd4bf0a;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
   }
   .slot.spare {
     border-style: dashed;
@@ -248,7 +248,7 @@
   }
   .slot.top {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px #2dd4bf18;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 9%, transparent);
   }
   .slot.reading {
     border-color: var(--warning);
@@ -256,7 +256,7 @@
   }
   .slot.writing {
     border-color: var(--success);
-    box-shadow: 0 0 0 4px #4ade8018;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 9%, transparent);
     transform: translateX(4px);
   }
   .marks {
@@ -301,9 +301,9 @@
     display: grid;
     gap: 0.3rem;
     padding: 0.6rem;
-    border: 2px solid #334155;
+    border: 2px solid var(--border);
     border-radius: 13px;
-    background: #0a1727;
+    background: var(--surface);
     transition: 160ms ease;
   }
   article strong {
@@ -320,7 +320,7 @@
   }
   article.top {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px #2dd4bf18;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 9%, transparent);
   }
   article.current {
     border-color: var(--secondary);
@@ -341,7 +341,7 @@
     padding: 0.05rem 0.4rem;
     border-radius: 99px;
     background: var(--primary);
-    color: #04231f;
+    color: var(--primary-contrast);
     font-size: 0.55rem;
     font-style: normal;
   }
@@ -389,7 +389,7 @@
     border-color: var(--primary);
   }
   .legend i.l-live {
-    border-color: #2dd4bf66;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
   }
   .legend i.l-spare {
     border-color: var(--border);

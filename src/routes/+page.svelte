@@ -208,8 +208,8 @@
   }
   .array div.active {
     border-color: var(--primary);
-    background: #2dd4bf22;
-    box-shadow: 0 0 25px #2dd4bf44;
+    background: color-mix(in srgb, var(--primary) 13%, transparent);
+    box-shadow: 0 0 25px color-mix(in srgb, var(--primary) 27%, transparent);
   }
   .array small {
     display: block;

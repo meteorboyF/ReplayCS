@@ -362,7 +362,7 @@
     padding-inline: 1.1rem;
   }
   .algorithm-tabs button.selected {
-    color: #04231f;
+    color: var(--primary-contrast);
     border-color: var(--primary);
     background: var(--primary);
     font-weight: 800;
@@ -466,7 +466,7 @@
   }
   .aux-values code.aux-active {
     border-color: var(--warning);
-    background: #fbbf2415;
+    background: color-mix(in srgb, var(--warning) 8%, transparent);
   }
   .stage h2 {
     margin: 0.35rem 0 0;
@@ -508,14 +508,14 @@
       background 180ms ease;
   }
   .cell.sorted {
-    border-color: #4ade8077;
-    background: #4ade8012;
+    border-color: color-mix(in srgb, var(--success) 47%, transparent);
+    background: color-mix(in srgb, var(--success) 7%, transparent);
   }
   .cell.active {
     z-index: 1;
     border-color: var(--warning);
-    background: #fbbf2417;
-    box-shadow: 0 0 0 3px #fbbf241a;
+    background: color-mix(in srgb, var(--warning) 9%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning) 10%, transparent);
     transform: translateY(-8px);
   }
   .value {
@@ -558,7 +558,7 @@
     padding: 0.7rem;
     border: 1px solid var(--border);
     border-radius: 11px;
-    background: #07111f66;
+    background: var(--bg);
   }
   .metrics span,
   .complexity span {
@@ -584,7 +584,7 @@
   }
   .explanation > p {
     margin: 0.65rem 0 1rem;
-    color: #dce7f5;
+    color: var(--text);
     line-height: 1.6;
   }
   dl {
@@ -596,7 +596,7 @@
   dl div {
     padding: 0.65rem;
     border-radius: 9px;
-    background: #07111f88;
+    background: var(--bg);
   }
   dt {
     color: var(--muted);
@@ -619,11 +619,11 @@
   }
   .stable {
     color: var(--success);
-    background: #4ade8014;
+    background: color-mix(in srgb, var(--success) 8%, transparent);
   }
   .unstable {
     color: var(--warning);
-    background: #fbbf2414;
+    background: color-mix(in srgb, var(--warning) 8%, transparent);
   }
   .stability-note {
     padding: 0.8rem 0;

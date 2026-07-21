@@ -168,12 +168,12 @@
     padding: 0.45rem 0.55rem;
     border: 1px solid var(--border);
     border-radius: 9px;
-    background: #07111f88;
+    background: var(--bg);
     align-content: start;
   }
   .scalar-dock > div.active {
-    border-color: #2dd4bf66;
-    background: #2dd4bf0b;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
   }
   .scalar-dock span {
     color: var(--muted);
@@ -188,7 +188,7 @@
     height: 6px;
     margin-top: 0.2rem;
     border-radius: 99px;
-    background: #1e293b;
+    background: var(--raised);
     overflow: visible;
   }
   .load-bar i {
@@ -236,9 +236,9 @@
     gap: 0.25rem;
     justify-items: center;
     padding: 0.45rem 0.25rem 0.4rem;
-    border: 2px solid #334155;
+    border: 2px solid var(--border);
     border-radius: 10px;
-    background: #0a1727;
+    background: var(--surface);
     transition: 160ms ease;
   }
   .bucket small {
@@ -247,7 +247,7 @@
   }
   .bucket.home {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px #2dd4bf18;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 9%, transparent);
   }
   .bucket.collided {
     border-color: var(--warning);
@@ -275,12 +275,12 @@
   .home-tag {
     left: 4px;
     background: var(--primary);
-    color: #04231f;
+    color: var(--primary-contrast);
   }
   .probe-tag {
     right: 4px;
     background: var(--secondary);
-    color: #150b2e;
+    color: var(--raised);
   }
   .chain {
     display: grid;
@@ -290,9 +290,9 @@
   .chain b {
     min-width: 34px;
     padding: 0.2rem 0.3rem;
-    border: 1px solid #2dd4bf44;
+    border: 1px solid color-mix(in srgb, var(--primary) 27%, transparent);
     border-radius: 7px;
-    background: #2dd4bf0a;
+    background: color-mix(in srgb, var(--primary) 4%, transparent);
     text-align: center;
     font: 0.85rem var(--mono);
     transition: 140ms;
@@ -305,16 +305,16 @@
   }
   .chain b.compared {
     border-color: var(--warning);
-    background: #fbbf2415;
+    background: color-mix(in srgb, var(--warning) 8%, transparent);
   }
   .chain b.cursor {
     border-color: var(--secondary);
-    box-shadow: 0 0 0 3px #9b7cff18;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--secondary) 9%, transparent);
     transform: translateY(-2px);
   }
   .chain b.moving {
     border-color: var(--accent);
-    background: #38bdf81c;
+    background: color-mix(in srgb, var(--accent) 11%, transparent);
   }
   .bucket.tombstone .chain b {
     border-color: var(--danger);

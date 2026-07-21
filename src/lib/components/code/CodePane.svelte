@@ -78,7 +78,7 @@
   }
   .tabs button.active {
     color: var(--primary);
-    background: #2dd4bf18;
+    background: color-mix(in srgb, var(--primary) 9%, transparent);
     border-color: var(--primary);
   }
   pre {
@@ -95,12 +95,12 @@
     white-space: pre;
   }
   pre div.active {
-    background: #2dd4bf18;
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
     border-left-color: var(--primary);
-    color: #d8fff8;
+    color: var(--text);
   }
   pre span {
-    color: #60728a;
+    color: var(--muted);
     user-select: none;
   }
 </style>
