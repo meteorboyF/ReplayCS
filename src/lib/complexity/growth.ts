@@ -96,6 +96,10 @@ export function evaluateComplexity(
       return cap(cappedProduct(vertices + edges, logV));
     case 'O(log n + k)':
       return cap(logN + outputSize);
+    case 'O(n + k)':
+      return cap(n + outputSize);
+    case 'O(d(n + k))':
+      return cap(cappedProduct(3, n + outputSize)); // Approximate d as 3
     case 'custom':
       return { value: 0, capped: false, display: 'scenario-defined' };
   }

@@ -1087,10 +1087,10 @@ export function createDequeLesson(config: DequeConfig): TraceLesson {
     const lines: SourceLine[] = [];
     let currentLine = 1;
     for (const sq of baseSource) {
-      lines.push({ line: currentLine++, text: sq[lang], semanticOperationId: sq.semantic });
+      lines.push({ id: `L${currentLine}`, number: currentLine++, text: sq[lang], semanticOperationId: sq.semantic || undefined });
     }
     for (const sq of opSource) {
-      lines.push({ line: currentLine++, text: sq[lang], semanticOperationId: sq.semantic });
+      lines.push({ id: `L${currentLine}`, number: currentLine++, text: sq[lang], semanticOperationId: sq.semantic || undefined });
     }
     return lines;
   };

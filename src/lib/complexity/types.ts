@@ -12,6 +12,8 @@ export type ComplexityClass =
   | 'O(n!)'
   | 'O(n + m)'
   | 'O(nm)'
+  | 'O(n + k)'
+  | 'O(d(n + k))'
   | 'O(V + E)'
   | 'O((V + E) log V)'
   | 'O(log n + k)'

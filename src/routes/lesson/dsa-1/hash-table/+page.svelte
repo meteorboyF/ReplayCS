@@ -67,7 +67,8 @@
   let completedOperations = $state<string[]>([]);
   let timer: ReturnType<typeof setInterval> | undefined;
 
-  let step = $derived(lesson.steps[index]);
+  let boundedIndex = $derived(Math.max(0, Math.min(index, lesson.steps.length - 1)));
+  let step = $derived(lesson.steps[boundedIndex]);
   let predictionResolved = $derived(!step.prediction || submitted.includes(step.prediction.id));
   let visibleState = $derived(
     step.prediction && !predictionResolved ? step.stateBefore : step.stateAfter
@@ -158,7 +159,7 @@
       index = 0;
       playing = false;
       clearInterval(timer);
-      submitted = loadPredictions(`hashTable-${operation}`);
+      submitted = [];
     } catch (error) {
       inputError = error instanceof Error ? error.message : String(error);
     }

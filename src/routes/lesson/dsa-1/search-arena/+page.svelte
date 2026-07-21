@@ -6,6 +6,7 @@
   import TraceControls from '$lib/components/trace/TraceControls.svelte';
   import PredictionCheckpoint from '$lib/components/trace/PredictionCheckpoint.svelte';
   import SearchVisualizer from '$lib/components/visualizers/SearchVisualizer.svelte';
+  import MistakeReplay, { type MistakeAttempt } from '$lib/components/trace/MistakeReplay.svelte';
   import {
     createSearchLesson,
     SEARCH_ALGORITHMS,
@@ -17,10 +18,24 @@
     awardPrediction,
     completeLesson,
     loadProgress,
+    recordLanguageUse,
     recordHint,
     recordMisconception,
-    saveProgress
+    saveProgress,
+    awardRecovery
   } from '$lib/progress/store';
+  import type { MisconceptionTag } from '$lib/progress/misconceptions';
+
+  type MistakeMetadata = {
+    prompt: string;
+    wrongAnswer: string;
+    correctAnswer: string;
+    explanation: string;
+    tag: MisconceptionTag;
+    variableLabel?: string;
+    stateKey?: string;
+    recoveryPrompt?: string;
+  };
   import type { StepContext } from '$lib/server/openai/schemas';
 
   import type { SupportedLanguage } from '$lib/trace/types';
@@ -47,11 +62,11 @@
   let traceRevision = $state(0);
   let timer: ReturnType<typeof setInterval> | undefined;
 
-  let step = $derived(lesson.steps[index]);
+  let boundedIndex = $derived(Math.max(0, Math.min(index, lesson.steps.length - 1)));
+  let step = $derived(lesson.steps[boundedIndex]);
   let info = $derived(SEARCH_ALGORITHMS.find(a => a.id === algorithm)!);
-  let lessonId = $derived(`search:${algorithm}`);
+  let lessonId = $derived(`search-arena:${algorithm}`);
   let completed = $derived(progress.completed.includes(lessonId));
-  let currentState = $derived(step?.state as unknown as RuntimeState);
 
   onMount(() => {
     progress = loadProgress();
@@ -114,6 +129,14 @@
       inputError = `Invalid target: ${targetValue}`;
       return;
     }
+    if (algorithm.includes('binary-search') || algorithm === 'bst-search') {
+      for (let i = 1; i < values.length; i++) {
+        if (values[i] < values[i - 1]) {
+          inputError = 'Binary search requires ascending sorted input.';
+          return;
+        }
+      }
+    }
     inputError = '';
     inputValues = values.join(', ');
     targetValue = target.toString();
@@ -154,7 +177,7 @@
   }
 
   let predictionResolved = $derived(!step.prediction || submitted.includes(step.prediction.id));
-  let visibleState = $derived(step.prediction && !predictionResolved ? step.stateBefore : step.stateAfter) as unknown as RuntimeState;
+  let visibleState = $derived(step.prediction && !predictionResolved ? step.stateBefore : step.stateAfter);
 
   function selectLanguage(next: SupportedLanguage) {
     language = next;
@@ -179,7 +202,7 @@
     predictionAnswer = text;
     
     if (correct) {
-      progress = awardPrediction(progress, lessonId);
+      progress = awardPrediction(progress, `${lessonId}:${step.prediction.id}`, step.prediction.xpReward);
       saveProgress(progress);
       setTimeout(() => jump(index + 1), 600);
     } else {
@@ -197,9 +220,11 @@
     }
   }
 
-  function handleRecovery(xp: number) {
-    progress = awardRecovery(progress, lessonId, xp);
-    saveProgress(progress);
+  function handleRecovery() {
+    if (mistake) {
+      progress = awardRecovery(progress, mistake.evidenceId);
+      saveProgress(progress);
+    }
     mistake = null;
   }
 
@@ -229,12 +254,12 @@
       : undefined
   });
 
-  function handleHint(hint: string) {
+  function handleHint() {
     progress = recordHint(progress, lessonId);
     saveProgress(progress);
   }
 
-  function handleMisconception(misconception: string) {
+  function handleMisconception(misconception: MisconceptionTag) {
     progress = recordMisconception(progress, lessonId, misconception);
     saveProgress(progress);
   }
@@ -276,7 +301,7 @@
   </div>
 
   <div class="main-content">
-    <SearchVisualizer state={visibleState} />
+    <SearchVisualizer state={visibleState as unknown as RuntimeState} />
     
     {#if predictionNudge}
       <div class="nudge">{predictionNudge}</div>
@@ -286,8 +311,8 @@
   <div class="sidebar">
     <aside class="step-panel panel">
       <div class="step-heading">
-        <span class="eyebrow">Step {index + 1}</span>
-        <span class="event">{step.action}</span>
+        <span class="eyebrow">Step {index + 1} of {lesson.steps.length}</span>
+        <span class="event">{step.eventType}</span>
       </div>
       <h2>{step.title || 'Execute'}</h2>
       <p class="explanation">
@@ -322,8 +347,7 @@
     {/if}
     <div class="code-panel panel">
       <CodePane 
-        source={lesson.sourceByLanguage || lesson.source} 
-        activeLineId={step.sourceLineId} 
+        source={lesson.sourceByLanguage} 
         {language}
         activeSemantic={step.semanticOperationId}
         onlanguage={selectLanguage}
@@ -335,7 +359,7 @@
     <div class="ai-panel panel">
       {#if currentMistake}
         <MistakeReplay
-          mistake={currentMistake}
+          attempt={currentMistake}
           stateBefore={step.stateBefore}
           stateAfter={step.stateAfter}
           onrecover={handleRecovery}

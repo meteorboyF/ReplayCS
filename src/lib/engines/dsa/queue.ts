@@ -372,7 +372,7 @@ function operationSource(config: ResolvedConfig): QuadSourceLine[] {
 
 function sourceLines(config: ResolvedConfig, lang: SupportedLanguage): SourceLine[] {
   const quads = operationSource(config);
-  return quads.map((q, index) => ({ line: index + 1, semanticOperationId: q.semantic, text: q[lang] }));
+  return quads.map((q, index) => ({ id: `L${index}`, number: index + 1, semanticOperationId: q.semantic || undefined, text: q[lang] }));
 }
 
 function selectedCase(config: ResolvedConfig): SelectedCase {
@@ -426,7 +426,7 @@ function entitiesFor(state: RuntimeState): TraceEntity[] {
   } else {
     const arrayElements: TraceEntity[] = state.array.map((value, index) => ({
       id: `array-${index}`,
-      type: 'array-element',
+      type: 'array-cell',
       label: `[${index}]`,
       value,
       metadata: {
@@ -515,7 +515,7 @@ function mutationsBetween(
           property: 'value',
           previousValue: before[indexField],
           nextValue: after[indexField],
-          animation: 'update'
+          animation: 'pulse'
         });
       }
     }
@@ -528,7 +528,7 @@ function mutationsBetween(
           property: 'value',
           previousValue: beforeArray[i],
           nextValue: afterArray[i],
-          animation: 'update'
+          animation: 'pulse'
         });
       }
     }
@@ -587,9 +587,10 @@ function createTraceBuilder(
       auxiliarySpace: complexityCase.auxiliarySpace,
       space: {
         auxiliary: { current: 1, peak: peakAuxiliary, unit: 'variables' },
-        output: { current: peakOutput, peak: peakOutput, unit: 'elements' }
+        output: { current: config.values.length, peak: config.values.length, unit: 'elements' }
       },
-      derivation: complexityCase.derivation
+      assumptions: Array.from(complexityCase.assumptions),
+      derivation: []
     };
 
     steps.push({
@@ -599,14 +600,13 @@ function createTraceBuilder(
       sourceLineIds: [semantic],
       semanticOperationId: semantic,
       title,
-      explanation,
       stateBefore: before,
       stateAfter: after,
       mutations: mutationsBetween(before, after),
       complexityEvidence,
-      predictions: [],
       entities: entitiesFor(state),
-      deterministicExplanation: explanation
+      deterministicExplanation: explanation,
+      visualFocus: []
     });
   };
 
@@ -621,7 +621,7 @@ function runEnqueue(builder: TraceBuilder, config: ResolvedConfig) {
         'logic',
         'Insert value at rear',
         'Assign value to tail index and wrap tail around.',
-        { 'array-write': 1, arithmetic: 1 },
+        { 'write': 1, read: 1 },
         (s) => {
           s.array[s.tailIndex] = config.newValue;
           s.tailIndex = (s.tailIndex + 1) % s.capacity;
@@ -633,7 +633,7 @@ function runEnqueue(builder: TraceBuilder, config: ResolvedConfig) {
         'logic',
         'Insert value at end',
         'Assign value to tail index.',
-        { 'array-write': 1 },
+        { 'write': 1 },
         (s) => {
           s.array[s.tailIndex] = config.newValue;
           s.tailIndex++;
@@ -672,24 +672,24 @@ function runDequeue(builder: TraceBuilder, config: ResolvedConfig) {
   }
   
   if (config.backing === 'naive-array') {
-    builder.add('start', 'Save front', 'Save the element to return.', { 'array-read': 1 }, (s) => {
+    builder.add('start', 'Save front', 'Save the element to return.', { 'read': 1 }, (s) => {
       s.result = s.array[0];
     });
     for (let i = 1; i < config.values.length; i++) {
-      builder.add('logic', `Shift element ${i}`, 'Move element one position left.', { 'array-read': 1, 'array-write': 1 }, (s) => {
+      builder.add('logic', `Shift element ${i}`, 'Move element one position left.', { 'read': 1, 'write': 1 }, (s) => {
         s.array[i - 1] = s.array[i];
       });
     }
-    builder.add('end', 'Clear last', 'Nullify the last element and decrement size.', { 'array-write': 1 }, (s) => {
+    builder.add('end', 'Clear last', 'Nullify the last element and decrement size.', { 'write': 1 }, (s) => {
       s.array[s.tailIndex - 1] = null;
       s.tailIndex--;
       s.size--;
     });
   } else if (config.backing === 'circular-array') {
-    builder.add('start', 'Save front', 'Save the element to return.', { 'array-read': 1 }, (s) => {
+    builder.add('start', 'Save front', 'Save the element to return.', { 'read': 1 }, (s) => {
       s.result = s.array[s.headIndex];
     });
-    builder.add('logic', 'Advance front', 'Move head index and wrap around.', { 'array-write': 1, arithmetic: 1 }, (s) => {
+    builder.add('logic', 'Advance front', 'Move head index and wrap around.', { 'write': 1, read: 1 }, (s) => {
       s.array[s.headIndex] = null;
       s.headIndex = (s.headIndex + 1) % s.capacity;
       s.size--;
@@ -716,7 +716,7 @@ function runFront(builder: TraceBuilder, config: ResolvedConfig) {
     builder.add('start', 'Check empty', 'Queue is empty.', { comparison: 1 });
     return;
   }
-  builder.add('logic', 'Access front', 'Read front element directly.', { 'array-read': 1 }, (s) => {
+  builder.add('logic', 'Access front', 'Read front element directly.', { 'read': 1 }, (s) => {
     if (s.backing === 'linked-list') {
       const head = s.nodes.find(n => n.id === s.headId);
       s.result = head ? head.value : null;
@@ -733,7 +733,7 @@ function runRear(builder: TraceBuilder, config: ResolvedConfig) {
     builder.add('start', 'Check empty', 'Queue is empty.', { comparison: 1 });
     return;
   }
-  builder.add('logic', 'Access rear', 'Read rear element directly.', { 'array-read': 1 }, (s) => {
+  builder.add('logic', 'Access rear', 'Read rear element directly.', { 'read': 1 }, (s) => {
     if (s.backing === 'linked-list') {
       const tail = s.nodes.find(n => n.id === s.tailId);
       s.result = tail ? tail.value : null;

@@ -5,10 +5,16 @@ export const subjects = {
       'Trace binary search, compare classic sorting algorithms, and replay linked-list pointer changes operation by operation.',
     lessons: [
       {
-        title: 'Binary Search',
-        slug: 'binary-search',
+        title: 'Search Arena',
+        slug: 'search-arena',
         status: 'live',
-        detail: 'Shrink a sorted search range and predict every midpoint.'
+        detail: 'Trace and compare Linear Search, Binary Search, BST Search, and Hash Lookup.'
+      },
+      {
+        title: 'Hash Table Lab',
+        slug: 'hash-table',
+        status: 'live',
+        detail: 'Watch deterministic hashing, separate chaining, and linear probing slot by slot.'
       },
       {
         title: 'Sorting Arena',

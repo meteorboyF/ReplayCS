@@ -374,7 +374,7 @@ function operationSource(config: ResolvedConfig): QuadSourceLine[] {
 
 function sourceLines(config: ResolvedConfig, lang: SupportedLanguage): SourceLine[] {
   const quads = operationSource(config);
-  return quads.map((q, index) => ({ line: index + 1, semanticOperationId: q.semantic, text: q[lang] }));
+  return quads.map((q, index) => ({ id: `L${index}`, number: index + 1, semanticOperationId: q.semantic || undefined, text: q[lang] }));
 }
 
 function selectedCase(config: ResolvedConfig): SelectedCase {
@@ -419,7 +419,7 @@ function entitiesFor(state: RuntimeState): TraceEntity[] {
     state.buckets.forEach((headId, i) => {
       entities.push({
         id: `bucket-${i}`,
-        type: 'array-element',
+        type: 'array-cell',
         label: `bucket[${i}]`,
         value: headId,
         metadata: {}
@@ -442,7 +442,7 @@ function entitiesFor(state: RuntimeState): TraceEntity[] {
     state.cells.forEach((cell, i) => {
       entities.push({
         id: cell.id,
-        type: 'array-element',
+        type: 'array-cell',
         label: `cell[${i}]`,
         value: cell.status === 'occupied' ? `{${cell.key}:${cell.value}}` : cell.status,
         metadata: {
@@ -471,7 +471,7 @@ function mutationsBetween(
         property: 'value',
         previousValue: before[v],
         nextValue: after[v],
-        animation: 'update'
+        animation: 'pulse'
       });
     }
   }
@@ -486,7 +486,7 @@ function mutationsBetween(
           property: 'value',
           previousValue: beforeBuckets[i],
           nextValue: afterBuckets[i],
-          animation: 'update'
+          animation: 'pulse'
         });
       }
     }
@@ -531,7 +531,7 @@ function mutationsBetween(
           property: 'value',
           previousValue: prior.value,
           nextValue: node.value,
-          animation: 'update'
+          animation: 'pulse'
         });
       }
     }
@@ -559,7 +559,7 @@ function mutationsBetween(
           property: 'value',
           previousValue: prior.status === 'occupied' ? `{${prior.key}:${prior.value}}` : prior.status,
           nextValue: cell.status === 'occupied' ? `{${cell.key}:${cell.value}}` : cell.status,
-          animation: 'update'
+          animation: 'pulse'
         });
       }
     }
@@ -618,9 +618,10 @@ function createTraceBuilder(
       auxiliarySpace: complexityCase.auxiliarySpace,
       space: {
         auxiliary: { current: state.capacity, peak: peakAuxiliary, unit: 'variables' },
-        output: { current: peakOutput, peak: peakOutput, unit: 'elements' }
+        output: { current: state.size, peak: Math.max(state.size, state.capacity), unit: 'elements' }
       },
-      derivation: complexityCase.derivation
+      assumptions: Array.from(complexityCase.assumptions),
+      derivation: []
     };
 
     steps.push({
@@ -630,14 +631,13 @@ function createTraceBuilder(
       sourceLineIds: [semantic],
       semanticOperationId: semantic,
       title,
-      explanation,
       stateBefore: before,
       stateAfter: after,
       mutations: mutationsBetween(before, after),
       complexityEvidence,
-      predictions: [],
       entities: entitiesFor(state),
-      deterministicExplanation: explanation
+      deterministicExplanation: explanation,
+      visualFocus: []
     });
   };
 
@@ -667,7 +667,7 @@ function checkResize(builder: TraceBuilder, config: ResolvedConfig) {
       }
     });
 
-    builder.add('resize', 'Rehash elements', 'Rehashing all existing elements into the new structure.', { arithmetic: builder.state.size }, (s) => {
+    builder.add('resize', 'Rehash elements', 'Rehashing all existing elements into the new structure.', { read: builder.state.size }, (s) => {
       if (s.backing === 'separate-chaining') {
         // We only rehash 'live' nodes
         for (const n of s.nodes) {
@@ -678,7 +678,7 @@ function checkResize(builder: TraceBuilder, config: ResolvedConfig) {
           }
         }
       } else {
-        const oldEntries = builder.steps[builder.steps.length - 2].stateAfter.cells as RuntimeCell[];
+        const oldEntries = builder.steps[builder.steps.length - 2].stateAfter.cells as unknown as unknown as RuntimeCell[];
         for (const cell of oldEntries) {
           if (cell.status === 'occupied') {
             let h = hashFunc(cell.key!, s.capacity, s.hashType);
@@ -703,7 +703,7 @@ function runInsert(builder: TraceBuilder, config: ResolvedConfig) {
   builder.add('start', 'Start Insert', `Inserting key ${config.targetKey}.`, { comparison: 1 });
   
   const h = hashFunc(config.targetKey, builder.state.capacity, config.hashType);
-  builder.add('hash', 'Compute Hash', `Hash for key ${config.targetKey} is ${h}.`, { arithmetic: 1 });
+  builder.add('hash', 'Compute Hash', `Hash for key ${config.targetKey} is ${h}.`, { read: 1 });
   
   if (config.backing === 'separate-chaining') {
     let curr = builder.state.buckets[h];
@@ -714,7 +714,7 @@ function runInsert(builder: TraceBuilder, config: ResolvedConfig) {
       const node = builder.state.nodes.find(n => n.id === curr)!;
       builder.add('logic', 'Traverse bucket', `Checking node with key ${node.key}.`, { comparison: 1 });
       if (node.key === config.targetKey) {
-        builder.add('logic', 'Update existing', `Key found. Updating value to ${config.targetValue}.`, { 'array-write': 1 }, (s) => {
+        builder.add('logic', 'Update existing', `Key found. Updating value to ${config.targetValue}.`, { 'write': 1 }, (s) => {
           const n = s.nodes.find(x => x.id === curr)!;
           n.value = config.targetValue;
         });
@@ -747,10 +747,10 @@ function runInsert(builder: TraceBuilder, config: ResolvedConfig) {
     for (let i = 0; i < builder.state.capacity; i++) {
       probes++;
       const cell = builder.state.cells[currH];
-      builder.add('logic', 'Probe cell', `Checking cell ${currH} (status: ${cell.status}).`, { 'array-read': 1, comparison: 1 });
+      builder.add('logic', 'Probe cell', `Checking cell ${currH} (status: ${cell.status}).`, { 'read': 1, comparison: 1 });
       
       if (cell.status === 'empty' || cell.status === 'tombstone') {
-        builder.add('logic', 'Insert into empty/tombstone', `Found available cell at ${currH}. Inserting.`, { 'array-write': 1 }, (s) => {
+        builder.add('logic', 'Insert into empty/tombstone', `Found available cell at ${currH}. Inserting.`, { 'write': 1 }, (s) => {
           s.cells[currH].key = config.targetKey;
           s.cells[currH].value = config.targetValue;
           s.cells[currH].status = 'occupied';
@@ -760,7 +760,7 @@ function runInsert(builder: TraceBuilder, config: ResolvedConfig) {
         found = true;
         break;
       } else if (cell.key === config.targetKey) {
-        builder.add('logic', 'Update existing', `Key found at cell ${currH}. Updating value.`, { 'array-write': 1 }, (s) => {
+        builder.add('logic', 'Update existing', `Key found at cell ${currH}. Updating value.`, { 'write': 1 }, (s) => {
           s.cells[currH].value = config.targetValue;
         });
         found = true;
@@ -780,7 +780,7 @@ function runInsert(builder: TraceBuilder, config: ResolvedConfig) {
 function runSearch(builder: TraceBuilder, config: ResolvedConfig) {
   builder.add('start', 'Start Search', `Searching for key ${config.targetKey}.`, { comparison: 1 });
   const h = hashFunc(config.targetKey, builder.state.capacity, config.hashType);
-  builder.add('hash', 'Compute Hash', `Hash for key ${config.targetKey} is ${h}.`, { arithmetic: 1 });
+  builder.add('hash', 'Compute Hash', `Hash for key ${config.targetKey} is ${h}.`, { read: 1 });
 
   if (config.backing === 'separate-chaining') {
     let curr = builder.state.buckets[h];
@@ -807,12 +807,12 @@ function runSearch(builder: TraceBuilder, config: ResolvedConfig) {
     let found = false;
     for (let i = 0; i < builder.state.capacity; i++) {
       const cell = builder.state.cells[currH];
-      builder.add('logic', 'Probe cell', `Checking cell ${currH} (status: ${cell.status}).`, { 'array-read': 1, comparison: 1 });
+      builder.add('logic', 'Probe cell', `Checking cell ${currH} (status: ${cell.status}).`, { 'read': 1, comparison: 1 });
       
       if (cell.status === 'empty') {
         break;
       } else if (cell.status === 'occupied' && cell.key === config.targetKey) {
-        builder.add('logic', 'Found key', `Key ${config.targetKey} found at cell ${currH}.`, { 'array-read': 1 }, (s) => {
+        builder.add('logic', 'Found key', `Key ${config.targetKey} found at cell ${currH}.`, { 'read': 1 }, (s) => {
           s.result = cell.value;
         });
         found = true;
@@ -831,7 +831,7 @@ function runSearch(builder: TraceBuilder, config: ResolvedConfig) {
 function runDelete(builder: TraceBuilder, config: ResolvedConfig) {
   builder.add('start', 'Start Delete', `Deleting key ${config.targetKey}.`, { comparison: 1 });
   const h = hashFunc(config.targetKey, builder.state.capacity, config.hashType);
-  builder.add('hash', 'Compute Hash', `Hash for key ${config.targetKey} is ${h}.`, { arithmetic: 1 });
+  builder.add('hash', 'Compute Hash', `Hash for key ${config.targetKey} is ${h}.`, { read: 1 });
 
   if (config.backing === 'separate-chaining') {
     let curr = builder.state.buckets[h];
@@ -867,12 +867,12 @@ function runDelete(builder: TraceBuilder, config: ResolvedConfig) {
     let found = false;
     for (let i = 0; i < builder.state.capacity; i++) {
       const cell = builder.state.cells[currH];
-      builder.add('logic', 'Probe cell', `Checking cell ${currH} (status: ${cell.status}).`, { 'array-read': 1, comparison: 1 });
+      builder.add('logic', 'Probe cell', `Checking cell ${currH} (status: ${cell.status}).`, { 'read': 1, comparison: 1 });
       
       if (cell.status === 'empty') {
         break;
       } else if (cell.status === 'occupied' && cell.key === config.targetKey) {
-        builder.add('logic', 'Delete cell', `Key found. Marking cell ${currH} as tombstone.`, { 'array-write': 1 }, (s) => {
+        builder.add('logic', 'Delete cell', `Key found. Marking cell ${currH} as tombstone.`, { 'write': 1 }, (s) => {
           s.cells[currH].status = 'tombstone';
           s.cells[currH].key = null;
           s.cells[currH].value = null;

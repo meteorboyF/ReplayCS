@@ -12,7 +12,8 @@
     DEFAULT_SORTING_CONFIG,
     validateSortingInput,
     parseSortingInput,
-    type SortingAlgorithm
+    type SortingAlgorithm,
+    type RuntimeState
   } from '$lib/engines/dsa/sorting';
   import MistakeReplay, { type MistakeAttempt } from '$lib/components/trace/MistakeReplay.svelte';
   import {
@@ -62,7 +63,8 @@
   let traceRevision = $state(0);
   let timer: ReturnType<typeof setInterval> | undefined;
 
-  let step = $derived(lesson.steps[index]);
+  let boundedIndex = $derived(Math.max(0, Math.min(index, lesson.steps.length - 1)));
+  let step = $derived(lesson.steps[boundedIndex]);
   let info = $derived(SORTING_METADATA.find(a => a.id === algorithm)!);
   let lessonId = $derived(`sorting-arena:${algorithm}`);
   let completed = $derived(progress.completed.includes(lessonId));
@@ -201,9 +203,11 @@
     }
   }
 
-  function handleRecovery(xp: number) {
-    progress = awardRecovery(progress, lessonId, xp);
-    saveProgress(progress);
+  function handleRecovery() {
+    if (mistake) {
+      progress = awardRecovery(progress, mistake.evidenceId);
+      saveProgress(progress);
+    }
     mistake = null;
   }
 
@@ -233,7 +237,7 @@
       : undefined
   });
 
-  function handleHint(hint: string) {
+  function handleHint() {
     progress = recordHint(progress, lessonId);
     saveProgress(progress);
   }
@@ -286,7 +290,7 @@
       </span>
       <p>{info.description}</p>
     </div>
-    <SortingVisualizer state={visibleState} />
+    <SortingVisualizer state={visibleState as unknown as RuntimeState} />
     
     {#if predictionNudge}
       <div class="nudge">{predictionNudge}</div>

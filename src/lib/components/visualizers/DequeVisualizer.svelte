@@ -134,11 +134,6 @@
     padding: 1.25rem 0.25rem;
     overflow-x: auto;
   }
-  .queue-container {
-    display: flex;
-    flex-direction: row;
-    gap: 0.5rem;
-  }
   article {
     position: relative;
     width: 112px;

@@ -297,7 +297,7 @@ function entitiesFor(state: RuntimeState): TraceEntity[] {
     state.buckets.forEach((bucket, i) => {
       entities.push({
         id: `bucket-${i}`,
-        type: 'array-element',
+        type: 'array-cell',
         label: `bucket[${i}]`,
         value: bucket.length > 0 ? bucket.join(' -> ') : 'empty',
         metadata: { active: state.currentBucket === i }
@@ -409,7 +409,6 @@ function createTraceBuilder(config: ResolvedConfig, state: RuntimeState, caseTyp
         sourceLineIds: [semantic],
         semanticOperationId: semantic,
         title,
-        explanation,
         stateBefore: before,
         stateAfter: after,
         entities: entitiesFor(state),
@@ -417,7 +416,8 @@ function createTraceBuilder(config: ResolvedConfig, state: RuntimeState, caseTyp
         deterministicExplanation: explanation,
         complexityEvidence: evidence,
         complexityCost: { comparisons: state.comparisons },
-        prediction: pred
+        prediction: pred,
+        visualFocus: []
       });
     }
   };
@@ -440,7 +440,7 @@ function runLinearSearch(b: TraceBuilder) {
       return;
     }
     
-    b.add('increment', 'Increment index', 'Move to next element.', { arithmetic: 1, write: 1 }, s => { s.index = s.index! + 1; });
+    b.add('increment', 'Increment index', 'Move to next element.', { read: 1, write: 1 }, s => { s.index = s.index! + 1; });
   }
   
   b.add('check-loop', 'Loop ends', 'Checked all elements.', { comparison: 1 });
@@ -454,7 +454,7 @@ function runBinarySearchIterative(b: TraceBuilder) {
     b.add('check-loop', 'Check condition', `${state.left} ≤ ${state.right}, so another candidate remains.`, { comparison: 1 });
     
     const nextMid = state.left! + Math.floor((state.right! - state.left!) / 2);
-    b.add('calc-mid', 'Calculate mid', `The midpoint is ${nextMid}.`, { arithmetic: 1, write: 1 }, s => { s.mid = nextMid; }, {
+    b.add('calc-mid', 'Calculate mid', `The midpoint is ${nextMid}.`, { read: 1, write: 1 }, s => { s.mid = nextMid; }, {
       id: `mid-${b.steps.length}`,
       prompt: 'Which index becomes mid?',
       type: 'numeric',
@@ -496,7 +496,7 @@ function runBinarySearchRecursive(b: TraceBuilder) {
     }
     
     const mid = left + Math.floor((right - left) / 2);
-    b.add('calc-mid', 'Calculate mid', `mid = ${mid}`, { arithmetic: 1, write: 1 }, s => { s.mid = mid; });
+    b.add('calc-mid', 'Calculate mid', `mid = ${mid}`, { read: 1, write: 1 }, s => { s.mid = mid; });
     
     b.add('compare', 'Compare', `values[${mid}] == ${state.target}?`, { read: 2, comparison: 1 }, s => { s.comparisons++; });
     if (state.values[mid] === state.target) {
@@ -542,7 +542,7 @@ function runBSTSearch(b: TraceBuilder) {
 
 function runHashLookup(b: TraceBuilder) {
   const { state } = b;
-  b.add('hash', 'Compute hash', `Hash for ${state.target} is ${state.target % state.hashTableSize}`, { arithmetic: 1 });
+  b.add('hash', 'Compute hash', `Hash for ${state.target} is ${state.target % state.hashTableSize}`, { read: 1 });
   const hashIdx = state.target % state.hashTableSize;
   
   b.add('access', 'Access bucket', `Go to bucket ${hashIdx}`, { read: 1, write: 1 }, s => { s.currentBucket = hashIdx; });

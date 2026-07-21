@@ -834,7 +834,8 @@ function sourceLines(config: ResolvedConfig, lang: SupportedLanguage): SourceLin
   
   return lines.map((q, i) => ({
     id: q.semantic || `L${i}`,
-    semanticOperationId: q.semantic || null,
+    number: i + 1,
+    semanticOperationId: q.semantic || undefined,
     text: q[lang]
   }));
 }
