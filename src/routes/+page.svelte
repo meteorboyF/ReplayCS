@@ -33,10 +33,11 @@
       and understand why it happened.
     </p>
     <div class="actions">
-      <a class="button primary" href={primaryCta.href}>{primaryCta.label}</a><a
-        class="button"
-        href="/learn/dsa-1">Explore subjects</a
-      ><a class="button judge" href="/judge-demo">Judge demo · 3 min</a>
+      <a class="button primary" href={primaryCta.href}>{primaryCta.label}</a>
+      <div class="secondary-links">
+        <a href="/learn/dsa-1">Explore subjects</a>
+        <a href="/judge-demo">Judge demo · 3 min</a>
+      </div>
     </div>
     <p class="languages">Curated equivalents in <strong>C · C++ · Java · Python</strong></p>
   </div>
@@ -61,15 +62,17 @@
 <section class="section">
   <p class="eyebrow">One learning loop</p>
   <h2>Predict. Execute. Explain. Master.</h2>
-  <div class="cards">
-    {#each [['01', 'Predict before reveal', 'Commit to the next line or state.'], ['02', 'Watch state mutate', 'See ranges, queues, rows, and variables change.'], ['03', 'Explain the why', 'Deterministic truth first; grounded AI help on request.']] as card}<article
-        class="card panel"
-      >
-        <span class="pill">{card[0]}</span>
-        <h3>{card[1]}</h3>
-        <p class="muted">{card[2]}</p>
-      </article>{/each}
-  </div>
+  <ol class="loop-strip">
+    {#each [['01', 'Predict before reveal', 'Commit to the next line or state.'], ['02', 'Watch state mutate', 'See ranges, queues, rows, and variables change.'], ['03', 'Explain the why', 'Deterministic truth first; grounded AI help on request.']] as card}
+      <li>
+        <span class="loop-num">{card[0]}</span>
+        <div>
+          <strong>{card[1]}</strong>
+          <span class="muted">{card[2]}</span>
+        </div>
+      </li>
+    {/each}
+  </ol>
 </section>
 <section class="section">
   <p class="eyebrow">Curriculum</p>
@@ -103,14 +106,51 @@
   .actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.8rem;
+    align-items: center;
+    gap: 1.25rem 1.5rem;
     margin: 1.8rem 0;
   }
-  .judge {
-    border-color: #9b7cff88;
-    background: #9b7cff12;
-    color: #c8baff;
-    font-weight: 750;
+  .secondary-links {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+  }
+  .secondary-links a {
+    color: var(--muted);
+    font-size: 0.92rem;
+    text-decoration: none;
+  }
+  .secondary-links a:hover {
+    color: var(--text);
+    text-decoration: underline;
+  }
+  .loop-strip {
+    list-style: none;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem 2rem;
+  }
+  .loop-strip li {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+  }
+  .loop-num {
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 0.9rem;
+  }
+  .loop-strip strong {
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+  .loop-strip .muted {
+    font-size: 0.88rem;
+    line-height: 1.5;
   }
   .languages {
     font-size: 0.85rem;
@@ -208,12 +248,19 @@
       grid-template-columns: repeat(2, 1fr);
     }
   }
+  @media (max-width: 700px) {
+    .loop-strip {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
   @media (max-width: 560px) {
     .subjects {
       grid-template-columns: 1fr;
     }
     .actions {
       flex-direction: column;
+      align-items: flex-start;
     }
     .preview {
       overflow: hidden;
