@@ -99,7 +99,7 @@
     <p>Inspect and replay every relation—without sending arbitrary SQL anywhere.</p>
   </div>
   <div class="score" aria-label="Learner score">
-    <span>⚡ {progress.xp} XP</span><span>♥ {progress.hearts}</span>
+    <span>⚡ {progress.xp} XP</span>
   </div>
 </div>
 

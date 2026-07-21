@@ -77,8 +77,6 @@
   }
 
   function activityLabel(type: Progress['recentActivity'][number]['type']) {
-    if (type === 'prediction') return 'Prediction earned';
-    if (type === 'recovery') return 'Mistake recovered';
     return 'Lesson completed';
   }
 

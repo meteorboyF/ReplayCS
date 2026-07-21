@@ -27,44 +27,12 @@ function orderedLessons(progress: Progress): LiveLesson[] {
   );
 }
 
-function unresolvedMistakes(progress: Progress, lesson: LiveLesson): number {
-  const prefix = `${lesson.completionId}:`;
-  const evidence = progress.mistakeEvidence.filter((id) => id.startsWith(prefix));
-  const exactRecoveries = new Set(progress.recoveredMistakes.filter((id) => evidence.includes(id)));
-  const canonicalRecoveries = progress.recoveredMistakes.filter(
-    (id) => id.startsWith(prefix) && !evidence.includes(id)
-  ).length;
-  return Math.max(0, evidence.length - exactRecoveries.size - canonicalRecoveries);
-}
-
-function hasLegacyMisconception(progress: Progress, lesson: LiveLesson): boolean {
-  if (progress.completed.includes(lesson.completionId)) return false;
-  if (progress.mistakeEvidence.some((id) => id.startsWith(`${lesson.completionId}:`))) {
-    return false;
-  }
-  return lesson.recovery.misconceptionTags.some(
-    (tag) => (progress.misconceptionCounts[tag] ?? 0) > 0
-  );
-}
-
 export function recommendationSequence(progress: Progress): readonly LiveLesson[] {
   return orderedLessons(progress);
 }
 
 export function recommendNext(progress: Progress): Recommendation {
   const lessons = orderedLessons(progress);
-  const recovery =
-    lessons.find((lesson) => unresolvedMistakes(progress, lesson) > 0) ??
-    lessons.find((lesson) => hasLegacyMisconception(progress, lesson));
-  if (recovery) {
-    return {
-      title: recovery.recovery.title,
-      href: recovery.recovery.href,
-      reason: recovery.recovery.reason,
-      label: 'Recovery'
-    };
-  }
-
   const nextLesson = lessons.find((lesson) => !progress.completed.includes(lesson.completionId));
   if (nextLesson) {
     return {
@@ -72,7 +40,7 @@ export function recommendNext(progress: Progress): Recommendation {
       href: nextLesson.href,
       reason: progress.onboardingComplete
         ? `Continue your path through ${subjectsLabel(nextLesson.subject)} with an unfinished live lesson.`
-        : 'Build the prediction habit with a short, visual trace.',
+        : 'Start with a short visual trace and inspect every state change.',
       label: progress.completed.length ? 'Next live lesson' : 'Recommended start'
     };
   }

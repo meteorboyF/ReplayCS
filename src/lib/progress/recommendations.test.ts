@@ -45,30 +45,6 @@ describe('adaptive recommendations', () => {
     ]);
   });
 
-  it('prioritizes evidence-backed recovery', () => {
-    const profile = createEmptyProgress();
-    profile.misconceptionCounts['scheduler-tie-break'] = 1;
-    profile.mistakeEvidence = ['cpu-scheduling:first-dispatch'];
-    expect(recommendNext(profile)).toMatchObject({
-      title: 'CPU Scheduling Recovery',
-      label: 'Recovery'
-    });
-  });
-
-  it('keeps compatibility with legacy count-only misconception evidence', () => {
-    const profile = createEmptyProgress();
-    profile.misconceptionCounts['index-vs-value'] = 2;
-    expect(recommendNext(profile).label).toBe('Recovery');
-  });
-
-  it('stops recommending a recovery after its evidence is recovered', () => {
-    const profile = createEmptyProgress();
-    profile.misconceptionCounts['scheduler-tie-break'] = 1;
-    profile.mistakeEvidence = ['cpu-scheduling:first-dispatch'];
-    profile.recoveredMistakes = ['cpu-scheduling:first-dispatch'];
-    expect(recommendNext(profile).label).not.toBe('Recovery');
-  });
-
   it('moves completed learners through every incomplete live lesson', () => {
     expect(
       recommendNext({
