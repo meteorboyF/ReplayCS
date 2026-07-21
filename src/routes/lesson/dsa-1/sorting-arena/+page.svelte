@@ -646,6 +646,9 @@
     color: var(--primary);
   }
   @media (max-width: 1100px) {
+    .setup {
+      grid-template-columns: 1fr;
+    }
     .arena-grid {
       grid-template-columns: minmax(0, 1fr) minmax(240px, 0.7fr);
     }
