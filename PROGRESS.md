@@ -3,16 +3,16 @@
 ## Current status
 
 - Updated: 2026-07-22 (+06)
-- Working branch: `fix/light-theme-contrast`
-- Working baseline: `3003dd4` (`origin/main`, merge of PR #32)
+- Working branch: `feat/strings-lab`
+- Working baseline: `4e9310b` (`origin/main`, merge of PR #34)
 - Teammate UI baseline: `d007dce` (PR #33, light-first theme and theme toggle), layered on the earlier `e75d3a9` redesign
-- Production commit: `3003dd4`
+- Production commit: `4e9310b`
 - Production: https://replaycs.vercel.app
-- Deployment: `dpl_5Ga2emV11KuuEdVBxDdhb26zDr7A` (`READY`)
-- Stable deployment URL: https://replaycs-avshb50qb-meteorboy-f.vercel.app
+- Deployment: `dpl_HcX8sThH4wL3N9z5mqBWz3nfCJ6x` (`READY`)
+- Stable deployment URL: https://replaycs-bf3kokpeo-meteorboy-f.vercel.app
 - Recovery branch: `origin/feat/study-recap` at `2fb3489`
-- Worktree: the confirmed light-theme contrast repair changes only the shared primary token; local `.claude/` is untracked and must not be committed.
-- Immediate next action: merge and deploy the contrast repair, then build Strings Lab from the resulting main.
+- Worktree: Strings Lab implementation and regression coverage are in progress; local `.claude/` is untracked and must not be committed.
+- Immediate next action: complete the Strings full gate, merge/deploy it, then build Recursion Lab from current main.
 
 ## Current teammate UI contract
 
@@ -50,8 +50,8 @@ The only product regression found was the Sorting Arena setup form extending the
 
 - Study Recap: complete, merged in PR #31, and deployed from `1c99536`. The deterministic generator, server-only optional model rewrite, strict validation/schema, request size limit, timeout, safe fallback, English/Bangla and concise/exam-ready controls, subject/topic selection, teammate-style Progress CTA, and responsive page are implemented.
 - Progress-store cleanup: complete in PR #32 and deployed from `3003dd4`. Version 4 removes obsolete prediction-era dependencies while accepting versions 1–4 and safely ignoring legacy stored properties.
-- Light-theme regression repair: in progress. The PR #33 palette caused serious WCAG contrast failures for primary buttons, tabs, and result values. Darkening the shared light-theme primary token fixes all reported violations without replacing the teammate theme.
-- Strings Lab: not started.
+- Light-theme regression repair: complete in PR #34 and deployed from `4e9310b`. The public Complexity Lab passes behavior and serious/critical WCAG checks (2/2).
+- Strings Lab: implemented locally with nine operations, bounded inputs, C/C++/Java/Python semantic source mapping, character/allocation/copy/capacity visualization, cumulative work evidence, best/worst search, immutable O(n²) versus builder O(n), curriculum wiring, and mobile/language-preservation tests. Full gate: check/lint clean, 205/205 unit/API tests, build pass, and 146/146 browser tests.
 - Recursion Lab: not started.
 
 ## Validation
@@ -81,8 +81,8 @@ UI milestone `e298072`:
 3. UI regression repair and durable audit test: complete (PR #30, production `e298072`).
 4. Study Recap transplant/adaptation: complete (PR #31, production `1c99536`).
 5. Compatibility-safe progress-store cleanup: complete (PR #32, production `3003dd4`).
-6. Light-theme accessibility regression: repaired locally; focused browser check 2/2, check/lint 0 issues, unit 202/202, build pass.
-7. Strings Lab: pending.
+6. Light-theme accessibility regression: complete (PR #34, production `4e9310b`, public verification 2/2).
+7. Strings Lab: implemented locally; full gate green and ready for PR.
 8. Recursion Lab: pending.
 
 ## Blockers

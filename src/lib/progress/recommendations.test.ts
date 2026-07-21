@@ -40,6 +40,7 @@ describe('adaptive recommendations', () => {
       'hash-table-lab',
       'search-lab',
       'bst-lab',
+      'strings-lab',
       'cpu-scheduling',
       'packet-journey'
     ]);
@@ -60,6 +61,7 @@ describe('adaptive recommendations', () => {
           'hash-table-lab',
           'search-lab',
           'bst-lab',
+          'strings-lab',
           'graph-explorer'
         ]
       }).href
