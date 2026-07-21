@@ -5,11 +5,6 @@ test('keeps the trace step while switching language', async ({ page }) => {
   await page.getByRole('button', { name: /Next/ }).click();
   await page.getByRole('button', { name: /Next/ }).click();
   await expect(page.getByText('Step 3')).toBeVisible();
-  await expect(page.getByText('The midpoint is 3.')).not.toBeVisible();
-  await expect(page.getByText(/Lock your prediction to unlock/)).toBeVisible();
-  await page.getByLabel('Your prediction').fill('3');
-  await page.getByRole('button', { name: 'Lock prediction' }).click();
-  await expect(page.getByText('The midpoint is 3.')).toBeVisible();
   await page.getByRole('tab', { name: 'PYTHON' }).click();
   await expect(page.getByText('mid = left + (right - left) // 2')).toBeVisible();
   await expect(page.getByText('Step 3')).toBeVisible();

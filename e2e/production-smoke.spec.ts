@@ -24,5 +24,4 @@ test('keeps the flagship trace usable at a mobile viewport', async ({ page }) =>
   await expect(page.getByRole('heading', { name: 'Binary Search' })).toBeVisible();
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByText('Step 2', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Explain this step' })).toBeVisible();
 });

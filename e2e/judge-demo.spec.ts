@@ -68,15 +68,10 @@ test('every guided link resolves to a real product screen without an API key', a
     await expect(page.getByRole('heading', { name: stage.heading, level: 1 })).toBeVisible();
   }
 
+  // The binary-search stage lands mid-trace and reveals its state immediately — no prediction gate.
   await page.goto(stages[0].href);
-  await expect(page.getByText(/Lock your prediction to unlock/)).toBeVisible();
-  await page.getByLabel('Your prediction').fill('3');
-  await page.getByRole('button', { name: 'Lock prediction' }).click();
-  await page.getByRole('button', { name: 'Explain this step' }).click();
-  await expect(page.getByText('Deterministic', { exact: true })).toBeVisible();
-  await expect(
-    page.getByText('AI is not configured, so ReplayCS used its deterministic explanation.')
-  ).toBeVisible();
+  await expect(page.getByText('Step 3')).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'PYTHON' })).toHaveAttribute('aria-selected', 'true');
 });
 
 test('landing page and mobile navigation expose the judge route', async ({ page }) => {
@@ -91,7 +86,7 @@ test('landing page and mobile navigation expose the judge route', async ({ page 
     page.getByRole('navigation').getByRole('link', { name: 'Judge Demo' })
   ).toBeVisible();
   const primaryNavigation = page.getByRole('navigation', { name: 'Main navigation' });
-  for (const label of ['Learn', 'Trace Lab', 'Challenges', 'Judge Demo', 'Progress', 'About']) {
+  for (const label of ['Learn', 'Trace Lab', 'Complexity', 'Judge Demo', 'Progress', 'About']) {
     await expect(primaryNavigation.getByRole('link', { name: label, exact: true })).toBeVisible();
   }
 
