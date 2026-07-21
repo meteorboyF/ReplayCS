@@ -3,21 +3,21 @@
 ## Current status
 
 - Updated: 2026-07-22 (+06)
-- Working branch: `refactor/progress-store`
-- Working baseline: `1c99536` (`origin/main`, merge of PR #31)
-- Teammate UI baseline: `e75d3a9` (PRs #23 and #25–#29)
-- Production commit: `1c99536`
+- Working branch: `fix/light-theme-contrast`
+- Working baseline: `3003dd4` (`origin/main`, merge of PR #32)
+- Teammate UI baseline: `d007dce` (PR #33, light-first theme and theme toggle), layered on the earlier `e75d3a9` redesign
+- Production commit: `3003dd4`
 - Production: https://replaycs.vercel.app
-- Deployment: `dpl_2H8cEaxbiYPcUy8mf1X7K6c5kAVP` (`READY`)
-- Stable deployment URL: https://replaycs-pbigame5c-meteorboy-f.vercel.app
+- Deployment: `dpl_5Ga2emV11KuuEdVBxDdhb26zDr7A` (`READY`)
+- Stable deployment URL: https://replaycs-avshb50qb-meteorboy-f.vercel.app
 - Recovery branch: `origin/feat/study-recap` at `2fb3489`
-- Worktree: obsolete progress fields are being removed with a version-4 compatibility migration; local `.claude/` is untracked and must not be committed.
-- Immediate next action: complete the progress-store full gate, merge/deploy it, then build Strings Lab from current main.
+- Worktree: the confirmed light-theme contrast repair changes only the shared primary token; local `.claude/` is untracked and must not be committed.
+- Immediate next action: merge and deploy the contrast repair, then build Strings Lab from the resulting main.
 
 ## Current teammate UI contract
 
-- Global tokens and primitives live in `src/app.css`: dark navy background, `--surface`/`--raised` cards, teal `--primary`, violet `--secondary`, sky `--accent`, 18px `.panel` corners, system sans typography, and `--mono` for execution data.
-- `src/routes/+layout.svelte` owns the sticky header, primary navigation, 1180px page shell, skip link, and footer. These must not be replaced.
+- Global tokens and primitives live in `src/app.css`: light surfaces are the default, `[data-theme='dark']` supplies the dark palette, teal `--primary`, violet `--secondary`, sky `--accent`, 18px `.panel` corners, system sans typography, and `--mono` for execution data.
+- `src/routes/+layout.svelte` owns the sticky header, primary navigation, 1180px page shell, skip link, footer, persisted theme selection, and accessible light/dark toggle. These must not be replaced.
 - Teammate page patterns are implemented by the current Landing, Onboarding, Learn, Trace Lab, Scenario Gallery, and Progress routes. Reuse their restrained hierarchy, one promoted next action, grouped subject cards, compact eyebrow labels, and deferred secondary settings.
 - `src/lib/components/ui/ProgressBar.svelte` is the approved shared progress indicator.
 - Lessons continue to use `src/lib/components/lesson/LessonWorkspace.svelte`, `CodePane.svelte`, `TraceControls.svelte`, `ExecutionEvidence.svelte`, and the existing complexity components. Do not restore older lesson shells.
@@ -49,7 +49,8 @@ The only product regression found was the Sorting Arena setup form extending the
 ## Recovery and feature status
 
 - Study Recap: complete, merged in PR #31, and deployed from `1c99536`. The deterministic generator, server-only optional model rewrite, strict validation/schema, request size limit, timeout, safe fallback, English/Bangla and concise/exam-ready controls, subject/topic selection, teammate-style Progress CTA, and responsive page are implemented.
-- Progress-store cleanup: in progress. Consumer audit found legacy fields still affected mastery, recommendations, two score badges, and activity labels. The local version-4 shape removes those dependencies while accepting versions 1–4 and ignoring obsolete stored properties. Focused checks: 15/15 unit and 7/7 browser.
+- Progress-store cleanup: complete in PR #32 and deployed from `3003dd4`. Version 4 removes obsolete prediction-era dependencies while accepting versions 1–4 and safely ignoring legacy stored properties.
+- Light-theme regression repair: in progress. The PR #33 palette caused serious WCAG contrast failures for primary buttons, tabs, and result values. Darkening the shared light-theme primary token fixes all reported violations without replacing the teammate theme.
 - Strings Lab: not started.
 - Recursion Lab: not started.
 
@@ -79,9 +80,10 @@ UI milestone `e298072`:
 2. Production audit: complete; one tablet overflow identified.
 3. UI regression repair and durable audit test: complete (PR #30, production `e298072`).
 4. Study Recap transplant/adaptation: complete (PR #31, production `1c99536`).
-5. Compatibility-safe progress-store cleanup: in progress on `refactor/progress-store`.
-6. Strings Lab: pending.
-7. Recursion Lab: pending.
+5. Compatibility-safe progress-store cleanup: complete (PR #32, production `3003dd4`).
+6. Light-theme accessibility regression: repaired locally; focused browser check 2/2, check/lint 0 issues, unit 202/202, build pass.
+7. Strings Lab: pending.
+8. Recursion Lab: pending.
 
 ## Blockers
 
