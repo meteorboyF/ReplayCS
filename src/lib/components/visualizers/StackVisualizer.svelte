@@ -1,15 +1,51 @@
 <script lang="ts">
-  import type { TraceValue } from '$lib/trace/types';
+  import type { SupportedLanguage, TraceValue } from '$lib/trace/types';
+  import ArrayVisualizer from './DynamicArrayVisualizer.svelte';
+  import LinkedListVisualizer from './LinkedListVisualizer.svelte';
 
-  type ElementView = {
-    id: string;
-    value: string | number;
-  };
+  let {
+    state,
+    language,
+    activeSemantic
+  }: {
+    state: Record<string, TraceValue>;
+    language?: SupportedLanguage;
+    activeSemantic?: string;
+  } = $props();
 
-  let { state }: { state: Record<string, TraceValue> } = $props();
-
-  const pointerNames = ['top', 'current'] as const;
-  let elements = $derived((Array.isArray(state.elements) ? state.elements : []) as unknown as ElementView[]);
+  const pointerNames = ['top', 'current', 'result'] as const;
+  
+  // Extract elements from the trace state for the abstract stack view.
+  // We can derive this based on the backing type.
+  type ElementView = { id: string; value: string | number };
+  let elements = $derived.by(() => {
+    const list: ElementView[] = [];
+    if (state.backing === 'array' || state.backing === 'dynamic-array') {
+      const slots = (Array.isArray(state.slots) ? state.slots : []) as (number | null)[];
+      const size = typeof state.size === 'number' ? state.size : 0;
+      for (let i = 0; i < size; i++) {
+        if (slots[i] !== null) {
+          list.push({ id: `slot-${i}`, value: slots[i]! });
+        }
+      }
+    } else {
+      const nodes = (Array.isArray(state.nodes) ? state.nodes : []) as any[];
+      // We start from head and follow next pointers
+      let currentId = typeof state.head === 'string' ? state.head : null;
+      let safeLimit = 100;
+      while (currentId && safeLimit-- > 0) {
+        const node = nodes.find(n => n.id === currentId);
+        if (!node || node.status === 'deleted') break;
+        // In our linked list backing for stack, head is the TOP of the stack.
+        // We push to `list` directly so index 0 is top, and we will render top to bottom.
+        list.push({ id: node.id, value: node.value });
+        currentId = node.next;
+      }
+      // Reverse to match array's visual order where bottom is first.
+      list.reverse();
+    }
+    return list;
+  });
 
   function pointerValue(name: (typeof pointerNames)[number]) {
     const value = state[name];
@@ -32,19 +68,32 @@
 
   <div class="memory" aria-label="Stack elements">
     {#if elements.length === 0}
-      <div class="empty"><code>top → null</code><span>The stack is empty.</span></div>
+      <div class="empty"><code>top → null</code><span>The abstract stack is empty.</span></div>
     {:else}
       <div class="stack-container">
-        {#each elements as element}
+        <div class="top-label">top →</div>
+        {#each elements.slice().reverse() as element}
           <article aria-label={`Element ${element.id}, value ${element.value}`}>
             <span class="element-id">{element.id}</span>
             <strong>{element.value}</strong>
           </article>
         {/each}
+        <div class="bottom-label">bottom</div>
       </div>
     {/if}
   </div>
 </section>
+
+{#if language && activeSemantic}
+  <div class="backing-view">
+    <p class="eyebrow">Backing Memory View</p>
+    {#if state.backing === 'array' || state.backing === 'dynamic-array'}
+      <ArrayVisualizer {state} {language} {activeSemantic} />
+    {:else}
+      <LinkedListVisualizer {state} />
+    {/if}
+  </div>
+{/if}
 
 <style>
   .visualizer {
@@ -119,5 +168,28 @@
   .empty code {
     color: var(--primary);
     font-size: 1.1rem;
+  }
+  .backing-view {
+    margin-top: 1rem;
+  }
+  .backing-view .eyebrow {
+    color: var(--primary);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.5rem 0.5rem;
+  }
+  .top-label {
+    text-align: right;
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding-right: 0.5rem;
+  }
+  .bottom-label {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
   }
 </style>

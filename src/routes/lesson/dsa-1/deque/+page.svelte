@@ -122,8 +122,8 @@
   function config(): DequeConfig {
     return {
       operation,
-      backing,
       values: parseValues(false),
+      backing,
       newValue
     };
   }
@@ -153,6 +153,7 @@
       lesson = createDequeLesson({
         operation,
         values,
+        backing,
         newValue
       });
       index = 0;
@@ -262,7 +263,7 @@
         predicted: answer,
         actual,
         explanation: authored?.explanation ?? step.prediction.explanation,
-        tag: authored?.tag ?? 'deque-update-order',
+        tag: authored?.tag ?? 'pointer-update-order',
         variableLabel: authored?.variableLabel ?? stateKey,
         stateKey,
         recoveryPrompt:
@@ -378,7 +379,14 @@
     >Current deque
     <input bind:value={valuesText} aria-describedby="list-help list-error" />
   </label>
-  {#if String(operation).startsWith('insert')}
+  <label class="backing-field"
+    >Implementation
+    <select aria-label="Implementation backing" bind:value={backing} onchange={buildTrace}>
+      <option value="circular-array">Circular Array</option>
+      <option value="linked-list">Linked List</option>
+    </select>
+  </label>
+  {#if String(operation).startsWith('push')}
     <label>New value<input type="number" bind:value={newValue} /></label>
   {/if}
   <button class="primary" type="submit">Build deterministic trace</button>
@@ -409,7 +417,7 @@
   />
 
   <main class="execution">
-    <DequeVisualizer state={visibleState} />
+    <DequeVisualizer state={visibleState} {language} activeSemantic={step.semanticOperationId} />
     <TraceControls
       {index}
       total={lesson.steps.length}

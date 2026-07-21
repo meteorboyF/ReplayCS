@@ -28,6 +28,24 @@ export const subjects = {
         slug: 'arrays',
         status: 'live',
         detail: 'Trace index arithmetic, shifting, resizing, and amortized growth slot by slot.'
+      },
+      {
+        title: 'Stack Simulator',
+        slug: 'stack',
+        status: 'live',
+        detail: 'Trace push, pop, and peek operations on array and linked-list backings.'
+      },
+      {
+        title: 'Queue Simulator',
+        slug: 'queue',
+        status: 'live',
+        detail: 'Trace enqueue and dequeue operations with naive and circular arrays.'
+      },
+      {
+        title: 'Deque Simulator',
+        slug: 'deque',
+        status: 'live',
+        detail: 'Trace double-ended operations on circular arrays and linked lists.'
       }
     ]
   },

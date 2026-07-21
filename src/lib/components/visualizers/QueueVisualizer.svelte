@@ -1,15 +1,50 @@
 <script lang="ts">
-  import type { TraceValue } from '$lib/trace/types';
+  import type { SupportedLanguage, TraceValue } from '$lib/trace/types';
+  import ArrayVisualizer from './DynamicArrayVisualizer.svelte';
+  import LinkedListVisualizer from './LinkedListVisualizer.svelte';
 
-  type ElementView = {
-    id: string;
-    value: string | number;
-  };
+  let {
+    state,
+    language,
+    activeSemantic
+  }: {
+    state: Record<string, TraceValue>;
+    language?: SupportedLanguage;
+    activeSemantic?: string;
+  } = $props();
 
-  let { state }: { state: Record<string, TraceValue> } = $props();
+  const pointerNames = ['front', 'rear', 'current', 'result'] as const;
 
-  const pointerNames = ['front', 'rear', 'current'] as const;
-  let elements = $derived((Array.isArray(state.elements) ? state.elements : []) as unknown as ElementView[]);
+  // Extract elements from the trace state for the abstract queue view.
+  type ElementView = { id: string; value: string | number };
+  let elements = $derived.by(() => {
+    const list: ElementView[] = [];
+    if (state.backing === 'naive-array' || state.backing === 'circular-array') {
+      const slots = (Array.isArray(state.slots) ? state.slots : []) as (number | null)[];
+      const size = typeof state.size === 'number' ? state.size : 0;
+      const frontIndex = typeof state.frontIndex === 'number' ? state.frontIndex : 0;
+      const capacity = typeof state.capacity === 'number' ? state.capacity : slots.length;
+      if (capacity > 0) {
+        for (let i = 0; i < size; i++) {
+          const idx = (frontIndex + i) % capacity;
+          if (slots[idx] !== null) {
+            list.push({ id: `slot-${idx}`, value: slots[idx]! });
+          }
+        }
+      }
+    } else {
+      const nodes = (Array.isArray(state.nodes) ? state.nodes : []) as any[];
+      let currentId = typeof state.front === 'string' ? state.front : null;
+      let safeLimit = 100;
+      while (currentId && safeLimit-- > 0) {
+        const node = nodes.find(n => n.id === currentId);
+        if (!node || node.status === 'deleted') break;
+        list.push({ id: node.id, value: node.value });
+        currentId = node.next;
+      }
+    }
+    return list;
+  });
 
   function pointerValue(name: (typeof pointerNames)[number]) {
     const value = state[name];
@@ -32,19 +67,32 @@
 
   <div class="memory" aria-label="Queue elements">
     {#if elements.length === 0}
-      <div class="empty"><code>front → null</code><span>The queue is empty.</span></div>
+      <div class="empty"><code>front → null</code><span>The abstract queue is empty.</span></div>
     {:else}
       <div class="queue-container">
+        <div class="side-label">front →</div>
         {#each elements as element}
           <article aria-label={`Element ${element.id}, value ${element.value}`}>
             <span class="element-id">{element.id}</span>
             <strong>{element.value}</strong>
           </article>
         {/each}
+        <div class="side-label">← rear</div>
       </div>
     {/if}
   </div>
 </section>
+
+{#if language && activeSemantic}
+  <div class="backing-view">
+    <p class="eyebrow">Backing Memory View</p>
+    {#if state.backing === 'naive-array' || state.backing === 'circular-array'}
+      <ArrayVisualizer {state} {language} {activeSemantic} />
+    {:else}
+      <LinkedListVisualizer {state} />
+    {/if}
+  </div>
+{/if}
 
 <style>
   .visualizer {
@@ -119,5 +167,23 @@
   .empty code {
     color: var(--primary);
     font-size: 1.1rem;
+  }
+  .backing-view {
+    margin-top: 1rem;
+  }
+  .backing-view .eyebrow {
+    color: var(--primary);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.5rem 0.5rem;
+  }
+  .side-label {
+    display: flex;
+    align-items: center;
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 0 0.25rem;
   }
 </style>

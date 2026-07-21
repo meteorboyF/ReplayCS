@@ -14,7 +14,7 @@
     parseSortingInput,
     type SortingAlgorithm
   } from '$lib/engines/dsa/sorting';
-  import type { RuntimeState } from '$lib/engines/dsa/sorting';
+  import MistakeReplay, { type MistakeAttempt } from '$lib/components/trace/MistakeReplay.svelte';
   import {
     awardPrediction,
     completeLesson,
@@ -22,8 +22,21 @@
     recordHint,
     recordLanguageUse,
     recordMisconception,
-    saveProgress
+    saveProgress,
+    awardRecovery
   } from '$lib/progress/store';
+  import type { MisconceptionTag } from '$lib/progress/misconceptions';
+
+  type MistakeMetadata = {
+    prompt: string;
+    wrongAnswer: string;
+    correctAnswer: string;
+    explanation: string;
+    tag: MisconceptionTag;
+    variableLabel?: string;
+    stateKey?: string;
+    recoveryPrompt?: string;
+  };
   import type { StepContext } from '$lib/server/openai/schemas';
   import type { SupportedLanguage } from '$lib/trace/types';
   import { page } from '$app/state';
@@ -45,6 +58,7 @@
   let predictionNudge = $state('');
   
   let progress = $state(loadProgress());
+  let submitted = $state<string[]>([]);
   let traceRevision = $state(0);
   let timer: ReturnType<typeof setInterval> | undefined;
 
@@ -52,7 +66,6 @@
   let info = $derived(SORTING_METADATA.find(a => a.id === algorithm)!);
   let lessonId = $derived(`sorting-arena:${algorithm}`);
   let completed = $derived(progress.completed.includes(lessonId));
-  let currentState = $derived(step?.state as unknown as RuntimeState);
 
   onMount(() => {
     progress = loadProgress();
@@ -145,7 +158,7 @@
   }
 
   let predictionResolved = $derived(!step.prediction || submitted.includes(step.prediction.id));
-  let visibleState = $derived(step.prediction && !predictionResolved ? step.stateBefore : step.stateAfter) as unknown as RuntimeState;
+  let visibleState = $derived(step.prediction && !predictionResolved ? step.stateBefore : step.stateAfter);
 
   function selectLanguage(next: SupportedLanguage) {
     language = next;
@@ -170,7 +183,7 @@
     predictionAnswer = text;
     
     if (correct) {
-      progress = awardPrediction(progress, lessonId);
+      progress = awardPrediction(progress, `${lessonId}:${step.prediction.id}`, step.prediction.xpReward);
       saveProgress(progress);
       setTimeout(() => jump(index + 1), 600);
     } else {
@@ -225,7 +238,7 @@
     saveProgress(progress);
   }
 
-  function handleMisconception(misconception: string) {
+  function handleMisconception(misconception: MisconceptionTag) {
     progress = recordMisconception(progress, lessonId, misconception);
     saveProgress(progress);
   }
@@ -284,7 +297,7 @@
     <aside class="step-panel panel">
       <div class="step-heading">
         <span class="eyebrow">Step {index + 1} of {lesson.steps.length}</span>
-        <span class="event">{step.action}</span>
+        <span class="event">{step.eventType}</span>
       </div>
       <h2>{step.title || 'Ready to bubble'}</h2>
       <p class="explanation">
@@ -319,8 +332,7 @@
     {/if}
     <div class="code-panel panel">
       <CodePane 
-        source={lesson.sourceByLanguage || lesson.source} 
-        activeLineId={step.sourceLineId} 
+        source={lesson.sourceByLanguage} 
         {language}
         activeSemantic={step.semanticOperationId}
         onlanguage={selectLanguage}
@@ -332,7 +344,7 @@
     <div class="ai-panel panel">
       {#if currentMistake}
         <MistakeReplay
-          mistake={currentMistake}
+          attempt={currentMistake}
           stateBefore={step.stateBefore}
           stateAfter={step.stateAfter}
           onrecover={handleRecovery}

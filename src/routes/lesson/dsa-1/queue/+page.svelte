@@ -152,6 +152,7 @@
       lesson = createQueueLesson({
         operation,
         values,
+        backing,
         newValue
       });
       index = 0;
@@ -261,7 +262,7 @@
         predicted: answer,
         actual,
         explanation: authored?.explanation ?? step.prediction.explanation,
-        tag: authored?.tag ?? 'queue-update-order',
+        tag: authored?.tag ?? 'pointer-update-order',
         variableLabel: authored?.variableLabel ?? stateKey,
         stateKey,
         recoveryPrompt:
@@ -377,6 +378,14 @@
     >Current queue
     <input bind:value={valuesText} aria-describedby="list-help list-error" />
   </label>
+  <label class="backing-field"
+    >Implementation
+    <select aria-label="Implementation backing" bind:value={backing} onchange={buildTrace}>
+      <option value="naive-array">Naive Array (O(n) shift)</option>
+      <option value="circular-array">Circular Array</option>
+      <option value="linked-list">Linked List</option>
+    </select>
+  </label>
   {#if String(operation) === 'enqueue'}
     <label>New value<input type="number" bind:value={newValue} /></label>
   {/if}
@@ -408,7 +417,7 @@
   />
 
   <main class="execution">
-    <QueueVisualizer state={visibleState} />
+    <QueueVisualizer state={visibleState} {language} activeSemantic={step.semanticOperationId} />
     <TraceControls
       {index}
       total={lesson.steps.length}

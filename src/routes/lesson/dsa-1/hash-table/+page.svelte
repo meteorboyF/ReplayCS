@@ -260,7 +260,7 @@
         predicted: answer,
         actual,
         explanation: authored?.explanation ?? step.prediction.explanation,
-        tag: authored?.tag ?? 'hashTable-update-order',
+        tag: authored?.tag ?? 'pointer-update-order',
         variableLabel: authored?.variableLabel ?? stateKey,
         stateKey,
         recoveryPrompt:
@@ -367,7 +367,7 @@
     >
       {#each HASH_TABLE_OPERATIONS as item}
         <option value={item.id}>
-          {item.title}
+          {item.label}
         </option>
       {/each}
     </select>

@@ -86,6 +86,42 @@ const definitions: readonly LiveLessonDefinition[] = [
     }
   },
   {
+    completionId: 'stack-simulator',
+    subject: 'dsa-1',
+    slug: 'stack',
+    completionXp: 30,
+    recovery: {
+      title: 'Stack Simulator Recovery',
+      href: '/lesson/dsa-1/stack',
+      reason: 'Replay the pointer or array index state prior to the LIFO violation.',
+      misconceptionTags: ['stack-vs-queue', 'index-vs-value', 'pointer-update-order']
+    }
+  },
+  {
+    completionId: 'queue-simulator',
+    subject: 'dsa-1',
+    slug: 'queue',
+    completionXp: 30,
+    recovery: {
+      title: 'Queue Simulator Recovery',
+      href: '/lesson/dsa-1/queue',
+      reason: 'Replay the pointer or array index state prior to the FIFO violation.',
+      misconceptionTags: ['stack-vs-queue', 'index-vs-value', 'pointer-update-order', 'off-by-one']
+    }
+  },
+  {
+    completionId: 'deque-simulator',
+    subject: 'dsa-1',
+    slug: 'deque',
+    completionXp: 35,
+    recovery: {
+      title: 'Deque Simulator Recovery',
+      href: '/lesson/dsa-1/deque',
+      reason: 'Replay the state prior to the double-ended boundary violation.',
+      misconceptionTags: ['index-vs-value', 'pointer-update-order', 'off-by-one']
+    }
+  },
+  {
     completionId: 'graph-explorer',
     subject: 'dsa-2',
     slug: 'graph-explorer',

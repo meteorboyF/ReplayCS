@@ -14,7 +14,8 @@
     createStackLesson,
     type StackConfig,
     type StackOperation,
-    type StackOperationMetadata
+    type StackOperationMetadata,
+    type StackBacking
   } from '$lib/engines/dsa/stack';
   import {
     awardPrediction,
@@ -57,6 +58,7 @@
   let operation = $state<StackOperation>(DEFAULT_STACK_CONFIG.operation);
   let valuesText = $state(DEFAULT_STACK_CONFIG.values?.join(', ') ?? '');
   let newValue = $state(DEFAULT_STACK_CONFIG.newValue ?? 99);
+  let backing = $state<StackBacking>('array');
   let lesson = $state(createStackLesson(config()));
   let index = $state(0);
   let language = $state<SupportedLanguage>('cpp');
@@ -120,6 +122,7 @@
     return {
       operation,
       values: parseValues(false),
+      backing,
       newValue
     };
   }
@@ -149,6 +152,7 @@
       lesson = createStackLesson({
         operation,
         values,
+        backing,
         newValue
       });
       index = 0;
@@ -258,7 +262,7 @@
         predicted: answer,
         actual,
         explanation: authored?.explanation ?? step.prediction.explanation,
-        tag: authored?.tag ?? 'stack-update-order',
+        tag: authored?.tag ?? 'pointer-update-order',
         variableLabel: authored?.variableLabel ?? stateKey,
         stateKey,
         recoveryPrompt:
@@ -374,6 +378,14 @@
     >Current stack
     <input bind:value={valuesText} aria-describedby="list-help list-error" />
   </label>
+  <label class="backing-field"
+    >Implementation
+    <select aria-label="Implementation backing" bind:value={backing} onchange={buildTrace}>
+      <option value="array">Array (Fixed)</option>
+      <option value="dynamic-array">Dynamic Array</option>
+      <option value="linked-list">Linked List</option>
+    </select>
+  </label>
   {#if String(operation) === 'push'}
     <label>New value<input type="number" bind:value={newValue} /></label>
   {/if}
@@ -405,7 +417,7 @@
   />
 
   <main class="execution">
-    <StackVisualizer state={visibleState} />
+    <StackVisualizer state={visibleState} {language} activeSemantic={step.semanticOperationId} />
     <TraceControls
       {index}
       total={lesson.steps.length}

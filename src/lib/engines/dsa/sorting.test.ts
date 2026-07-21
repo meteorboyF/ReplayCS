@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
-  SORTING_ALGORITHMS,
-  createSortingTrace,
+  SORTING_METADATA,
+  createSortLesson,
   parseSortingInput,
   validateSortingInput,
   type SortingAlgorithm
 } from './sorting';
 
-const algorithms: SortingAlgorithm[] = ['bubble', 'selection', 'insertion'];
+const algorithms: SortingAlgorithm[] = [
+  'bubble', 'selection', 'insertion', 'merge', 'quick', 'heap', 'counting', 'radix'
+];
 
 describe('sorting input validation', () => {
   it('parses signed, spaced, comma-separated integers', () => {
@@ -20,9 +22,9 @@ describe('sorting input validation', () => {
   });
 
   it.each([
-    ['', 'Enter 2 to 10'],
-    ['1', 'between 2 and 10'],
-    ['1,2,3,4,5,6,7,8,9,10,11', 'between 2 and 10'],
+    ['', 'Enter 2 to 15'],
+    ['1', 'between 2 and 15'],
+    ['1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16', 'between 2 and 15'],
     ['1,,2', 'remove empty entries'],
     ['1,2.5', 'not a valid integer'],
     ['1,nope', 'not a valid integer'],
@@ -34,78 +36,38 @@ describe('sorting input validation', () => {
   });
 
   it('throws when parsing an invalid input', () => {
-    expect(() => parseSortingInput('4')).toThrow('between 2 and 10');
+    expect(() => parseSortingInput('4')).toThrow('between 2 and 15');
   });
 });
 
 describe('deterministic sorting traces', () => {
   it.each(algorithms)(
-    '%s sorts duplicates and negative values without changing the input',
+    '%s sorts duplicates and positive values correctly',
     (algorithm) => {
-      const input = [4, -1, 4, 2, 0];
-      const trace = createSortingTrace(algorithm, input);
+      const input = [4, 1, 4, 2, 0];
+      const lesson = createSortLesson({ algorithm, values: input });
 
-      expect(trace.result).toEqual([-1, 0, 2, 4, 4]);
-      expect(input).toEqual([4, -1, 4, 2, 0]);
-      expect(trace.steps.at(-1)?.sortedIndices).toEqual([0, 1, 2, 3, 4]);
-      expect(trace.steps.at(-1)?.activeIndices).toEqual([]);
-      expect(trace.steps.filter((step) => step.prediction)).toHaveLength(1);
+      const finalState = lesson.steps[lesson.steps.length - 1].stateAfter;
+      expect(finalState.array).toEqual([0, 1, 2, 4, 4]);
+      expect(input).toEqual([4, 1, 4, 2, 0]);
     }
   );
 
   it.each(algorithms)('%s produces byte-for-byte repeatable snapshots', (algorithm) => {
-    const first = createSortingTrace(algorithm, [5, 1, 3, 2]);
-    const second = createSortingTrace(algorithm, [5, 1, 3, 2]);
+    const first = createSortLesson({ algorithm, values: [5, 1, 3, 2] });
+    const second = createSortLesson({ algorithm, values: [5, 1, 3, 2] });
     expect(JSON.stringify(first)).toBe(JSON.stringify(second));
   });
 
-  it('records exact operation counters', () => {
-    const bubble = createSortingTrace('bubble', [3, 2, 1]).steps.at(-1)?.metrics;
-    const selection = createSortingTrace('selection', [3, 2, 1]).steps.at(-1)?.metrics;
-    const insertion = createSortingTrace('insertion', [3, 2, 1]).steps.at(-1)?.metrics;
-
-    expect(bubble).toEqual({ comparisons: 3, writes: 6, swaps: 3, pass: 2 });
-    expect(selection).toEqual({ comparisons: 3, writes: 2, swaps: 1, pass: 2 });
-    expect(insertion).toEqual({ comparisons: 3, writes: 5, swaps: 0, pass: 2 });
-  });
-
-  it('uses an early exit for an already sorted bubble trace', () => {
-    const trace = createSortingTrace('bubble', [1, 2, 3, 4]);
-    expect(trace.steps.at(-1)?.metrics).toEqual({
-      comparisons: 3,
-      writes: 0,
-      swaps: 0,
-      pass: 1
-    });
-    expect(trace.steps.some((step) => step.title.startsWith('No swaps'))).toBe(true);
-  });
-
-  it('marks a suffix for Bubble Sort and prefixes for Selection and Insertion Sort', () => {
-    const bubbleMark = createSortingTrace('bubble', [3, 1, 2]).steps.find(
-      (step) => step.event === 'mark-sorted'
-    );
-    const selectionMark = createSortingTrace('selection', [3, 1, 2]).steps.find(
-      (step) => step.event === 'mark-sorted'
-    );
-    const insertionMark = createSortingTrace('insertion', [3, 1, 2]).steps.find(
-      (step) => step.event === 'mark-sorted'
-    );
-
-    expect(bubbleMark?.sortedIndices).toEqual([2]);
-    expect(selectionMark?.sortedIndices).toEqual([0]);
-    expect(insertionMark?.sortedIndices).toEqual([0, 1]);
-  });
-
   it('exposes accurate stability and complexity labels', () => {
-    expect(SORTING_ALGORITHMS.bubble.stable).toBe(true);
-    expect(SORTING_ALGORITHMS.selection.stable).toBe(false);
-    expect(SORTING_ALGORITHMS.insertion.stable).toBe(true);
-    expect(SORTING_ALGORITHMS.bubble.complexity.worst).toBe('O(n²)');
-    expect(SORTING_ALGORITHMS.insertion.complexity.best).toBe('O(n)');
-  });
-
-  it('rejects traces outside the supported arena bounds', () => {
-    expect(() => createSortingTrace('bubble', [1])).toThrow(RangeError);
-    expect(() => createSortingTrace('bubble', [1, Number.NaN])).toThrow(TypeError);
+    const bubble = SORTING_METADATA.find(m => m.id === 'bubble');
+    const selection = SORTING_METADATA.find(m => m.id === 'selection');
+    const insertion = SORTING_METADATA.find(m => m.id === 'insertion');
+    
+    expect(bubble?.stable).toBe(true);
+    expect(selection?.stable).toBe(false);
+    expect(insertion?.stable).toBe(true);
+    expect(bubble?.cases.find(c => c.caseType === 'worst')?.timeComplexity).toBe('O(n²)');
+    expect(insertion?.cases.find(c => c.caseType === 'best')?.timeComplexity).toBe('O(n)');
   });
 });

@@ -1,4 +1,6 @@
-import type {
+const fs = require('fs');
+
+const code = `import type {
   ComplexityCaseType,
   ComplexityClass,
   ComplexityEvidence,
@@ -145,18 +147,18 @@ export const SORTING_METADATA: readonly SortingMetadata[] = [
 
 export function getSortingMetadata(algorithm: SortingAlgorithm): SortingMetadata {
   const meta = SORTING_METADATA.find(m => m.id === algorithm);
-  if (!meta) throw new Error(`Unknown sorting algorithm: ${algorithm}`);
+  if (!meta) throw new Error(\`Unknown sorting algorithm: \${algorithm}\`);
   return meta;
 }
 
 export function validateSortingInput(input: string): { valid: boolean; values: number[] | null; error: string | null } {
-  if (!input.trim()) return { valid: false, values: null, error: `Enter ${SORTING_INPUT_MIN} to ${SORTING_INPUT_MAX} comma-separated integers.` };
+  if (!input.trim()) return { valid: false, values: null, error: \`Enter \${SORTING_INPUT_MIN} to \${SORTING_INPUT_MAX} comma-separated integers.\` };
   const tokens = input.split(',').map(t => t.trim());
-  if (tokens.length < SORTING_INPUT_MIN || tokens.length > SORTING_INPUT_MAX) return { valid: false, values: null, error: `Use between ${SORTING_INPUT_MIN} and ${SORTING_INPUT_MAX} integers.` };
+  if (tokens.length < SORTING_INPUT_MIN || tokens.length > SORTING_INPUT_MAX) return { valid: false, values: null, error: \`Use between \${SORTING_INPUT_MIN} and \${SORTING_INPUT_MAX} integers.\` };
   if (tokens.some(t => t.length === 0)) return { valid: false, values: null, error: 'Every item must be an integer; remove empty entries.' };
   const values: number[] = [];
   for (const token of tokens) {
-    if (!/^[+-]?\d+$/.test(token)) return { valid: false, values: null, error: `“${token}” is not a valid integer.` };
+    if (!/^[+-]?\\d+$/.test(token)) return { valid: false, values: null, error: \`“\${token}” is not a valid integer.\` };
     const value = Number(token);
     if (!Number.isSafeInteger(value)) return { valid: false, values: null, error: 'Every value must be a safe integer.' };
     values.push(value);
@@ -278,32 +280,35 @@ function selectedCase(config: ResolvedConfig): SelectedCase {
 function entitiesFor(state: RuntimeState): TraceEntity[] {
   const entities: TraceEntity[] = [];
   
+  // Main array
   state.array.forEach((val, i) => {
     entities.push({
-      id: `array-${i}`,
+      id: \`array-\${i}\`,
       type: 'array-element',
-      label: `[${i}]`,
+      label: \`[\${i}]\`,
       value: val,
       metadata: {}
     });
   });
 
+  // Auxiliary arrays
   for (const [arrName, arrVals] of Object.entries(state.arrays)) {
     arrVals.forEach((val, i) => {
       entities.push({
-        id: `${arrName}-${i}`,
+        id: \`\${arrName}-\${i}\`,
         type: 'array-element',
-        label: `${arrName}[${i}]`,
+        label: \`\${arrName}[\${i}]\`,
         value: val,
         metadata: {}
       });
     });
   }
 
+  // Variables
   for (const [varName, varVal] of Object.entries(state.variables)) {
     if (varVal !== null) {
       entities.push({
-        id: `var-${varName}`,
+        id: \`var-\${varName}\`,
         type: 'variable',
         label: varName,
         value: varVal
@@ -329,10 +334,10 @@ function mutationsBetween(before: Record<string, TraceValue>, after: Record<stri
   for (let i = 0; i < Math.max(beforeArray.length, afterArray.length); i++) {
     if (beforeArray[i] !== afterArray[i]) {
       mutations.push({
-        entityId: `array-${i}`,
+        entityId: \`array-\${i}\`,
         property: 'value',
-        previousValue: beforeArray[i] ?? null,
-        nextValue: afterArray[i] ?? null,
+        previousValue: beforeArray[i],
+        nextValue: afterArray[i],
         animation: 'update'
       });
     }
@@ -343,7 +348,7 @@ function mutationsBetween(before: Record<string, TraceValue>, after: Record<stri
   for (const key of new Set([...Object.keys(beforeVars), ...Object.keys(afterVars)])) {
     if (beforeVars[key] !== afterVars[key]) {
       mutations.push({
-        entityId: `var-${key}`,
+        entityId: \`var-\${key}\`,
         property: 'value',
         previousValue: beforeVars[key] ?? null,
         nextValue: afterVars[key] ?? null,
@@ -360,7 +365,7 @@ function mutationsBetween(before: Record<string, TraceValue>, after: Record<stri
     for (let i = 0; i < Math.max(bArr.length, aArr.length); i++) {
       if (bArr[i] !== aArr[i]) {
         mutations.push({
-          entityId: `${key}-${i}`,
+          entityId: \`\${key}-\${i}\`,
           property: 'value',
           previousValue: bArr[i] ?? null,
           nextValue: aArr[i] ?? null,
@@ -414,7 +419,7 @@ function createTraceBuilder(config: ResolvedConfig, complexityCase: SelectedCase
     };
 
     steps.push({
-      id: `step-${steps.length + 1}`,
+      id: \`step-\${steps.length + 1}\`,
       index: steps.length,
       eventType: semantic,
       sourceLineIds: [semantic],
@@ -439,13 +444,13 @@ function runBubbleSort(builder: TraceBuilder, config: ResolvedConfig) {
   builder.add('start', 'Start Bubble Sort', 'Begin sorting process', { comparison: 0 });
   const n = builder.state.array.length;
   for (let i = 0; i < n - 1; i++) {
-    builder.add('outer-loop', `Pass ${i + 1}`, `Starting pass ${i + 1}`, { comparison: 1 }, s => { s.variables.i = i; });
+    builder.add('outer-loop', \`Pass \${i + 1}\`, \`Starting pass \${i + 1}\`, { comparison: 1 }, s => { s.variables.i = i; });
     let swapped = false;
     for (let j = 0; j < n - i - 1; j++) {
-      builder.add('inner-loop', 'Check pair', `Check elements at index ${j} and ${j+1}`, { comparison: 1 }, s => { s.variables.j = j; });
-      builder.add('compare', 'Compare', `Compare ${builder.state.array[j]} > ${builder.state.array[j+1]}`, { 'array-read': 2, comparison: 1 });
+      builder.add('inner-loop', 'Check pair', \`Check elements at index \${j} and \${j+1}\`, { comparison: 1 }, s => { s.variables.j = j; });
+      builder.add('compare', 'Compare', \`Compare \${builder.state.array[j]} > \${builder.state.array[j+1]}\`, { 'array-read': 2, comparison: 1 });
       if (builder.state.array[j] > builder.state.array[j + 1]) {
-        builder.add('swap', 'Swap', `Swap ${builder.state.array[j]} and ${builder.state.array[j+1]}`, { 'array-write': 2 }, s => {
+        builder.add('swap', 'Swap', \`Swap \${builder.state.array[j]} and \${builder.state.array[j+1]}\`, { 'array-write': 2 }, s => {
           const temp = s.array[j];
           s.array[j] = s.array[j+1];
           s.array[j+1] = temp;
@@ -465,18 +470,18 @@ function runSelectionSort(builder: TraceBuilder, config: ResolvedConfig) {
   builder.add('start', 'Start Selection Sort', 'Begin sorting process', { comparison: 0 });
   const n = builder.state.array.length;
   for (let i = 0; i < n - 1; i++) {
-    builder.add('outer-loop', `Find min for index ${i}`, `Assume index ${i} is minimum`, { comparison: 1 }, s => { s.variables.i = i; s.variables.min_idx = i; });
+    builder.add('outer-loop', \`Find min for index \${i}\`, \`Assume index \${i} is minimum\`, { comparison: 1 }, s => { s.variables.i = i; s.variables.min_idx = i; });
     let min_idx = i;
     for (let j = i + 1; j < n; j++) {
-      builder.add('inner-loop', 'Check next element', `Check index ${j}`, { comparison: 1 }, s => { s.variables.j = j; });
-      builder.add('compare', 'Compare', `Compare ${builder.state.array[j]} < ${builder.state.array[min_idx]}`, { 'array-read': 2, comparison: 1 });
+      builder.add('inner-loop', 'Check next element', \`Check index \${j}\`, { comparison: 1 }, s => { s.variables.j = j; });
+      builder.add('compare', 'Compare', \`Compare \${builder.state.array[j]} < \${builder.state.array[min_idx]}\`, { 'array-read': 2, comparison: 1 });
       if (builder.state.array[j] < builder.state.array[min_idx]) {
         min_idx = j;
-        builder.add('inner-loop', 'New Minimum', `Found new minimum at index ${min_idx}`, { comparison: 0 }, s => { s.variables.min_idx = min_idx; });
+        builder.add('inner-loop', 'New Minimum', \`Found new minimum at index \${min_idx}\`, { comparison: 0 }, s => { s.variables.min_idx = min_idx; });
       }
     }
     if (min_idx !== i) {
-      builder.add('swap', 'Swap', `Swap ${builder.state.array[i]} and ${builder.state.array[min_idx]}`, { 'array-write': 2 }, s => {
+      builder.add('swap', 'Swap', \`Swap \${builder.state.array[i]} and \${builder.state.array[min_idx]}\`, { 'array-write': 2 }, s => {
         const temp = s.array[i];
         s.array[i] = s.array[min_idx];
         s.array[min_idx] = temp;
@@ -490,17 +495,17 @@ function runInsertionSort(builder: TraceBuilder, config: ResolvedConfig) {
   builder.add('start', 'Start Insertion Sort', 'Begin sorting process', { comparison: 0 });
   const n = builder.state.array.length;
   for (let i = 1; i < n; i++) {
-    builder.add('outer-loop', `Insert element ${i}`, `Pick element ${builder.state.array[i]}`, { comparison: 1 }, s => {
+    builder.add('outer-loop', \`Insert element \${i}\`, \`Pick element \${builder.state.array[i]}\`, { comparison: 1 }, s => {
       s.variables.i = i;
       s.variables.key = s.array[i];
     });
     const key = builder.state.array[i];
     let j = i - 1;
     while (j >= 0) {
-      builder.add('inner-loop', 'Check sorted portion', `Check index ${j}`, { comparison: 1 }, s => { s.variables.j = j; });
-      builder.add('compare', 'Compare', `Compare ${builder.state.array[j]} > ${key}`, { 'array-read': 1, comparison: 1 });
+      builder.add('inner-loop', 'Check sorted portion', \`Check index \${j}\`, { comparison: 1 }, s => { s.variables.j = j; });
+      builder.add('compare', 'Compare', \`Compare \${builder.state.array[j]} > \${key}\`, { 'array-read': 1, comparison: 1 });
       if (builder.state.array[j] > key) {
-        builder.add('swap', 'Shift', `Shift ${builder.state.array[j]} to the right`, { 'array-write': 1 }, s => {
+        builder.add('swap', 'Shift', \`Shift \${builder.state.array[j]} to the right\`, { 'array-write': 1 }, s => {
           s.array[j + 1] = s.array[j];
         });
         j--;
@@ -508,7 +513,7 @@ function runInsertionSort(builder: TraceBuilder, config: ResolvedConfig) {
         break;
       }
     }
-    builder.add('swap', 'Insert', `Insert ${key} at index ${j+1}`, { 'array-write': 1 }, s => {
+    builder.add('swap', 'Insert', \`Insert \${key} at index \${j+1}\`, { 'array-write': 1 }, s => {
       s.array[j + 1] = key;
     });
   }
@@ -520,17 +525,17 @@ function runMergeSort(builder: TraceBuilder, config: ResolvedConfig) {
   
   function mergeSort(left: number, right: number) {
     if (left >= right) return;
-    builder.add('outer-loop', 'Divide', `Divide array from ${left} to ${right}`, { comparison: 1 }, s => {
+    builder.add('outer-loop', 'Divide', \`Divide array from \${left} to \${right}\`, { comparison: 1 }, s => {
       s.variables.left = left;
       s.variables.right = right;
     });
     const mid = Math.floor((left + right) / 2);
-    builder.add('outer-loop', 'Midpoint', `Midpoint is ${mid}`, { arithmetic: 1 }, s => { s.variables.mid = mid; });
+    builder.add('outer-loop', 'Midpoint', \`Midpoint is \${mid}\`, { arithmetic: 1 }, s => { s.variables.mid = mid; });
     
     mergeSort(left, mid);
     mergeSort(mid + 1, right);
     
-    builder.add('inner-loop', 'Merge', `Merge ${left}..${mid} and ${mid+1}..${right}`, { allocation: right - left + 1 }, s => {
+    builder.add('inner-loop', 'Merge', \`Merge \${left}..\${mid} and \${mid+1}..\${right}\`, { allocation: right - left + 1 }, s => {
       s.variables.left = left;
       s.variables.mid = mid;
       s.variables.right = right;
@@ -540,7 +545,7 @@ function runMergeSort(builder: TraceBuilder, config: ResolvedConfig) {
     let i = left;
     let j = mid + 1;
     while (i <= mid && j <= right) {
-      builder.add('compare', 'Compare for merge', `Compare ${builder.state.array[i]} and ${builder.state.array[j]}`, { 'array-read': 2, comparison: 1 });
+      builder.add('compare', 'Compare for merge', \`Compare \${builder.state.array[i]} and \${builder.state.array[j]}\`, { 'array-read': 2, comparison: 1 });
       if (builder.state.array[i] <= builder.state.array[j]) {
         temp.push(builder.state.array[i++]);
       } else {
@@ -566,18 +571,18 @@ function runQuickSort(builder: TraceBuilder, config: ResolvedConfig) {
 
   function partition(low: number, high: number): number {
     const pivot = builder.state.array[high];
-    builder.add('outer-loop', 'Partition', `Partition from ${low} to ${high} with pivot ${pivot}`, { 'array-read': 1 }, s => {
+    builder.add('outer-loop', 'Partition', \`Partition from \${low} to \${high} with pivot \${pivot}\`, { 'array-read': 1 }, s => {
       s.variables.low = low;
       s.variables.high = high;
       s.variables.pivot = pivot;
     });
     let i = low - 1;
     for (let j = low; j < high; j++) {
-      builder.add('compare', 'Compare with pivot', `Compare ${builder.state.array[j]} < ${pivot}`, { 'array-read': 1, comparison: 1 }, s => { s.variables.j = j; });
+      builder.add('compare', 'Compare with pivot', \`Compare \${builder.state.array[j]} < \${pivot}\`, { 'array-read': 1, comparison: 1 }, s => { s.variables.j = j; });
       if (builder.state.array[j] < pivot) {
         i++;
         if (i !== j) {
-          builder.add('swap', 'Swap', `Swap ${builder.state.array[i]} and ${builder.state.array[j]}`, { 'array-write': 2 }, s => {
+          builder.add('swap', 'Swap', \`Swap \${builder.state.array[i]} and \${builder.state.array[j]}\`, { 'array-write': 2 }, s => {
             const temp = s.array[i];
             s.array[i] = s.array[j];
             s.array[j] = temp;
@@ -585,7 +590,7 @@ function runQuickSort(builder: TraceBuilder, config: ResolvedConfig) {
         }
       }
     }
-    builder.add('swap', 'Place pivot', `Place pivot at correct position ${i+1}`, { 'array-write': 2 }, s => {
+    builder.add('swap', 'Place pivot', \`Place pivot at correct position \${i+1}\`, { 'array-write': 2 }, s => {
       const temp = s.array[i+1];
       s.array[i+1] = s.array[high];
       s.array[high] = temp;
@@ -613,7 +618,7 @@ function runHeapSort(builder: TraceBuilder, config: ResolvedConfig) {
     const l = 2 * i + 1;
     const r = 2 * i + 2;
 
-    builder.add('inner-loop', 'Heapify', `Heapify at node ${i}`, { comparison: 1 }, s => {
+    builder.add('inner-loop', 'Heapify', \`Heapify at node \${i}\`, { comparison: 1 }, s => {
       s.variables.largest = largest;
       s.variables.l = l;
       s.variables.r = r;
@@ -629,7 +634,7 @@ function runHeapSort(builder: TraceBuilder, config: ResolvedConfig) {
     }
 
     if (largest !== i) {
-      builder.add('swap', 'Swap in Heap', `Swap ${builder.state.array[i]} and ${builder.state.array[largest]}`, { 'array-write': 2 }, s => {
+      builder.add('swap', 'Swap in Heap', \`Swap \${builder.state.array[i]} and \${builder.state.array[largest]}\`, { 'array-write': 2 }, s => {
         const swap = s.array[i];
         s.array[i] = s.array[largest];
         s.array[largest] = swap;
@@ -645,7 +650,7 @@ function runHeapSort(builder: TraceBuilder, config: ResolvedConfig) {
   }
 
   for (let i = n - 1; i > 0; i--) {
-    builder.add('swap', 'Extract Max', `Move max element ${builder.state.array[0]} to end`, { 'array-write': 2 }, s => {
+    builder.add('swap', 'Extract Max', \`Move max element \${builder.state.array[0]} to end\`, { 'array-write': 2 }, s => {
       const temp = s.array[0];
       s.array[0] = s.array[i];
       s.array[i] = temp;
@@ -663,7 +668,7 @@ function runCountingSort(builder: TraceBuilder, config: ResolvedConfig) {
   const min = Math.min(...arr);
   const range = max - min + 1;
   
-  builder.add('logic', 'Find Range', `Max: ${max}, Min: ${min}, Range: ${range}`, { comparison: arr.length, allocation: range }, s => {
+  builder.add('logic', 'Find Range', \`Max: \${max}, Min: \${min}, Range: \${range}\`, { comparison: arr.length, allocation: range }, s => {
     s.variables.max = max;
     s.variables.min = min;
     s.arrays.count = new Array(range).fill(0);
@@ -671,20 +676,20 @@ function runCountingSort(builder: TraceBuilder, config: ResolvedConfig) {
   });
 
   for (let i = 0; i < arr.length; i++) {
-    builder.add('outer-loop', 'Count Frequencies', `Count frequency of ${arr[i]}`, { 'array-read': 1, 'array-write': 1 }, s => {
+    builder.add('outer-loop', 'Count Frequencies', \`Count frequency of \${arr[i]}\`, { 'array-read': 1, 'array-write': 1 }, s => {
       s.variables.i = i;
       s.arrays.count[arr[i] - min]++;
     });
   }
 
   for (let i = 1; i < range; i++) {
-    builder.add('inner-loop', 'Cumulative Count', `Add ${builder.state.arrays.count[i-1]} to count[${i}]`, { 'array-read': 2, 'array-write': 1 }, s => {
+    builder.add('inner-loop', 'Cumulative Count', \`Add \${builder.state.arrays.count[i-1]} to count[\${i}]\`, { 'array-read': 2, 'array-write': 1 }, s => {
       s.arrays.count[i] += s.arrays.count[i - 1];
     });
   }
 
   for (let i = arr.length - 1; i >= 0; i--) {
-    builder.add('swap', 'Place Element', `Place ${arr[i]} into output`, { 'array-read': 2, 'array-write': 2 }, s => {
+    builder.add('swap', 'Place Element', \`Place \${arr[i]} into output\`, { 'array-read': 2, 'array-write': 2 }, s => {
       const idx = s.arrays.count[arr[i] - min] - 1;
       s.arrays.output[idx] = arr[i];
       s.arrays.count[arr[i] - min]--;
@@ -706,33 +711,35 @@ function runRadixSort(builder: TraceBuilder, config: ResolvedConfig) {
   const arr = builder.state.array;
   if (arr.length === 0) return;
   
+  // Radix sort usually assumes positive integers. We will just use max for digits.
+  // For simplicity if there are negatives, it gets complicated, but we'll assume valid inputs or handle it simply.
   const max = Math.max(...arr.map(Math.abs));
-  builder.add('logic', 'Find Max', `Max value is ${max} to determine digits`, { comparison: arr.length }, s => {
+  builder.add('logic', 'Find Max', \`Max value is \${max} to determine digits\`, { comparison: arr.length }, s => {
     s.variables.max = max;
   });
 
   for (let exp = 1; Math.floor(max / exp) > 0; exp *= 10) {
-    builder.add('outer-loop', 'Digit Pass', `Sorting by digit place ${exp}`, { comparison: 1 }, s => {
+    builder.add('outer-loop', 'Digit Pass', \`Sorting by digit place \${exp}\`, { comparison: 1 }, s => {
       s.variables.exp = exp;
       s.arrays.output = new Array(arr.length).fill(0);
       s.arrays.count = new Array(10).fill(0);
     });
 
     for (let i = 0; i < arr.length; i++) {
-      builder.add('inner-loop', 'Count Frequencies', `Count digit for ${arr[i]}`, { 'array-read': 1, 'array-write': 1 }, s => {
+      builder.add('inner-loop', 'Count Frequencies', \`Count digit for \${arr[i]}\`, { 'array-read': 1, 'array-write': 1 }, s => {
         const digit = Math.floor(Math.abs(arr[i]) / exp) % 10;
         s.arrays.count[digit]++;
       });
     }
 
     for (let i = 1; i < 10; i++) {
-      builder.add('inner-loop', 'Cumulative Count', `Cumulative count for digit ${i}`, { 'array-read': 2, 'array-write': 1 }, s => {
+      builder.add('inner-loop', 'Cumulative Count', \`Cumulative count for digit \${i}\`, { 'array-read': 2, 'array-write': 1 }, s => {
         s.arrays.count[i] += s.arrays.count[i - 1];
       });
     }
 
     for (let i = arr.length - 1; i >= 0; i--) {
-      builder.add('swap', 'Place Element', `Place ${arr[i]} into output`, { 'array-read': 2, 'array-write': 2 }, s => {
+      builder.add('swap', 'Place Element', \`Place \${arr[i]} into output\`, { 'array-read': 2, 'array-write': 2 }, s => {
         const digit = Math.floor(Math.abs(arr[i]) / exp) % 10;
         s.arrays.output[s.arrays.count[digit] - 1] = arr[i];
         s.arrays.count[digit]--;
@@ -771,14 +778,14 @@ export function createSortLesson(config: SortingConfig = DEFAULT_SORTING_CONFIG)
 
   const metadata = getSortingMetadata(config.algorithm);
   return {
-    id: `sorting-${config.algorithm}`,
+    id: \`sorting-\${config.algorithm}\`,
     subject: 'dsa-1',
     topic: 'Sorting',
-    title: `Sorting Lab — ${metadata.label}`,
+    title: \`Sorting Lab \u2014 \${metadata.label}\`,
     description: metadata.description,
     difficulty: 'beginner',
     learningObjectives: [
-      `Understand the ${metadata.label} algorithm and its complexity.`
+      \`Understand the \${metadata.label} algorithm and its complexity.\`
     ],
     supportedLanguages: ['c', 'cpp', 'java', 'python'],
     sourceByLanguage: {
@@ -792,3 +799,6 @@ export function createSortLesson(config: SortingConfig = DEFAULT_SORTING_CONFIG)
     completionCriteria: { requiredCorrectPredictions: 0, masteryThreshold: 0.8 }
   };
 }
+`
+
+fs.writeFileSync('/home/angkon/Projects/ReplayCS/src/lib/engines/dsa/sorting.ts', code, 'utf-8');
