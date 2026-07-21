@@ -1,5 +1,21 @@
 <script lang="ts">
   import { galleryScenarios } from '$lib/content/scenarioGallery';
+
+  const buckets = [
+    { title: 'Data structures & algorithms', subjects: ['DSA I', 'DSA II'] },
+    {
+      title: 'Systems, data & networks',
+      subjects: ['DBMS', 'Operating Systems', 'Computer Networks']
+    }
+  ];
+  const groups = buckets
+    .map((bucket) => ({
+      title: bucket.title,
+      scenarios: galleryScenarios.filter((scenario) =>
+        bucket.subjects.includes(scenario.subjectLabel)
+      )
+    }))
+    .filter((group) => group.scenarios.length > 0);
 </script>
 
 <svelte:head>
@@ -19,25 +35,30 @@
   </p>
 </header>
 
-<div class="grid" role="list" aria-label="Trace scenarios">
-  {#each galleryScenarios as scenario (scenario.id)}
-    <article
-      class="card panel accent-{scenario.accent}"
-      role="listitem"
-      data-testid="scenario-card-{scenario.id}"
-    >
-      <div class="card-head">
-        <span class="subject">{scenario.subjectLabel}</span>
-      </div>
-      <h2>{scenario.title}</h2>
-      <p class="desc">{scenario.description}</p>
-      <p class="observe"><span>You’ll watch</span>{scenario.observe}</p>
-      <a class="open" href={scenario.href} data-testid="scenario-link-{scenario.id}">
-        Open trace →
-      </a>
-    </article>
-  {/each}
-</div>
+{#each groups as group}
+  <section class="group">
+    <h2 class="group-title">{group.title}</h2>
+    <div class="grid" role="list" aria-label={`${group.title} scenarios`}>
+      {#each group.scenarios as scenario (scenario.id)}
+        <article
+          class="card panel accent-{scenario.accent}"
+          role="listitem"
+          data-testid="scenario-card-{scenario.id}"
+        >
+          <div class="card-head">
+            <span class="subject">{scenario.subjectLabel}</span>
+          </div>
+          <h3>{scenario.title}</h3>
+          <p class="desc">{scenario.description}</p>
+          <p class="observe"><span>You’ll watch</span>{scenario.observe}</p>
+          <a class="open" href={scenario.href} data-testid="scenario-link-{scenario.id}">
+            Open trace →
+          </a>
+        </article>
+      {/each}
+    </div>
+  </section>
+{/each}
 
 <style>
   .gallery-head {
@@ -59,6 +80,18 @@
     margin: 0;
     color: var(--muted);
     line-height: 1.6;
+  }
+  .group {
+    margin-top: 2.25rem;
+  }
+  .group-title {
+    font-size: 1rem;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin: 0 0 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
   }
   .grid {
     display: grid;
@@ -98,7 +131,7 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
-  .card h2 {
+  .card h3 {
     margin: 0;
     font-size: 1.15rem;
   }
