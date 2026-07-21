@@ -22,8 +22,30 @@ describe('live lesson registry', () => {
 
   it('derives remaining completion XP from live metadata and completion state', () => {
     const progress = { ...createEmptyProgress(), completed: ['binary-search'] };
-    expect(liveLessonsForSubject('dsa-1')).toHaveLength(7);
-    expect(remainingCompletionXp(progress, 'dsa-1')).toBe(200);
+    expect(liveLessonsForSubject('dsa-1')).toHaveLength(8);
+    expect(remainingCompletionXp(progress, 'dsa-1')).toBe(240);
+  });
+
+  it('registers the complete Hash Table Lab route, reward, and recovery evidence', () => {
+    const hashTable = LIVE_LESSONS.find((lesson) => lesson.completionId === 'hash-table-lab');
+
+    expect(hashTable).toMatchObject({
+      subject: 'dsa-1',
+      slug: 'hash-table',
+      title: 'Hash Table Lab',
+      href: '/lesson/dsa-1/hash-table',
+      completionXp: 40,
+      recovery: {
+        title: 'Hash Table Lab Recovery',
+        href: '/lesson/dsa-1/hash-table'
+      }
+    });
+    expect(hashTable?.recovery.misconceptionTags).toEqual([
+      'hash-vs-bucket',
+      'tombstone-vs-empty',
+      'rehash-scope',
+      'amortized-vs-worst'
+    ]);
   });
 
   it('registers the Stack, Queue, and Deque Labs with routes, rewards, and recovery evidence', () => {
@@ -137,7 +159,8 @@ describe('live lesson registry', () => {
         'array-lab': 90,
         'stack-lab': 90,
         'queue-lab': 90,
-        'deque-lab': 90
+        'deque-lab': 90,
+        'hash-table-lab': 90
       }
     };
     expect(subjectMastery(progress, 'dsa-1')).toBe(90);

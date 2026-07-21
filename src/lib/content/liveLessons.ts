@@ -135,6 +135,23 @@ const definitions: readonly LiveLessonDefinition[] = [
     }
   },
   {
+    completionId: 'hash-table-lab',
+    subject: 'dsa-1',
+    slug: 'hash-table',
+    completionXp: 40,
+    recovery: {
+      title: 'Hash Table Lab Recovery',
+      href: '/lesson/dsa-1/hash-table',
+      reason: 'Replay the first bucket-selection, tombstone, or rehash divergence.',
+      misconceptionTags: [
+        'hash-vs-bucket',
+        'tombstone-vs-empty',
+        'rehash-scope',
+        'amortized-vs-worst'
+      ]
+    }
+  },
+  {
     completionId: 'graph-explorer',
     subject: 'dsa-2',
     slug: 'graph-explorer',
