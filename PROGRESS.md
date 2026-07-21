@@ -3,16 +3,16 @@
 ## Current status
 
 - Updated: 2026-07-22 (+06)
-- Working branch: `fix/teammate-ui-production`
-- Working baseline: `e75d3a9` (`origin/main`)
+- Working branch: `feat/study-recap-current`
+- Working baseline: `e298072` (`origin/main`, merge of PR #30)
 - Teammate UI baseline: `e75d3a9` (PRs #23 and #25–#29)
-- Production commit: `e75d3a9`
+- Production commit: `e298072`
 - Production: https://replaycs.vercel.app
-- Deployment: `dpl_C4dJaDCkj3f6cBM5EzLAgczkLmTw` (`READY`)
-- Stable deployment URL: https://replaycs-8ijrpiwg2-meteorboy-f.vercel.app
+- Deployment: `dpl_C6qLpB16DjeHPPbC27iC3YW8yAKX` (`READY`)
+- Stable deployment URL: https://replaycs-2aumm6wez-meteorboy-f.vercel.app
 - Recovery branch: `origin/feat/study-recap` at `2fb3489`
-- Worktree: tracked changes are the production audit and Sorting Arena tablet fix; local `.claude/` is untracked and must not be committed.
-- Immediate next action: finish the UI regression milestone, merge/deploy it, then transplant only Study Recap files onto current `origin/main`.
+- Worktree: Study Recap is being adapted on current main; local `.claude/` is untracked and must not be committed.
+- Immediate next action: complete the Study Recap full gate, merge/deploy it, then audit legacy progress-store consumers.
 
 ## Current teammate UI contract
 
@@ -30,41 +30,41 @@
 
 Automated against the public alias at 1440×900, 1280×800, 1024×768, and 390×844. The audit checks successful responses, visible main content, console/page errors, page-level overflow, and absence of prediction/lesson-AI UI. Lesson interaction coverage checks Next, Previous, Restart, Play, and timeline access.
 
-| Route group                   | Loads | Code | Visualizer | Controls | No overlap/overflow                        | Mobile | Console clean | Verified           |
-| ----------------------------- | ----- | ---- | ---------- | -------- | ------------------------------------------ | ------ | ------------- | ------------------ |
-| Landing, Learn, Trace Lab     | yes   | n/a  | n/a        | yes      | yes                                        | yes    | yes           | production         |
-| Complexity, Progress          | yes   | n/a  | yes        | yes      | yes                                        | yes    | yes           | production         |
-| Scenario Gallery, Judge Demo  | yes   | n/a  | n/a        | yes      | yes                                        | yes    | yes           | production         |
-| Arrays, Linked List, Stack    | yes   | yes  | yes        | yes      | yes                                        | yes    | yes           | production         |
-| Queue, Deque, Hash Table      | yes   | yes  | yes        | yes      | yes                                        | yes    | yes           | production         |
-| Searching, Binary Search, BST | yes   | yes  | yes        | yes      | yes                                        | yes    | yes           | production         |
-| Sorting Arena                 | yes   | yes  | yes        | yes      | **tablet regression found; fixed locally** | yes    | yes           | local fix verified |
-| Graph Explorer                | yes   | yes  | yes        | yes      | yes                                        | yes    | yes           | production         |
-| SQL Query Pipeline            | yes   | SQL  | yes        | yes      | yes                                        | yes    | yes           | production         |
-| CPU Scheduling                | yes   | n/a  | yes        | yes      | yes                                        | yes    | yes           | production         |
-| Packet Journey                | yes   | n/a  | yes        | yes      | yes                                        | yes    | yes           | production         |
+| Route group                   | Loads | Code | Visualizer | Controls | No overlap/overflow | Mobile | Console clean | Verified   |
+| ----------------------------- | ----- | ---- | ---------- | -------- | ------------------- | ------ | ------------- | ---------- |
+| Landing, Learn, Trace Lab     | yes   | n/a  | n/a        | yes      | yes                 | yes    | yes           | production |
+| Complexity, Progress          | yes   | n/a  | yes        | yes      | yes                 | yes    | yes           | production |
+| Scenario Gallery, Judge Demo  | yes   | n/a  | n/a        | yes      | yes                 | yes    | yes           | production |
+| Arrays, Linked List, Stack    | yes   | yes  | yes        | yes      | yes                 | yes    | yes           | production |
+| Queue, Deque, Hash Table      | yes   | yes  | yes        | yes      | yes                 | yes    | yes           | production |
+| Searching, Binary Search, BST | yes   | yes  | yes        | yes      | yes                 | yes    | yes           | production |
+| Sorting Arena                 | yes   | yes  | yes        | yes      | yes                 | yes    | yes           | production |
+| Graph Explorer                | yes   | yes  | yes        | yes      | yes                 | yes    | yes           | production |
+| SQL Query Pipeline            | yes   | SQL  | yes        | yes      | yes                 | yes    | yes           | production |
+| CPU Scheduling                | yes   | n/a  | yes        | yes      | yes                 | yes    | yes           | production |
+| Packet Journey                | yes   | n/a  | yes        | yes      | yes                 | yes    | yes           | production |
 
-The only product regression found was the Sorting Arena setup form extending the document to 1147px at a 1024px viewport. The local repair stacks the setup grid at the existing 1100px breakpoint while preserving the teammate/global visual language.
+The only product regression found was the Sorting Arena setup form extending the document to 1147px at a 1024px viewport. PR #30 stacks the setup grid at the existing 1100px breakpoint while preserving the teammate/global visual language. The deployed repair and all lesson controls passed 15/15 focused production checks.
 
 ## Recovery and feature status
 
-- Study Recap: unfinished implementation recovered from `.claude/worktrees/session-521cb8`, focused tests (10/10) and type-check passed, saved on `origin/feat/study-recap` at `2fb3489`. It is based on old main `5fe6464` and is **not merged**. Its Progress-page edit must not be transplanted wholesale because the teammate redesigned that file.
+- Study Recap: recovered source was transplanted onto current main without its stale Progress layout. The deterministic generator, server-only optional model rewrite, strict validation/schema, request size limit, timeout, safe fallback, English/Bangla and concise/exam-ready controls, subject/topic selection, teammate-style Progress CTA, and responsive page are implemented. Focused tests: 13/13 unit/API and 2/2 browser. Full gate, PR, merge, and deploy remain.
 - Progress-store cleanup: not started. Current main already removed user-facing prediction metrics; legacy storage fields still require a compatibility-safe consumer audit.
 - Strings Lab: not started.
 - Recursion Lab: not started.
 
 ## Validation
 
-Baseline `e75d3a9`:
+UI milestone `e298072`:
 
 - `git diff --check`: pass
 - `npm run check`: 0 errors, 0 warnings
 - `npm run lint`: pass
 - `npx vitest run`: 201/201 pass (20 files)
 - `npm run build`: pass
-- `npx playwright test`: 34/34 pass
-- Public route/viewport audit: 83/84 route-viewport checks passed; the single Sorting tablet overflow is fixed locally and its focused regression now passes.
-- Focused recovery checks: Study Recap 10/10 tests pass and Svelte check is clean.
+- `npx playwright test`: 132/132 pass
+- Public route/viewport audit: all required routes passed after the Sorting fix; deployed focused regression/control verification is 15/15.
+- Study Recap focused checks: Svelte check clean, 13/13 unit/API tests, 2/2 browser tests.
 
 ## Product rules
 
@@ -77,8 +77,8 @@ Baseline `e75d3a9`:
 
 1. Teammate UI deployed from current main: complete.
 2. Production audit: complete; one tablet overflow identified.
-3. UI regression repair and durable audit test: in progress on `fix/teammate-ui-production`.
-4. Study Recap transplant/adaptation: pending after the UI-fix merge/deploy.
+3. UI regression repair and durable audit test: complete (PR #30, production `e298072`).
+4. Study Recap transplant/adaptation: in progress on `feat/study-recap-current`.
 5. Compatibility-safe progress-store cleanup: pending after Study Recap.
 6. Strings Lab: pending.
 7. Recursion Lab: pending.

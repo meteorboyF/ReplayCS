@@ -26,6 +26,17 @@
     return RECAP_TOPICS.filter((topic) => topic.subjectLabel === subjectLabel);
   }
 
+  function toggleSubject(subjectLabel: string) {
+    const ids = topicsFor(subjectLabel).map((topic) => topic.id);
+    const shouldSelect = ids.some((id) => !selected.has(id));
+    const next = new Set(selected);
+    for (const id of ids) {
+      if (shouldSelect) next.add(id);
+      else next.delete(id);
+    }
+    selected = next;
+  }
+
   async function generate() {
     if (selected.size === 0) {
       error = 'Choose at least one topic.';
@@ -88,7 +99,12 @@
   <div class="topics">
     {#each subjects as subjectLabel}
       <div class="topic-group">
-        <span class="group-label">{subjectLabel}</span>
+        <div class="group-head">
+          <span class="group-label">{subjectLabel}</span>
+          <button type="button" onclick={() => toggleSubject(subjectLabel)}>
+            {topicsFor(subjectLabel).every((topic) => selected.has(topic.id)) ? 'Clear' : 'Select'}
+          </button>
+        </div>
         {#each topicsFor(subjectLabel) as topic}
           <label class="topic" class:checked={selected.has(topic.id)}>
             <input
@@ -239,6 +255,19 @@
     font-size: 0.66rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+  .group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .group-head button {
+    border: 0;
+    background: transparent;
+    color: var(--primary);
+    padding: 0.15rem;
+    font-size: 0.7rem;
   }
   .topic {
     display: flex;

@@ -6,6 +6,7 @@ const routes = [
   '/trace-lab',
   '/complexity',
   '/progress',
+  '/study-recap',
   '/challenges',
   '/judge-demo',
   '/lesson/dsa-1/arrays',

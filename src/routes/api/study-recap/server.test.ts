@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+const { getOpenAIMock } = vi.hoisted(() => ({ getOpenAIMock: vi.fn() }));
+vi.mock('$lib/server/openai/client', () => ({ getOpenAI: getOpenAIMock }));
 import { POST } from './+server';
 
 function call(body: unknown) {
@@ -12,6 +14,8 @@ function call(body: unknown) {
 }
 
 describe('POST /api/study-recap', () => {
+  beforeEach(() => getOpenAIMock.mockReset().mockReturnValue(null));
+
   it('returns the deterministic recap when no GPT key is configured', async () => {
     // OPENAI_API_KEY is not set in the test environment, so getOpenAI() is null.
     const response = await call({
@@ -38,6 +42,34 @@ describe('POST /api/study-recap', () => {
       depth: 'concise'
     });
     expect(response.status).toBe(400);
+  });
+
+  it('rejects a request containing any invalid topic', async () => {
+    const response = await call({
+      topicIds: ['arrays', 'not-a-real-topic'],
+      language: 'en',
+      depth: 'concise'
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it('falls back when the model request fails', async () => {
+    getOpenAIMock.mockReturnValue({
+      chat: { completions: { create: vi.fn().mockRejectedValue(new Error('model unavailable')) } }
+    });
+    const response = await call({ topicIds: ['arrays'], language: 'en', depth: 'exam' });
+    expect(response.status).toBe(200);
+    expect((await response.json()).recap.source).toBe('deterministic');
+  });
+
+  it('rejects oversized requests before parsing', async () => {
+    const request = new Request('http://localhost/api/study-recap', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ topicIds: ['arrays'], padding: 'x'.repeat(17_000) })
+    });
+    const response = await POST({ request } as unknown as Parameters<typeof POST>[0]);
+    expect(response.status).toBe(413);
   });
 
   it('defaults language and depth when omitted', async () => {

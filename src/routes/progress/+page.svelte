@@ -246,7 +246,9 @@
     <p>Hand-picked executions, each opening straight into its visual trace.</p>
   </div>
   <div class="jump-actions">
-    <a class="jump-link" href="/challenges" data-testid="scenario-gallery-link">Open the gallery →</a>
+    <a class="jump-link" href="/challenges" data-testid="scenario-gallery-link"
+      >Open the gallery →</a
+    >
     <a class="jump-link" href="/study-recap" data-testid="study-recap-link">Build a recap →</a>
   </div>
 </section>
