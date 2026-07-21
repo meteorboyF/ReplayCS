@@ -10,7 +10,8 @@ const subjects = [
       'Array & Dynamic Array Lab',
       'Stack Lab',
       'Queue Lab',
-      'Deque Lab'
+      'Deque Lab',
+      'Hash Table Lab'
     ]
   },
   { path: '/learn/dsa-2', liveLessons: ['Graph Explorer'] },

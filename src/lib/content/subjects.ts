@@ -47,6 +47,13 @@ export const subjects = {
         slug: 'deque',
         status: 'live',
         detail: 'Push, pop, and peek at both ends of a circular buffer or doubly linked list.'
+      },
+      {
+        title: 'Hash Table Lab',
+        slug: 'hash-table',
+        status: 'live',
+        detail:
+          'Hash keys into buckets, chase collisions through chains and probes, and rehash on resize.'
       }
     ]
   },
