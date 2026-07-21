@@ -3,12 +3,12 @@
 ## Last updated
 
 - Date: 2026-07-21
-- Local time: 23:15 (+06)
+- Local time: 23:35 (+06)
 - Updated by: Development session
 - Repository: https://github.com/meteorboyF/ReplayCS.git
 - Production: https://replaycs.vercel.app
-- Current branch: `refactor/visualizer-first-rescue` (renamed from `claude/session-521cb8`; old name never pushed)
-- Current commit: `c903075` (branch head; MERGED to main via PR #19)
+- Current branch: `refactor/scenario-gallery` (off merged main; Phase 0 branch `refactor/visualizer-first-rescue` merged via PR #19)
+- Current commit: branch `refactor/scenario-gallery` (Scenario Gallery work; see Git history)
 - Remote main commit: `22654b9` (merge of PR #19)
 - Latest production commit: `22654b9` — deployed to Vercel prod, alias `replaycs.vercel.app` → `replaycs-lc8ho0oo2-meteorboy-f.vercel.app`
 - Worktree status: clean
@@ -18,11 +18,13 @@
 
 ## Current session objective
 
-> Phase 0 product rescue: remove prediction, Learn/Guided/Challenge modes, and the AI mentor from every
-> lesson; rebuild the shared visual-first workspace; de-predict the six bespoke lesson pages; remove
-> Challenges from the primary nav; and get the full local gate (check/lint/vitest/build/playwright) green.
+> Phase 0 (DONE — merged PR #19, deployed): visualizer-first rescue. Now: post-Phase-0 tasks — convert
+> `/challenges` to a Scenario Gallery, add a synchronized four-language code trace to Sorting Arena,
+> remove dead prediction/mentor architecture, align the Progress dashboard with visual learning, build
+> the isolated `/study-recap` GPT feature, and start the Strings and Recursion labs.
 
-This objective is **complete** on branch `refactor/visualizer-first-rescue`. Not yet merged to `main` or deployed.
+Phase 0 is merged (`22654b9`) and deployed to `replaycs.vercel.app`. Scenario Gallery (Task 1) is
+implemented on branch `refactor/scenario-gallery`.
 
 ## Product direction (active rules — do not restore rejected features)
 
@@ -85,16 +87,16 @@ _None — session objective complete on branch._
 
 ## Needs rework (known follow-ups, not blocking Phase 0)
 
-### /challenges route + boss-arena subsystem still exists
+### /challenges → Scenario Gallery — DONE (branch `refactor/scenario-gallery`)
 
-- Current problem: the prediction-based Challenge Arena route (`src/routes/challenges/+page.svelte`), its
-  engine (`src/lib/challenges/arena.ts`), the Progress page "Challenge Arena" section
-  (`src/routes/progress/+page.svelte` lines ~261–286), and `e2e/challenge-arena.spec.ts` /
-  `e2e/progress-integrity.spec.ts` remain. Only the primary-nav link was removed.
-- Required: either delete the route/engine/tests, or convert `/challenges` into a non-guessing Scenario
-  Gallery of trace presets per the brief (section 2). Then prune boss/prediction fields from the Progress
-  page and progress store.
-- Priority: medium.
+- `/challenges` is now a non-guessing Scenario Gallery: `src/lib/content/scenarioGallery.ts` (11 curated
+  presets) + rewritten `src/routes/challenges/+page.svelte` (cards linking directly to trace presets, no
+  questions/XP/answers). Deleted `src/lib/challenges/arena.ts`, `arena.test.ts`, `e2e/challenge-arena.spec.ts`.
+  Progress page boss section replaced with a Scenario Gallery link; `e2e/scenario-gallery.spec.ts` added;
+  `e2e/progress-integrity.spec.ts` boss assertions removed.
+- RESIDUAL (Task: Progress alignment): `src/lib/progress/store.ts` still exports `completeBossChallenge` /
+  serializes `completedBossChallenges`, and the Progress page still shows prediction-centric metrics
+  (accuracy, streak, hearts, first-attempt accuracy). Remove/realign in the Progress dashboard task.
 
 ### Sorting Arena has no synchronized four-language code panel
 
@@ -172,25 +174,25 @@ Summary`, `controls` snippet, `visual` snippet, optional `about`. Do NOT add gat
 - Replay My Mistake in lessons — REMOVED.
 - Lesson AI mentor / "Explain this step" — REMOVED.
 - Prediction/lock gating of playback and reveals — REMOVED.
-- Challenges in primary nav — REMOVED (route still exists, awaiting rework).
+- Challenges in primary nav — REMOVED.
+- Challenge Arena prediction/boss engine (`arena.ts`) — REMOVED; `/challenges` is now a Scenario Gallery.
 
 ## Testing status
 
 ```
 git diff --check:   clean
-npm run check:      0 errors, 0 warnings (539 files)
+npm run check:      0 errors, 0 warnings (538 files)
 npm run lint:       clean (prettier --check)
-npx vitest run:     211 passed / 211 (21 files)
+npx vitest run:     206 passed / 206 (20 files)  # arena.test.ts (5) removed with the arena engine
 npm run build:      success (@sveltejs/adapter-vercel)
-npx playwright test: 31 passed / 31
-Production smoke:   NOT run (no deploy this session)
+npx playwright test: 30 passed / 30  # -3 challenge-arena, +2 scenario-gallery
 ```
 
 - Date run: 2026-07-21
-- Commit tested: `3841a9b`
+- Commit tested: Scenario Gallery branch tip (`refactor/scenario-gallery`)
 - Failing tests: none
 - Pre-existing failures: none observed
-- Production tested: no
+- Production tested: Phase 0 deployed (`22654b9`); Scenario Gallery deploy pending this task's merge
 
 ## Git history for this session
 
