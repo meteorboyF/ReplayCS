@@ -245,7 +245,12 @@
     <h2>Jump into a trace</h2>
     <p>Hand-picked executions, each opening straight into its visual trace.</p>
   </div>
-  <a class="jump-link" href="/challenges" data-testid="scenario-gallery-link">Open the gallery →</a>
+  <div class="jump-actions">
+    <a class="jump-link" href="/challenges" data-testid="scenario-gallery-link"
+      >Open the gallery →</a
+    >
+    <a class="jump-link" href="/study-recap" data-testid="study-recap-link">Build a recap →</a>
+  </div>
 </section>
 
 <details class="secondary panel">
@@ -506,6 +511,12 @@
     font-size: 0.85rem;
     font-weight: 600;
     white-space: nowrap;
+  }
+  .jump-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   /* deferred settings */
