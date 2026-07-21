@@ -3,18 +3,18 @@
 ## Last updated
 
 - Date: 2026-07-21
-- Local time: 23:00 (+06)
+- Local time: 23:15 (+06)
 - Updated by: Development session
 - Repository: https://github.com/meteorboyF/ReplayCS.git
 - Production: https://replaycs.vercel.app
-- Current branch: `refactor/visualizer-first-rescue` (renamed locally from `claude/session-521cb8`; commits unchanged)
-- Current commit: `6d6506e` (pre-publish; will advance with this doc update)
-- Remote main commit: `c17f6f5`
-- Latest production commit: unknown this session (not yet deployed — publish in progress)
+- Current branch: `refactor/visualizer-first-rescue` (renamed from `claude/session-521cb8`; old name never pushed)
+- Current commit: `c903075` (branch head; MERGED to main via PR #19)
+- Remote main commit: `22654b9` (merge of PR #19)
+- Latest production commit: `22654b9` — deployed to Vercel prod, alias `replaycs.vercel.app` → `replaycs-lc8ho0oo2-meteorboy-f.vercel.app`
 - Worktree status: clean
-- CI status: local gate green (see Testing status)
-- Production health: not verified this session (deploy pending)
-- Open blockers: none — publishing Phase 0 now (push → PR → merge → deploy)
+- CI status: GitHub Actions "Check, test, build, and browser smoke" PASSED on PR #19; local gate green
+- Production health: deployment Ready (Vercel); landing page serves the new build (title verified). Live per-route click-through NOT possible from this sandbox (production domain gates browser read/drive behind per-action approval; plain curl egress blocked). Behavior verified via CI browser smoke + local Playwright 31/31.
+- Open blockers: none for Phase 0 (published + deployed). Manual production click-through of all 15 routes remains for a human/interactive session.
 
 ## Current session objective
 
@@ -202,32 +202,35 @@ Production smoke:   NOT run (no deploy this session)
 | a517868 | refactor/visualizer-first-rescue | de-predict SQL Query Pipeline                 | no     | no     | no         |
 | a904678 | refactor/visualizer-first-rescue | de-predict CPU Scheduling                     | no     | no     | no         |
 | c900327 | refactor/visualizer-first-rescue | de-predict Packet Journey                     | no     | no     | no         |
-| 4865f5a | refactor/visualizer-first-rescue | remove Challenges from primary nav            | no     | no     | no         |
-| 3841a9b | refactor/visualizer-first-rescue | align e2e specs with visualizer-first product | no     | no     | no         |
+| 4865f5a | refactor/visualizer-first-rescue | remove Challenges from primary nav            | yes    | yes    | yes        |
+| 3841a9b | refactor/visualizer-first-rescue | align e2e specs with visualizer-first product | yes    | yes    | yes        |
+| 6d6506e | refactor/visualizer-first-rescue | add PROGRESS.md handoff                       | yes    | yes    | yes        |
+| c903075 | refactor/visualizer-first-rescue | branch-rename doc update                      | yes    | yes    | yes        |
+| 22654b9 | main                             | Merge PR #19                                  | yes    | —      | yes        |
 
-Recovery tag `replaycs-before-visualizer-rescue` created locally at `c17f6f5` (not pushed).
+(All eight Phase 0 code/test/doc commits are contained in PR #19 → merge `22654b9`.)
+
+Recovery tag `replaycs-before-visualizer-rescue` at `c17f6f5` — pushed to origin.
 
 ## Deployment history
 
-_None this session. Production still at its previous (pre-branch) commit._
+| Date       | Commit  | Environment | URL                                          | Health | Routes verified                    | Notes                                                             |
+| ---------- | ------- | ----------- | -------------------------------------------- | ------ | ---------------------------------- | ----------------------------------------------------------------- |
+| 2026-07-21 | 22654b9 | production  | replaycs.vercel.app → replaycs-lc8ho0oo2-... | Ready  | landing (title) + CI browser smoke | Live click-through of all 15 routes blocked in sandbox (approval) |
 
 ## Current blockers
 
-### Branch not pushed / merged / deployed
-
-- Impact: the visualizer-first rescue is only on the local worktree branch `refactor/visualizer-first-rescue`.
-- Cause: session scoped to implementation + local gate; push/merge/deploy left to the maintainer to review.
-- What was tried: full local gate is green.
-- Required user action: review the branch, then push, open a PR, merge to `main`, and deploy via the
-  ReplayCS-deploy worktree (`git pull --ff-only origin main && npx vercel deploy --prod --yes`).
-- Can other work continue: yes (further Phase 1+ topics build on this branch).
-- Safe next step after resolution: verify the six flagship routes + shell lessons in production, desktop
-  and mobile, and check the console.
+_None blocking. One residual verification gap:_ a live human click-through of all 15 production routes was
+not possible from this sandbox because the production domain gates the browser read/screenshot/drive tools
+behind per-action approval and plain curl egress is blocked. Behavior was instead verified by the GitHub
+Actions "browser smoke" Playwright run on the merged code and the local Playwright 31/31 run (which builds
+and previews the production bundle, including 390px mobile checks). A human should do a final manual
+click-through of the 15 routes in a browser.
 
 ## Immediate next actions
 
-1. Push `refactor/visualizer-first-rescue`, open a PR, merge to `main`, deploy to Vercel prod, verify the six flagship
-   routes render code+visual+state+complexity with working Next/Play and no lock UI (desktop + 390px).
+1. (DONE) Phase 0 pushed, PR #19 merged to `main` (`22654b9`), deployed to Vercel prod (`replaycs.vercel.app`).
+   Remaining: human manual click-through of all 15 production routes (sandbox could not drive the live site).
 2. Resolve `/challenges`: convert `src/routes/challenges/+page.svelte` into a non-guessing Scenario Gallery
    OR delete the route + `src/lib/challenges/arena.ts` + `e2e/challenge-arena.spec.ts`, and prune the boss/
    prediction section from `src/routes/progress/+page.svelte` and `e2e/progress-integrity.spec.ts`.
