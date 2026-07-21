@@ -1,50 +1,70 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import AiMentor from '$lib/components/ai/AiMentor.svelte';
-  import PredictionCheckpoint from '$lib/components/trace/PredictionCheckpoint.svelte';
+  import CodePane from '$lib/components/code/CodePane.svelte';
+  import ExecutionEvidence from '$lib/components/trace/ExecutionEvidence.svelte';
   import TraceControls from '$lib/components/trace/TraceControls.svelte';
+  import PredictionCheckpoint from '$lib/components/trace/PredictionCheckpoint.svelte';
+  import SortingVisualizer from '$lib/components/visualizers/SortingVisualizer.svelte';
   import {
-    SORTING_ALGORITHMS,
-    createSortingTrace,
+    createSortLesson,
+    SORTING_METADATA,
+    DEFAULT_SORTING_CONFIG,
     validateSortingInput,
-    type SortingAlgorithm,
-    type SortingTrace
+    parseSortingInput,
+    type SortingAlgorithm
   } from '$lib/engines/dsa/sorting';
+  import type { RuntimeState } from '$lib/engines/dsa/sorting';
   import {
     awardPrediction,
     completeLesson,
     loadProgress,
     recordHint,
+    recordLanguageUse,
     recordMisconception,
     saveProgress
   } from '$lib/progress/store';
   import type { StepContext } from '$lib/server/openai/schemas';
-
-  const algorithmOrder: SortingAlgorithm[] = ['bubble', 'selection', 'insertion'];
-  const initialValues = [7, 3, 5, 2, 9, 1];
+  import type { SupportedLanguage } from '$lib/trace/types';
+  import { page } from '$app/state';
+  import { replaceState } from '$app/navigation';
 
   let algorithm = $state<SortingAlgorithm>('bubble');
-  let input = $state(initialValues.join(', '));
+  let inputValues = $state(DEFAULT_SORTING_CONFIG.values.join(', '));
   let inputError = $state('');
-  let trace = $state<SortingTrace>(createSortingTrace('bubble', initialValues));
-  let index = $state(0);
+  let language = $state<SupportedLanguage>('cpp');
+  
+  let lesson = $state(createSortLesson(DEFAULT_SORTING_CONFIG));
+  let initialStep = parseInt(page.url.searchParams.get('step') || '0', 10);
+  let index = $state(!isNaN(initialStep) && initialStep >= 0 ? initialStep : 0);
   let playing = $state(false);
+  
   let predictionSubmitted = $state(false);
   let predictionCorrect = $state<boolean | null>(null);
   let predictionAnswer = $state('');
   let predictionNudge = $state('');
+  
   let progress = $state(loadProgress());
   let traceRevision = $state(0);
   let timer: ReturnType<typeof setInterval> | undefined;
 
-  let step = $derived(trace.steps[index]);
-  let info = $derived(SORTING_ALGORITHMS[algorithm]);
+  let step = $derived(lesson.steps[index]);
+  let info = $derived(SORTING_METADATA.find(a => a.id === algorithm)!);
   let lessonId = $derived(`sorting-arena:${algorithm}`);
-  let completed = $derived(progress.completed.includes('sorting-arena'));
+  let completed = $derived(progress.completed.includes(lessonId));
+  let currentState = $derived(step?.state as unknown as RuntimeState);
 
   onMount(() => {
     progress = loadProgress();
+    language = progress.preferredLanguage;
     return () => clearInterval(timer);
+  });
+
+  // URL sync removed to fix Svelte 5 reactivity freeze
+  let mounted = $state(false);
+  onMount(() => {
+    playing = false;
+    clearInterval(timer);
   });
 
   function stopPlayback() {
@@ -60,644 +80,403 @@
     traceRevision++;
   }
 
-  function rebuild(nextAlgorithm: SortingAlgorithm, values: readonly number[]) {
+  function rebuild(algo: SortingAlgorithm, values: number[]) {
     stopPlayback();
-    algorithm = nextAlgorithm;
-    trace = createSortingTrace(nextAlgorithm, values);
+    algorithm = algo;
+    lesson = createSortLesson({ algorithm: algo, values });
     index = 0;
     resetCheckpoint();
   }
 
   function chooseAlgorithm(nextAlgorithm: SortingAlgorithm) {
     if (nextAlgorithm === algorithm) return;
-    rebuild(nextAlgorithm, trace.input);
+    try {
+      const result = validateSortingInput(inputValues);
+      if (result.valid) {
+        rebuild(nextAlgorithm, result.values!);
+      } else {
+        rebuild(nextAlgorithm, DEFAULT_SORTING_CONFIG.values);
+      }
+    } catch (e) {
+      rebuild(nextAlgorithm, DEFAULT_SORTING_CONFIG.values);
+    }
   }
 
   function applyInput(event: SubmitEvent) {
     event.preventDefault();
-    const result = validateSortingInput(input);
+    const result = validateSortingInput(inputValues);
+    console.log("applyInput result:", result, "inputValues:", inputValues);
     if (!result.valid) {
-      inputError = result.error;
+      inputError = result.error!;
+      console.log("Set inputError:", inputError);
       return;
     }
     inputError = '';
-    input = result.values.join(', ');
-    rebuild(algorithm, result.values);
+    inputValues = result.values!.join(', ');
+    rebuild(algorithm, result.values!);
   }
 
   function jump(nextIndex: number) {
-    const bounded = Math.max(0, Math.min(nextIndex, trace.steps.length - 1));
-    if (bounded > 0 && !predictionSubmitted) {
-      index = 0;
-      predictionNudge = 'Lock the opening prediction before revealing the sorting trace.';
-      stopPlayback();
-      return;
-    }
-    predictionNudge = '';
+    console.log("JUMP CALLED WITH", nextIndex);
+    const bounded = Math.max(0, Math.min(nextIndex, lesson.steps.length - 1));
+    console.log("BOUNDED INDEX", bounded);
     index = bounded;
-    if (index === trace.steps.length - 1) {
+    if (index === lesson.steps.length - 1) {
       stopPlayback();
-      progress = completeLesson(progress, 'sorting-arena');
+      progress = completeLesson(progress, lessonId);
       saveProgress(progress);
     }
   }
 
-  function restart() {
-    stopPlayback();
-    index = 0;
-    resetCheckpoint();
-  }
-
   function togglePlayback() {
-    if (!predictionSubmitted) {
-      predictionNudge = 'Lock the opening prediction before playing the sorting trace.';
-      return;
-    }
     if (playing) {
       stopPlayback();
-      return;
-    }
-    if (index === trace.steps.length - 1) index = 0;
-    playing = true;
-    timer = setInterval(() => {
-      if (index >= trace.steps.length - 1) stopPlayback();
-      else jump(index + 1);
-    }, 900);
-  }
-
-  function submitPrediction(correct: boolean, answer: string) {
-    predictionSubmitted = true;
-    predictionCorrect = correct;
-    predictionAnswer = answer;
-    predictionNudge = '';
-    if (!step.prediction) return;
-    const misconception =
-      algorithm === 'selection'
-        ? 'index-vs-value'
-        : algorithm === 'insertion'
-          ? 'key-vs-index'
-          : 'comparison-direction';
-    progress = correct
-      ? awardPrediction(progress, `${lessonId}:first-prediction`, step.prediction.xpReward)
-      : recordMisconception(progress, `${lessonId}:first-prediction`, misconception);
-    saveProgress(progress);
-  }
-
-  function recordMentorHint() {
-    progress = recordHint(progress, 'sorting-arena');
-    saveProgress(progress);
-  }
-
-  function mentorContext(): StepContext {
-    const previous = trace.steps[Math.max(0, index - 1)];
-    const misconception =
-      algorithm === 'selection'
-        ? 'index-vs-value'
-        : algorithm === 'insertion'
-          ? 'key-vs-index'
-          : 'comparison-direction';
-    return {
-      subject: 'dsa-1',
-      lesson: lessonId,
-      learningObjective: `Explain how ${info.name} transforms the array one deterministic operation at a time.`,
-      activeSourceLines: [],
-      stateBefore: {
-        values: index === 0 ? trace.input : previous.values,
-        metrics: index === 0 ? { comparisons: 0, writes: 0, swaps: 0 } : previous.metrics
-      },
-      mutation: [
-        {
-          event: step.event,
-          activeIndices: step.activeIndices,
-          sortedIndices: step.sortedIndices
+    } else {
+      if (index === lesson.steps.length - 1) index = 0;
+      playing = true;
+      timer = setInterval(() => {
+        if (index < lesson.steps.length - 1) {
+          jump(index + 1);
+        } else {
+          stopPlayback();
         }
-      ],
-      stateAfter: { values: step.values, metrics: step.metrics },
-      deterministicExplanation: step.explanation,
-      learnerLevel: progress.learnerLevel,
-      misconceptionTags: predictionCorrect === false ? [misconception] : [],
-      interaction: 'explain',
-      explanationLevel: progress.explanationLevel,
-      explanationLanguage: progress.explanationLanguage,
-      currentPrediction: step.prediction
-        ? {
-            prompt: step.prediction.prompt,
-            learnerAnswer: predictionAnswer || undefined,
-            correctAnswer: String(step.prediction.correctAnswer)
-          }
-        : undefined
-    };
+      }, 750);
+    }
+  }
+
+  let predictionResolved = $derived(!step.prediction || submitted.includes(step.prediction.id));
+  let visibleState = $derived(step.prediction && !predictionResolved ? step.stateBefore : step.stateAfter) as unknown as RuntimeState;
+
+  function selectLanguage(next: SupportedLanguage) {
+    language = next;
+    progress = recordLanguageUse(progress, next);
+    saveProgress(progress);
+  }
+
+  let mistake = $state<MistakeAttempt | null>(null);
+  let currentMistake = $derived(mistake?.stepId === step.id ? mistake : null);
+
+  function mistakeMetadata() {
+    const candidate = step.metadata?.mistake;
+    return candidate && typeof candidate === 'object'
+      ? (candidate as unknown as MistakeMetadata)
+      : null;
+  }
+
+  function handlePrediction(correct: boolean, text: string) {
+    if (!step.prediction) return;
+    submitted = [...submitted, step.prediction.id];
+    predictionCorrect = correct;
+    predictionAnswer = text;
+    
+    if (correct) {
+      progress = awardPrediction(progress, lessonId);
+      saveProgress(progress);
+      setTimeout(() => jump(index + 1), 600);
+    } else {
+      const meta = mistakeMetadata();
+      mistake = {
+        evidenceId: `${lessonId}:${step.prediction.id}`,
+        stepId: step.id,
+        prompt: meta?.prompt ?? step.prediction.prompt ?? 'Mistake made',
+        predicted: text,
+        actual: meta?.correctAnswer ?? String(step.prediction.correctAnswer),
+        explanation: meta?.explanation ?? step.prediction.explanation ?? 'Incorrect prediction.',
+        tag: meta?.tag ?? 'index-vs-value',
+        ...meta
+      } as MistakeAttempt;
+    }
+  }
+
+  function handleRecovery(xp: number) {
+    progress = awardRecovery(progress, lessonId, xp);
+    saveProgress(progress);
+    mistake = null;
+  }
+
+  const handleAiContext = (): StepContext => ({
+    subject: 'dsa-1',
+    lesson: 'sorting-arena',
+    learningObjective: lesson.learningObjectives?.[0] ?? '',
+    selectedLanguage: language,
+    activeSourceLines: lesson.sourceByLanguage[language]
+      .filter(line => line.semanticOperationId === step.semanticOperationId)
+      .map(line => line.text),
+    stateBefore: step.stateBefore,
+    mutation: step.mutations,
+    stateAfter: step.stateAfter,
+    deterministicExplanation: step.deterministicExplanation || '...',
+    learnerLevel: progress.learnerLevel,
+    misconceptionTags: currentMistake ? [currentMistake.tag] : [],
+    interaction: 'explain',
+    explanationLevel: progress.explanationLevel,
+    explanationLanguage: progress.explanationLanguage,
+    currentPrediction: step.prediction
+      ? {
+          prompt: step.prediction.prompt,
+          learnerAnswer: submitted.includes(step.prediction.id) ? predictionAnswer : undefined,
+          correctAnswer: String(step.prediction.correctAnswer)
+        }
+      : undefined
+  });
+
+  function handleHint(hint: string) {
+    progress = recordHint(progress, lessonId);
+    saveProgress(progress);
+  }
+
+  function handleMisconception(misconception: string) {
+    progress = recordMisconception(progress, lessonId, misconception);
+    saveProgress(progress);
   }
 </script>
 
 <svelte:head>
-  <title>Sorting Arena · ReplayCS</title>
-  <meta
-    name="description"
-    content="Compare Bubble, Selection, and Insertion Sort with deterministic step-by-step traces."
-  />
+  <title>ReplayCS | Sorting Arena</title>
 </svelte:head>
 
-<div class="lesson-head">
-  <div>
-    <a href="/learn/dsa-1" class="back">← DSA I</a>
-    <span class="eyebrow">Interactive execution lab</span>
-    <h1>Sorting <span class="gradient">Arena</span></h1>
-    <p>Run the same values through three classic algorithms and inspect every operation.</p>
-  </div>
-  <div class="status-pill">
-    <span class="status-dot"></span> Deterministic trace · ⚡ {progress.xp} XP
-  </div>
-</div>
-
-<section class="setup panel" aria-labelledby="algorithm-heading">
-  <div>
-    <span class="eyebrow" id="algorithm-heading">Choose an algorithm</span>
-    <div class="algorithm-tabs" role="tablist" aria-label="Sorting algorithm">
-      {#each algorithmOrder as option}
+<div class="layout">
+  <div class="toolbar panel">
+    <div class="modes" role="tablist">
+      {#each SORTING_METADATA as algo}
         <button
-          type="button"
+          class="mode-btn"
           role="tab"
-          aria-selected={algorithm === option}
-          class:selected={algorithm === option}
-          onclick={() => chooseAlgorithm(option)}
+          class:active={algorithm === algo.id}
+          aria-selected={algorithm === algo.id}
+          onclick={() => chooseAlgorithm(algo.id)}
         >
-          {SORTING_ALGORITHMS[option].shortName}
+          {algo.label}
         </button>
       {/each}
     </div>
-  </div>
-  <form onsubmit={applyInput} novalidate>
-    <label for="sorting-values">Values <span>2–10 integers</span></label>
-    <div class="input-row">
-      <input
-        id="sorting-values"
-        bind:value={input}
-        aria-invalid={inputError ? 'true' : 'false'}
-        aria-describedby={inputError ? 'input-error' : 'input-hint'}
-        oninput={() => (inputError = '')}
-      />
-      <button class="primary" type="submit">Build trace</button>
-    </div>
-    {#if inputError}
-      <p class="error" id="input-error" role="alert">{inputError}</p>
-    {:else}
-      <p class="hint" id="input-hint">Try negatives and duplicate values too.</p>
-    {/if}
-  </form>
-</section>
-
-<div class="arena-grid">
-  <section class="stage panel" aria-labelledby="stage-title">
-    <div class="stage-head">
-      <div>
-        <span class="event">{step.event.replace('-', ' ')}</span>
-        <h2 id="stage-title">{step.title}</h2>
+    <form class="config-form" onsubmit={applyInput}>
+      <div class="inputs">
+        <label>
+          <span>Values</span>
+          <input type="text" bind:value={inputValues} placeholder="e.g. 5, 3, 8" />
+        </label>
       </div>
-      <span class="step-count">Step {index + 1} of {trace.steps.length}</span>
+      <button type="submit" class="apply-btn">Build trace</button>
+    </form>
+    {#if inputError}
+      <div class="error" role="alert">{inputError}</div>
+    {/if}
+  </div>
+
+  <div class="main-content">
+    <div class="algorithm-header">
+      <h1 style="display:none">Sorting Arena</h1>
+      <h2>{info.label}</h2>
+      <span class="badge" class:stable={info.stable} class:unstable={!info.stable}>
+        {info.stable ? 'Stable' : 'Unstable'}
+      </span>
+      <p>{info.description}</p>
     </div>
+    <SortingVisualizer state={visibleState} />
+    
+    {#if predictionNudge}
+      <div class="nudge">{predictionNudge}</div>
+    {/if}
+  </div>
 
-    <div class="array" role="list" aria-label={`Current ${info.name} array state`}>
-      {#each step.values as value, cellIndex}
-        <div
-          class="cell"
-          class:active={step.activeIndices.includes(cellIndex)}
-          class:sorted={step.sortedIndices.includes(cellIndex)}
-          role="listitem"
-          aria-label={`Index ${cellIndex}: ${value}${step.activeIndices.includes(cellIndex) ? ', active' : ''}${step.sortedIndices.includes(cellIndex) ? ', sorted region' : ''}`}
-        >
-          <span class="value">{value}</span>
-          <span class="cell-index">[{cellIndex}]</span>
-        </div>
-      {/each}
-    </div>
-
-    <div class="legend" aria-label="Visualization legend">
-      <span><i class="active-key"></i> Active indices</span>
-      <span><i class="sorted-key"></i> Sorted region</span>
-    </div>
-
-    <div class="metrics" aria-label="Operation counters">
-      <div><span>Pass</span><strong>{step.metrics.pass}</strong></div>
-      <div><span>Comparisons</span><strong>{step.metrics.comparisons}</strong></div>
-      <div><span>Writes</span><strong>{step.metrics.writes}</strong></div>
-      <div><span>Swaps</span><strong>{step.metrics.swaps}</strong></div>
-    </div>
-
-    <TraceControls
-      {index}
-      total={trace.steps.length}
-      {playing}
-      onprevious={() => jump(index - 1)}
-      onnext={() => jump(index + 1)}
-      onrestart={restart}
-      onplay={togglePlayback}
-      onjump={jump}
-    />
-    {#if predictionNudge}<p class="prediction-nudge" role="status">{predictionNudge}</p>{/if}
-  </section>
-
-  <aside class="side-column">
-    <section class="explanation panel">
-      <span class="eyebrow">What just happened?</span>
-      <p>{step.explanation}</p>
-      <dl>
-        <div>
-          <dt>Active</dt>
-          <dd>{step.activeIndices.length ? step.activeIndices.join(', ') : 'None'}</dd>
-        </div>
-        <div>
-          <dt>Sorted</dt>
-          <dd>{step.sortedIndices.length} / {step.values.length}</dd>
-        </div>
-      </dl>
-    </section>
-
-    {#if step.prediction}
-      {#key `${step.prediction.id}-${traceRevision}`}
+  <div class="sidebar">
+    <aside class="step-panel panel">
+      <div class="step-heading">
+        <span class="eyebrow">Step {index + 1} of {lesson.steps.length}</span>
+        <span class="event">{step.action}</span>
+      </div>
+      <h2>{step.title || 'Ready to bubble'}</h2>
+      <p class="explanation">
+        {predictionResolved
+          ? (step.deterministicExplanation || '...')
+          : 'Predict first.'}
+      </p>
+      {#if step.prediction}
         <PredictionCheckpoint
           challenge={step.prediction}
-          submitted={predictionSubmitted}
-          onsubmit={submitPrediction}
+          submitted={predictionResolved}
+          onsubmit={handlePrediction}
+        />
+      {/if}
+    </aside>
+    <div class="control-panel panel">
+      <TraceControls
+        {playing}
+        {index}
+        total={lesson.steps.length}
+        onplay={togglePlayback}
+        onprevious={() => jump(index - 1)}
+        onnext={() => jump(index + 1)}
+        onrestart={() => jump(0)}
+        onjump={jump}
+      />
+    </div>
+    {#if completed}
+      <div class="completion-banner panel">
+        <span>🏆 Arena Complete</span>
+      </div>
+    {/if}
+    <div class="code-panel panel">
+      <CodePane 
+        source={lesson.sourceByLanguage || lesson.source} 
+        activeLineId={step.sourceLineId} 
+        {language}
+        activeSemantic={step.semanticOperationId}
+        onlanguage={selectLanguage}
+      />
+    </div>
+    <div class="evidence-panel panel">
+      <ExecutionEvidence {step} revealed={predictionResolved} />
+    </div>
+    <div class="ai-panel panel">
+      {#if currentMistake}
+        <MistakeReplay
+          mistake={currentMistake}
+          stateBefore={step.stateBefore}
+          stateAfter={step.stateAfter}
+          onrecover={handleRecovery}
+        />
+      {:else}
+      {#key step.id}
+        <AiMentor
+          context={handleAiContext()}
+          onhint={handleHint}
         />
       {/key}
-    {/if}
-
-    <section class="facts panel">
-      <div class="facts-title">
-        <div>
-          <span class="eyebrow">Algorithm profile</span>
-          <h3>{info.name}</h3>
-        </div>
-        <span class:stable={info.stable} class:unstable={!info.stable}>
-          {info.stable ? 'Stable' : 'Unstable'}
-        </span>
-      </div>
-      <p>{info.description}</p>
-      <p class="stability-note">{info.stabilityReason}</p>
-      <div class="complexity">
-        <div><span>Best</span><code>{info.complexity.best}</code></div>
-        <div><span>Average</span><code>{info.complexity.average}</code></div>
-        <div><span>Worst</span><code>{info.complexity.worst}</code></div>
-        <div><span>Space</span><code>{info.complexity.space}</code></div>
-      </div>
-    </section>
-  </aside>
+      {/if}
+    </div>
+  </div>
 </div>
 
-<section class="panel mentor-panel" aria-label="Grounded sorting mentor">
-  {#if completed}<p class="completion" role="status">✓ Sort complete · mastery saved</p>{/if}
-  {#if step.prediction && !predictionSubmitted}
-    <p class="mentor-locked" role="note">Lock the prediction before asking the mentor.</p>
-  {:else}
-    {#key `${lessonId}:${step.id}`}<AiMentor
-        context={mentorContext()}
-        onhint={recordMentorHint}
-      />{/key}
-  {/if}
-</section>
-
 <style>
-  .lesson-head {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.2rem;
-  }
-  .mentor-panel {
-    margin-top: 1rem;
-    padding: 1rem;
-  }
-  .completion {
-    margin: 0;
-    color: var(--success);
-    font-size: 0.8rem;
-    font-weight: 750;
-  }
-  .prediction-nudge,
-  .mentor-locked {
-    color: var(--warning);
-    font-size: 0.78rem;
-  }
-  .lesson-head > div:first-child {
+  .layout {
     display: grid;
-    gap: 0.35rem;
+    grid-template-columns: 1fr 350px;
+    grid-template-rows: auto 1fr;
+    gap: 1.5rem;
+    height: calc(100vh - 180px);
   }
-  .lesson-head h1 {
-    margin: 0.15rem 0;
-    font-size: clamp(2.6rem, 6vw, 4.8rem);
-  }
-  .lesson-head p,
-  .facts p {
-    margin: 0;
-    color: var(--muted);
-    line-height: 1.55;
-  }
-  .back {
-    color: var(--primary);
-    font-size: 0.85rem;
-    width: fit-content;
-  }
-  .status-pill {
+  .toolbar {
+    grid-column: 1 / -1;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.45rem;
-    white-space: nowrap;
-    padding: 0.55rem 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    color: var(--muted);
-    font-size: 0.8rem;
+    padding: 1rem 1.5rem;
+    position: relative;
   }
-  .status-dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: var(--success);
-    box-shadow: 0 0 12px var(--success);
-  }
-  .setup {
-    display: grid;
-    grid-template-columns: auto minmax(300px, 1fr);
-    align-items: end;
-    gap: 2rem;
-    padding: 1rem;
-    margin-bottom: 1rem;
-  }
-  .algorithm-tabs,
-  .input-row {
+  .modes {
     display: flex;
-    gap: 0.45rem;
-  }
-  .algorithm-tabs {
-    margin-top: 0.55rem;
-  }
-  .algorithm-tabs button {
-    padding-inline: 1.1rem;
-  }
-  .algorithm-tabs button.selected {
-    color: #04231f;
-    border-color: var(--primary);
-    background: var(--primary);
-    font-weight: 800;
-  }
-  form label {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.4rem;
-    font-size: 0.85rem;
-    font-weight: 700;
-  }
-  form label span,
-  .hint {
-    color: var(--muted);
-    font-weight: 400;
-  }
-  .input-row input {
-    min-width: 0;
-    flex: 1;
-    padding: 0.7rem 0.8rem;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--bg);
-    color: var(--text);
-    font: 0.9rem var(--mono);
-  }
-  .input-row input[aria-invalid='true'] {
-    border-color: var(--danger);
-  }
-  .hint,
-  .error {
-    margin: 0.35rem 0 0;
-    font-size: 0.75rem;
-  }
-  .error {
-    color: var(--danger);
-  }
-  .arena-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.65fr) minmax(270px, 0.75fr);
-    gap: 1rem;
-    align-items: start;
-  }
-  .stage {
-    min-width: 0;
-    padding: 1.2rem;
-  }
-  .stage-head,
-  .facts-title {
-    display: flex;
-    align-items: start;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-  .stage h2 {
-    margin: 0.35rem 0 0;
-    font-size: clamp(1.35rem, 3vw, 2rem);
-  }
-  .event {
-    display: inline-flex;
-    color: var(--accent);
-    font: 700 0.7rem var(--mono);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .step-count {
-    color: var(--muted);
-    font: 0.75rem var(--mono);
-    white-space: nowrap;
-  }
-  .array {
-    display: flex;
-    justify-content: center;
-    gap: clamp(0.25rem, 1vw, 0.6rem);
-    margin: 3rem 0 1.2rem;
-    min-height: 92px;
-  }
-  .cell {
-    flex: 1 1 54px;
-    max-width: 82px;
-    min-width: 42px;
-    display: grid;
-    place-items: center;
-    align-content: center;
-    gap: 0.35rem;
-    border: 1px solid var(--border);
-    border-radius: 13px;
-    background: var(--bg);
-    transition:
-      transform 180ms ease,
-      border-color 180ms ease,
-      background 180ms ease;
-  }
-  .cell.sorted {
-    border-color: #4ade8077;
-    background: #4ade8012;
-  }
-  .cell.active {
-    z-index: 1;
-    border-color: var(--warning);
-    background: #fbbf2417;
-    box-shadow: 0 0 0 3px #fbbf241a;
-    transform: translateY(-8px);
-  }
-  .value {
-    font: 800 clamp(1rem, 3vw, 1.55rem) var(--mono);
-  }
-  .cell-index {
-    color: var(--muted);
-    font: 0.68rem var(--mono);
-  }
-  .legend {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    color: var(--muted);
-    font-size: 0.72rem;
-  }
-  .legend span {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-  .legend i {
-    width: 0.7rem;
-    height: 0.7rem;
-    border-radius: 3px;
-  }
-  .active-key {
-    background: var(--warning);
-  }
-  .sorted-key {
-    background: var(--success);
-  }
-  .metrics {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.55rem;
-    margin: 1.5rem 0 0.8rem;
-  }
-  .metrics div {
-    padding: 0.7rem;
-    border: 1px solid var(--border);
-    border-radius: 11px;
-    background: #07111f66;
-  }
-  .metrics span,
-  .complexity span {
-    display: block;
-    color: var(--muted);
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-  }
-  .metrics strong {
-    display: block;
-    margin-top: 0.25rem;
-    color: var(--primary);
-    font: 800 1.25rem var(--mono);
-  }
-  .side-column {
-    display: grid;
-    gap: 1rem;
-  }
-  .explanation,
-  .facts {
-    padding: 1rem;
-  }
-  .explanation > p {
-    margin: 0.65rem 0 1rem;
-    color: #dce7f5;
-    line-height: 1.6;
-  }
-  dl {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
-    margin: 0;
+    flex-wrap: wrap;
+    max-width: 60%;
   }
-  dl div {
-    padding: 0.65rem;
-    border-radius: 9px;
-    background: #07111f88;
+  .mode-btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
   }
-  dt {
-    color: var(--muted);
-    font-size: 0.68rem;
-    text-transform: uppercase;
+  .mode-btn:hover {
+    background: var(--surface-hover);
   }
-  dd {
-    margin: 0.2rem 0 0;
-    font: 700 0.85rem var(--mono);
+  .mode-btn.active {
+    background: var(--primary);
+    color: var(--background);
+    border-color: var(--primary);
   }
-  .facts h3 {
-    margin: 0.35rem 0 0;
-  }
-  .stable,
-  .unstable {
-    padding: 0.3rem 0.5rem;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 800;
-  }
-  .stable {
-    color: var(--success);
-    background: #4ade8014;
-  }
-  .unstable {
-    color: var(--warning);
-    background: #fbbf2414;
-  }
-  .stability-note {
-    padding: 0.8rem 0;
-    font-size: 0.78rem;
-  }
-  .complexity {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.45rem;
-  }
-  .complexity div {
+  .config-form {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.55rem;
+    gap: 1rem;
+    align-items: flex-end;
+  }
+  .inputs {
+    display: flex;
+    gap: 1rem;
+  }
+  .inputs label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .inputs input {
+    background: var(--background);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 0.5rem 0.8rem;
+    border-radius: 6px;
+    width: 200px;
+  }
+  .inputs input:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+  .apply-btn {
+    background: var(--primary);
+    color: var(--background);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .error {
+    position: absolute;
+    bottom: -1.2rem;
+    right: 1.5rem;
+    color: var(--danger);
+    font-size: 0.85rem;
+  }
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: auto;
+  }
+  .nudge {
+    color: var(--warning);
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: auto;
+  }
+  .panel {
+    background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 9px;
+    border-radius: 12px;
   }
-  .complexity code {
-    color: var(--primary);
+  .control-panel {
+    padding: 1rem;
   }
-  @media (max-width: 900px) {
-    .setup,
-    .arena-grid {
-      grid-template-columns: 1fr;
-    }
+  .completion-banner {
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.05) 100%);
+    border-color: rgba(16,185,129,0.2);
+    color: #10b981;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
   }
-  @media (max-width: 600px) {
-    .lesson-head {
-      align-items: start;
-      flex-direction: column;
-    }
-    .algorithm-tabs {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-    }
-    .input-row {
-      flex-direction: column;
-    }
-    .array {
-      justify-content: start;
-      overflow-x: auto;
-      padding: 0.75rem 0;
-    }
-    .cell {
-      flex-basis: 54px;
-      min-width: 54px;
-    }
-    .metrics {
-      grid-template-columns: repeat(2, 1fr);
-    }
+  .code-panel {
+    flex: 1;
+    min-height: 250px;
+  }
+  .evidence-panel {
+    min-height: 200px;
+  }
+  .ai-panel {
+    min-height: 300px;
   }
 </style>

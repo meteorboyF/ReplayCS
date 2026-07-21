@@ -19,5 +19,5 @@ test('shows a grounded deterministic mentor fallback without an API key', async 
     JSON.parse(localStorage.getItem('replaycs-progress') ?? '{}')
   );
   expect(progress.hintsUsed).toBe(1);
-  expect(progress.hintEvidence).toContain('binary-search');
+  expect(progress.hintEvidence).toContain('search:binary-search-iterative');
 });
