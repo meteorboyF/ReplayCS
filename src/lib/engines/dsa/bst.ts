@@ -720,18 +720,25 @@ function operationSource(config: ResolvedConfig): QuadSourceLine[] {
           '    if root is None: return Node(k)'
         ),
         quad(
-          'descend-check',
+          'descend-init',
           '  Node* cur = root; Node* parent = NULL;',
           '  Node* cur = root; Node* parent = nullptr;',
           '    Node cur = root, parent = null;',
           '    cur, parent = root, None'
         ),
         quad(
+          'descend-check',
+          '  while (cur) {',
+          '  while (cur) {',
+          '    while (cur != null) {',
+          '    while cur:'
+        ),
+        quad(
           'compare',
-          '  while (cur) { parent = cur;',
-          '  while (cur) { parent = cur;',
-          '    while (cur != null) { parent = cur;',
-          '    while cur: parent = cur'
+          '    parent = cur; if (k == cur->value) return root;',
+          '    parent = cur; if (k == cur->value) return root;',
+          '      parent = cur; if (k == cur.value) return root;',
+          '        parent = cur\n        if k == cur.value: return root'
         ),
         quad(
           'descend-child',

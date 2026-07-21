@@ -12,6 +12,29 @@
     onlanguage: (l: SupportedLanguage) => void;
   } = $props();
   const languages: SupportedLanguage[] = ['c', 'cpp', 'java', 'python'];
+  let sourceElement: HTMLElement | undefined;
+  let copyStatus = $state('Copy code');
+
+  $effect(() => {
+    language;
+    activeSemantic;
+    queueMicrotask(() =>
+      sourceElement
+        ?.querySelector('.active')
+        ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    );
+  });
+
+  async function copySource() {
+    const text = source[language].map((line) => line.text).join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      copyStatus = 'Copied';
+    } catch {
+      copyStatus = 'Copy unavailable';
+    }
+    setTimeout(() => (copyStatus = 'Copy code'), 1400);
+  }
 
   function moveLanguageFocus(event: KeyboardEvent, currentLanguage: SupportedLanguage) {
     let nextIndex: number;
@@ -55,8 +78,11 @@
         onkeydown={(event) => moveLanguageFocus(event, lang)}
         >{lang === 'cpp' ? 'C++' : lang.toUpperCase()}</button
       >{/each}
+    <button class="copy" type="button" onclick={copySource} aria-label="Copy source code"
+      >{copyStatus}</button
+    >
   </div>
-  <pre aria-label="Source code">{#each source[language] as line}<div
+  <pre aria-label="Source code" bind:this={sourceElement}>{#each source[language] as line}<div
         class:active={line.semanticOperationId === activeSemantic}><span>{line.number}</span><code
           >{line.text || ' '}</code
         ></div>{/each}</pre>
@@ -71,6 +97,7 @@
     border-bottom: 1px solid var(--border);
     display: flex;
     gap: 0.3rem;
+    overflow-x: auto;
   }
   .tabs button {
     padding: 0.4rem 0.6rem;
@@ -80,6 +107,10 @@
     color: var(--primary);
     background: color-mix(in srgb, var(--primary) 9%, transparent);
     border-color: var(--primary);
+  }
+  .tabs .copy {
+    margin-left: auto;
+    white-space: nowrap;
   }
   pre {
     margin: 0;

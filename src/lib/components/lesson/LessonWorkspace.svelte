@@ -167,7 +167,7 @@
   </div>
 </header>
 
-<div class="control-bar panel">
+<div class="control-bar panel" data-testid="lesson-operation-toolbar">
   {@render controls()}
 </div>
 
@@ -195,7 +195,7 @@
 </div>
 
 <div class="workspace" class:wide={tabWidth === 'wide'} data-tab={mobileTab}>
-  <div class="pane code" data-pane="code">
+  <div class="pane code" data-pane="code" data-testid="lesson-code-panel">
     <CodePane
       source={lesson.sourceByLanguage}
       {language}
@@ -204,15 +204,15 @@
     />
   </div>
 
-  <div class="pane visual" data-pane="visual">
+  <div class="pane visual" data-pane="visual" data-testid="lesson-visual-panel">
     {@render visual({ state: visibleState, language, semantic: step.semanticOperationId })}
   </div>
 
-  <div class="pane state" data-pane="state">
+  <div class="pane state" data-pane="state" data-testid="lesson-state-panel">
     <ExecutionEvidence {step} revealed={true} />
   </div>
 
-  <div class="pane complexity" data-pane="complexity">
+  <div class="pane complexity" data-pane="complexity" data-testid="lesson-complexity-panel">
     {#if step.complexityEvidence}<ComplexityWhy evidence={step.complexityEvidence} />{/if}
   </div>
 </div>
@@ -232,7 +232,7 @@
   {/if}
 </section>
 
-<div class="playbar panel">
+<div class="playbar panel" data-testid="lesson-playback-controls">
   <TraceControls
     {index}
     total={lesson.steps.length}
@@ -298,6 +298,8 @@
   .control-bar {
     margin: 0.9rem 0 0.4rem;
     padding: 0.7rem 0.8rem;
+    min-width: 0;
+    overflow-x: auto;
   }
   .op-context {
     margin: 0 0 0.7rem;
@@ -335,13 +337,19 @@
   }
   .workspace {
     display: grid;
-    grid-template-columns: minmax(300px, 1fr) minmax(360px, 1.6fr);
+    grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.4fr);
     grid-template-areas: 'code visual' 'state complexity';
     gap: 0.7rem;
     align-items: start;
+    min-width: 0;
+    min-height: 0;
   }
   .workspace.wide {
-    grid-template-columns: minmax(300px, 0.9fr) minmax(400px, 1.7fr);
+    grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.6fr);
+  }
+  .pane {
+    min-width: 0;
+    min-height: 0;
   }
   .pane.code {
     grid-area: code;
@@ -350,6 +358,8 @@
   .pane.visual {
     grid-area: visual;
     min-width: 0;
+    overflow: auto;
+    contain: layout paint;
   }
   .pane.state {
     grid-area: state;
@@ -397,6 +407,8 @@
     gap: 0.6rem;
     margin: 0.7rem 0;
     padding: 0.5rem 0.6rem;
+    min-width: 0;
+    overflow-x: auto;
   }
   .playbar :global(.controls) {
     flex: 1;
@@ -423,7 +435,7 @@
   }
   @media (max-width: 1000px) {
     .workspace {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       grid-template-areas: 'visual' 'code' 'state' 'complexity';
     }
   }
@@ -459,9 +471,7 @@
       display: block;
     }
     .playbar {
-      position: sticky;
-      bottom: 0;
-      z-index: 5;
+      position: static;
     }
   }
 </style>
