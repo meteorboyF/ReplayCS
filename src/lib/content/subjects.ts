@@ -60,6 +60,12 @@ export const subjects = {
         slug: 'search-lab',
         status: 'live',
         detail: 'Race linear, binary (loop and recursion), BST, and hash search on the same data.'
+      },
+      {
+        title: 'BST Lab',
+        slug: 'bst',
+        status: 'live',
+        detail: 'Search, insert, delete, traverse, and measure a binary search tree node by node.'
       }
     ]
   },

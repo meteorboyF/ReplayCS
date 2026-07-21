@@ -39,6 +39,7 @@ describe('adaptive recommendations', () => {
       'deque-lab',
       'hash-table-lab',
       'search-lab',
+      'bst-lab',
       'cpu-scheduling',
       'packet-journey'
     ]);
@@ -82,6 +83,7 @@ describe('adaptive recommendations', () => {
           'deque-lab',
           'hash-table-lab',
           'search-lab',
+          'bst-lab',
           'graph-explorer'
         ]
       }).href

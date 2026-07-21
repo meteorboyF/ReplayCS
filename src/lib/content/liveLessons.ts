@@ -164,6 +164,24 @@ const definitions: readonly LiveLessonDefinition[] = [
     }
   },
   {
+    completionId: 'bst-lab',
+    subject: 'dsa-1',
+    slug: 'bst',
+    completionXp: 40,
+    recovery: {
+      title: 'BST Lab Recovery',
+      href: '/lesson/dsa-1/bst',
+      reason: 'Replay the first descent, deletion, or traversal-order divergence.',
+      misconceptionTags: [
+        'bst-descent-direction',
+        'bst-delete-successor',
+        'traversal-order',
+        'bfs-vs-dfs-space',
+        'height-vs-depth'
+      ]
+    }
+  },
+  {
     completionId: 'graph-explorer',
     subject: 'dsa-2',
     slug: 'graph-explorer',
