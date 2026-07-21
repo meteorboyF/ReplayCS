@@ -202,6 +202,7 @@
       visual trace.
     </p>
     <a href="/challenges" data-testid="scenario-gallery-link">Open the Scenario Gallery →</a>
+    <a href="/study-recap" data-testid="study-recap-link">Build a Study Recap →</a>
   </section>
 
   <section class="panel language-usage" data-testid="language-usage">
@@ -393,6 +394,8 @@
     font-size: 0.82rem;
   }
   .arena-progress a {
+    display: inline-block;
+    margin-right: 1.1rem;
     color: var(--primary);
     font-size: 0.8rem;
   }
