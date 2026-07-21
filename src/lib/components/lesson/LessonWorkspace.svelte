@@ -66,7 +66,9 @@
     operationSummary: string;
     tabWidth?: 'default' | 'wide';
     controls: Snippet;
-    visual: Snippet<[Record<string, TraceValue>]>;
+    visual: Snippet<
+      [{ state: Record<string, TraceValue>; language: SupportedLanguage; semantic: string }]
+    >;
     aboutTitle?: string;
     about?: Snippet;
   } = $props();
@@ -380,7 +382,7 @@
   </div>
 
   <div class="pane visual" data-pane="visual">
-    {@render visual(visibleState)}
+    {@render visual({ state: visibleState, language, semantic: step.semanticOperationId })}
   </div>
 
   <div class="pane state" data-pane="state">

@@ -201,7 +201,7 @@
     </div>
   {/snippet}
 
-  {#snippet visual(state)}
+  {#snippet visual({ state })}
     <StackVisualizer {state} />
   {/snippet}
 
