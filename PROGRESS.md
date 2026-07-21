@@ -2,19 +2,20 @@
 
 ## Last updated
 
-- Date: 2026-07-21
-- Local time: 23:55 (+06)
+- Date: 2026-07-22
+- Local time: 00:15 (+06)
 - Updated by: Development session
 - Repository: https://github.com/meteorboyF/ReplayCS.git
 - Production: https://replaycs.vercel.app
-- Current branch: `refactor/scenario-gallery` (off merged main; Phase 0 branch `refactor/visualizer-first-rescue` merged via PR #19)
-- Current commit: branch `refactor/scenario-gallery` (Scenario Gallery work; see Git history)
-- Remote main commit: `22654b9` (merge of PR #19)
-- Latest production commit: `22654b9` — deployed to Vercel prod, alias `replaycs.vercel.app` → `replaycs-lc8ho0oo2-meteorboy-f.vercel.app`
+- Current branch: `refactor/remove-prediction-subsystem` (Tasks 9+10; off merged main `a04b9bd`)
+- Current commit: `6cd5a04` (dashboard alignment) on `refactor/remove-prediction-subsystem`
+- Remote main commit: `a04b9bd` (merge of PR #21, sorting code trace)
+- Latest production commit: `a04b9bd` — deployed to Vercel prod, alias `replaycs.vercel.app` → `replaycs-nrxzgi0ao-meteorboy-f.vercel.app`
+- Shipped & deployed so far: PR #19 (Phase 0 visualizer-first rescue), PR #20 (Scenario Gallery), PR #21 (sorting four-language code trace)
 - Worktree status: clean
-- CI status: GitHub Actions "Check, test, build, and browser smoke" PASSED on PR #19; local gate green
-- Production health: deployment Ready (Vercel); landing page serves the new build (title verified). Live per-route click-through NOT possible from this sandbox (production domain gates browser read/drive behind per-action approval; plain curl egress blocked). Behavior verified via CI browser smoke + local Playwright 31/31.
-- Open blockers: none for Phase 0 (published + deployed). Manual production click-through of all 15 routes remains for a human/interactive session.
+- CI status: all three merged PRs passed GitHub Actions; local gate green on the current branch
+- Production health: latest deployment Ready; landing + `/challenges` + `/lesson/dsa-1/sorting-arena` verified serving (title-level via in-app browser). Full click-through of all routes needs a human — the production domain gates the browser's read/screenshot/drive tools behind per-action approval and plain curl egress is blocked in this sandbox.
+- Open blockers: none. Remaining: publish Tasks 9+10 (in progress), then build /study-recap and Strings/Recursion labs.
 
 ## Current session objective
 
@@ -110,11 +111,27 @@ _None — session objective complete on branch._
 - REMAINING (nice-to-have): per-step ComplexityEvidence object (the arena already shows live
   comparisons/writes/swaps counters + the per-algorithm best/avg/worst/space cases).
 
-### Progress store still tracks prediction/mistake/boss evidence
+### Dead prediction/mentor architecture — REMOVED (branch `refactor/remove-prediction-subsystem`)
 
-- `src/lib/progress/store.ts` retains `awardPrediction`, `awardRecovery`, `recordMisconception`,
-  `recordHint`, boss challenges, and prediction-weighted `lessonMasteryScore`. These are unused by lessons
-  now but still power the Progress page. Clean up alongside the /challenges decision. Priority: low.
+- Deleted: `AiMentor.svelte`, `src/lib/lesson/mode.ts`, `PredictionCheckpoint.svelte`,
+  `MistakeReplay.svelte`, `src/lib/server/openai/{tutor,tutor.test,schemas}.ts`, and the API routes
+  `api/ai/{explain-step,hint,evaluate-prediction,generate-challenge,lesson-recap}`. Verified zero
+  remaining references first. KEPT `src/lib/server/openai/client.ts` (generic OpenAI client) for
+  `/study-recap` and the `/api/health` route (`aiConfigured`).
+
+### Progress dashboard — ALIGNED (branch `refactor/remove-prediction-subsystem`)
+
+- Replaced prediction-centric metrics (accuracy, streak, hearts, first-attempt accuracy, average
+  attempts, hints, misconceptions, badges) with completion-focused ones (traces completed, subjects
+  explored, languages viewed). Mastery map → "Topic progress" (completion-based). Kept language activity,
+  recent activity, recommended next lab, saved preferences, JSON export/reset.
+
+### RESIDUAL — progress store legacy prediction/boss fields (low priority)
+
+- `src/lib/progress/store.ts` still exports `awardPrediction`, `awardRecovery`, `recordMisconception`,
+  `recordHint`, `completeBossChallenge` and serializes `completedBossChallenges` — now unused by any UI
+  but still covered by `store.test.ts`. Safe to prune in a dedicated store-cleanup pass (would require
+  updating `store.test.ts` + the `Progress` type + `sanitizeProgress`). Not user-visible.
 
 ## Curriculum status
 
@@ -189,16 +206,16 @@ Summary`, `controls` snippet, `visual` snippet, optional `about`. Do NOT add gat
 git diff --check:   clean
 npm run check:      0 errors, 0 warnings (538 files)
 npm run lint:       clean (prettier --check)
-npx vitest run:     209 passed / 209 (21 files)  # +3 sortingSource.test.ts
+npx vitest run:     201 passed / 201 (20 files)  # -8 tutor.test.ts (removed with the mentor)
 npm run build:      success (@sveltejs/adapter-vercel)
-npx playwright test: 33 passed / 33  # +3 sorting-arena.spec.ts
+npx playwright test: 33 passed / 33
 ```
 
-- Date run: 2026-07-21
-- Commit tested: Sorting code-trace branch tip (`feat/sorting-code-trace`)
+- Date run: 2026-07-22
+- Commit tested: `refactor/remove-prediction-subsystem` tip (`6cd5a04`)
 - Failing tests: none
 - Pre-existing failures: none observed
-- Production tested: Phase 0 + Scenario Gallery deployed; Sorting code-trace deploy pending this merge
+- Production tested: Phase 0 + Scenario Gallery + sorting code trace deployed; Tasks 9+10 deploy pending this merge
 
 ## Git history for this session
 
