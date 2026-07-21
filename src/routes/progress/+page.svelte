@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
   import { recommendNext } from '$lib/progress/recommendations';
   import {
     createEmptyProgress,
@@ -120,11 +121,11 @@
   }
 </script>
 
-<section class="profile-head">
+<header class="profile-head">
   <div>
     <p class="eyebrow">Learner profile</p>
     <h1>Level {level} tracer</h1>
-    <p>Every trace you run makes invisible state visible.</p>
+    <p class="tagline">Every trace you run makes invisible state visible.</p>
   </div>
   <div
     class="level-ring"
@@ -133,6 +134,13 @@
   >
     <strong>{progress.xp}</strong><span>XP</span>
   </div>
+</header>
+
+<section class="panel next-up" aria-labelledby="next-up-title">
+  <span class="pill">{recommendation.label}</span>
+  <h2 id="next-up-title">{recommendation.title}</h2>
+  <p>{recommendation.reason}</p>
+  <a class="button primary" href={recommendation.href}>Continue learning →</a>
 </section>
 
 <div class="metrics">
@@ -153,55 +161,54 @@
   </article>
 </div>
 
-<div class="dashboard-grid">
-  <section class="panel recommendation">
-    <span class="pill">{recommendation.label}</span>
-    <h2>{recommendation.title}</h2>
-    <p>{recommendation.reason}</p>
-    <a class="button primary" href={recommendation.href}>Continue learning →</a>
-  </section>
-  <section class="panel preferences">
-    <p class="eyebrow">Your learning setup</p>
-    <dl>
-      <div>
-        <dt>Level</dt>
-        <dd>{progress.learnerLevel}</dd>
-      </div>
-      <div>
-        <dt>Primary language</dt>
-        <dd>
-          {progress.preferredLanguage === 'cpp' ? 'C++' : progress.preferredLanguage.toUpperCase()}
-        </dd>
-      </div>
-      <div>
-        <dt>Explanation</dt>
-        <dd>
-          {progress.explanationLanguage === 'bn' ? 'বাংলা' : 'English'} · {progress.explanationLevel}
-        </dd>
-      </div>
-      <div>
-        <dt>Daily quest</dt>
-        <dd>{progress.dailyGoalMinutes} minutes</dd>
-      </div>
-    </dl>
-    <a href="/onboarding">Edit preferences</a>
-  </section>
-</div>
+<section class="panel mastery">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Topic progress</p>
+      <h2>Subjects</h2>
+    </div>
+    <span>Completion-based</span>
+  </div>
+  {#each subjectMastery as subject}
+    {@const score = masteryFor(subject.prefixes)}
+    <div class="mastery-row">
+      <strong>{subject.label}</strong>
+      <ProgressBar value={score} label={`${subject.label} mastery`} />
+      <b>{score}%</b>
+    </div>
+  {/each}
+</section>
 
-<div class="dashboard-grid learning-history">
-  <section class="panel arena-progress">
+<div class="history-grid">
+  <section class="panel activity" data-testid="recent-activity">
     <div class="section-head">
       <div>
-        <p class="eyebrow">Scenario Gallery</p>
-        <h2>Jump into a trace</h2>
+        <p class="eyebrow">Learning history</p>
+        <h2>Recent activity</h2>
       </div>
+      {#if progress.recentActivity.length}<span
+          >Latest {Math.min(progress.recentActivity.length, 6)}</span
+        >{/if}
     </div>
-    <p>
-      Hand-picked executions — dynamic-array resizes, hash collisions, worst-case searches, Round
-      Robin scheduling, LEFT JOINs, and cold-cache packet journeys — each opening straight into its
-      visual trace.
-    </p>
-    <a href="/challenges" data-testid="scenario-gallery-link">Open the Scenario Gallery →</a>
+    {#if progress.recentActivity.length}
+      <ol>
+        {#each progress.recentActivity.slice(0, 6) as item}
+          <li>
+            <span class={`activity-mark ${item.type}`} aria-hidden="true"></span>
+            <div>
+              <strong>{activityLabel(item.type)}</strong>
+              <span>{lessonLabel(item.lessonId)}</span>
+            </div>
+            <div class="activity-meta">
+              <b>+{item.xp} XP</b>
+              <time datetime={item.at}>{activityTime(item.at)}</time>
+            </div>
+          </li>
+        {/each}
+      </ol>
+    {:else}
+      <p class="empty">No activity recorded yet. Completed traces will appear here.</p>
+    {/if}
   </section>
 
   <section class="panel language-usage" data-testid="language-usage">
@@ -232,62 +239,49 @@
   </section>
 </div>
 
-<section class="panel activity" data-testid="recent-activity">
-  <div class="section-head">
-    <div>
-      <p class="eyebrow">Learning history</p>
-      <h2>Recent activity</h2>
-    </div>
-    {#if progress.recentActivity.length}<span
-        >Latest {Math.min(progress.recentActivity.length, 6)}</span
-      >{/if}
-  </div>
-  {#if progress.recentActivity.length}
-    <ol>
-      {#each progress.recentActivity.slice(0, 6) as item}
-        <li>
-          <span class={`activity-mark ${item.type}`} aria-hidden="true"></span>
-          <div>
-            <strong>{activityLabel(item.type)}</strong>
-            <span>{lessonLabel(item.lessonId)}</span>
-          </div>
-          <div class="activity-meta">
-            <b>+{item.xp} XP</b>
-            <time datetime={item.at}>{activityTime(item.at)}</time>
-          </div>
-        </li>
-      {/each}
-    </ol>
-  {:else}
-    <p class="empty">No activity recorded yet. Completed traces will appear here.</p>
-  {/if}
-</section>
-
-<section class="panel mastery">
-  <div class="section-head">
-    <div>
-      <p class="eyebrow">Topic progress</p>
-      <h2>Subjects</h2>
-    </div>
-    <span>Completion-based</span>
-  </div>
-  {#each subjectMastery as subject}{@const score = masteryFor(subject.prefixes)}
-    <div class="mastery-row">
-      <strong>{subject.label}</strong>
-      <div class="bar"><span class={subject.accent} style={`width:${score}%`}></span></div>
-      <b>{score}%</b>
-    </div>{/each}
-</section>
-
-<section class="data-actions">
+<section class="panel jump-in">
   <div>
-    <h2>Your data stays here</h2>
-    <p>ReplayCS stores this profile in your browser. Export it anytime.</p>
+    <p class="eyebrow">Scenario Gallery</p>
+    <h2>Jump into a trace</h2>
+    <p>Hand-picked executions, each opening straight into its visual trace.</p>
   </div>
-  <button onclick={exportProgress}>Export JSON</button><button class="danger" onclick={reset}
-    >Reset progress</button
-  >
+  <a class="jump-link" href="/challenges" data-testid="scenario-gallery-link">Open the gallery →</a>
 </section>
+
+<details class="secondary panel">
+  <summary>Preferences &amp; data</summary>
+  <div class="secondary-body">
+    <dl class="preferences">
+      <div>
+        <dt>Level</dt>
+        <dd>{progress.learnerLevel}</dd>
+      </div>
+      <div>
+        <dt>Primary language</dt>
+        <dd>
+          {progress.preferredLanguage === 'cpp' ? 'C++' : progress.preferredLanguage.toUpperCase()}
+        </dd>
+      </div>
+      <div>
+        <dt>Explanation</dt>
+        <dd>
+          {progress.explanationLanguage === 'bn' ? 'বাংলা' : 'English'} · {progress.explanationLevel}
+        </dd>
+      </div>
+      <div>
+        <dt>Daily quest</dt>
+        <dd>{progress.dailyGoalMinutes} minutes</dd>
+      </div>
+    </dl>
+    <div class="secondary-actions">
+      <a href="/onboarding">Edit preferences</a>
+      <span class="grow"></span>
+      <button onclick={exportProgress}>Export JSON</button>
+      <button class="danger" onclick={reset}>Reset progress</button>
+    </div>
+    <p class="data-note">ReplayCS stores this profile in your browser only. Export it anytime.</p>
+  </div>
+</details>
 {#if resetMessage}<p role="status" class="reset-message">{resetMessage}</p>{/if}
 
 <style>
@@ -296,38 +290,64 @@
     align-items: center;
     justify-content: space-between;
     gap: 2rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.25rem;
   }
   .profile-head h1 {
-    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-size: clamp(2rem, 4vw, 3rem);
     margin: 0.3rem 0;
   }
-  .profile-head p {
+  .profile-head .tagline {
     color: var(--muted);
+    margin: 0;
   }
   .level-ring {
     --level-progress: 0%;
-    width: 120px;
+    width: 104px;
     aspect-ratio: 1;
     border-radius: 50%;
     display: grid;
     place-content: center;
     text-align: center;
+    flex: none;
     background:
       radial-gradient(circle, var(--bg) 58%, transparent 60%),
       conic-gradient(var(--primary) var(--level-progress), var(--border) 0);
   }
   .level-ring strong {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
   .level-ring span {
     font-size: 0.65rem;
     color: var(--muted);
   }
+
+  /* promoted primary action */
+  .next-up {
+    padding: 1.5rem;
+    display: grid;
+    justify-items: start;
+    gap: 0.55rem;
+    background: linear-gradient(135deg, #2dd4bf1f, #8b5cf610);
+    border-color: color-mix(in oklab, var(--primary) 40%, var(--border));
+  }
+  .next-up h2 {
+    margin: 0;
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+  }
+  .next-up p {
+    color: var(--muted);
+    margin: 0;
+    max-width: 560px;
+  }
+  .next-up .button.primary {
+    margin-top: 0.4rem;
+  }
+
   .metrics {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 0.8rem;
+    margin-top: 0.8rem;
   }
   .metric {
     padding: 1rem;
@@ -343,64 +363,56 @@
   .metric b {
     font-size: 1.65rem;
     color: var(--primary);
+    font-variant-numeric: tabular-nums;
   }
-  .dashboard-grid {
-    display: grid;
-    grid-template-columns: 1.25fr 0.75fr;
-    gap: 0.8rem;
+
+  .mastery,
+  .activity,
+  .language-usage,
+  .jump-in {
+    padding: 1.25rem;
     margin-top: 0.8rem;
   }
-  .dashboard-grid > section,
-  .mastery {
-    padding: 1.25rem;
-  }
-  .recommendation {
-    background: linear-gradient(135deg, #2dd4bf18, #8b5cf610);
-  }
-  .recommendation p {
-    color: var(--muted);
-    max-width: 520px;
-  }
-  .preferences dl {
-    margin: 0.7rem 0;
-  }
-  .preferences dl div {
+  .section-head {
     display: flex;
     justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-    padding: 0.45rem 0;
+    align-items: center;
   }
-  .preferences dt {
+  .section-head h2 {
+    margin: 0.2rem 0;
+    font-size: 1.15rem;
+  }
+  .section-head > span {
     color: var(--muted);
+    font-size: 0.7rem;
   }
-  .preferences dd {
-    margin: 0;
+
+  .mastery-row {
+    display: grid;
+    grid-template-columns: 150px 1fr 45px;
+    gap: 1rem;
+    align-items: center;
+    margin: 0.85rem 0;
   }
-  .preferences a {
-    color: var(--primary);
-    font-size: 0.8rem;
+  .mastery-row b {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
   }
-  .learning-history {
-    grid-template-columns: 0.9fr 1.1fr;
+
+  .history-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 0.8rem;
   }
-  .arena-progress,
-  .language-usage,
-  .activity {
-    padding: 1.25rem;
+  .history-grid > section {
+    margin-top: 0.8rem;
   }
-  .arena-progress p {
-    color: var(--muted);
-    font-size: 0.82rem;
-  }
-  .arena-progress a {
-    color: var(--primary);
-    font-size: 0.8rem;
-  }
+
   .language-bar {
     height: 9px;
     overflow: hidden;
     border-radius: 99px;
-    background: var(--border);
+    background: var(--raised);
   }
   .language-bar span {
     display: block;
@@ -427,9 +439,6 @@
   }
   .language-usage li b {
     text-align: right;
-  }
-  .activity {
-    margin-top: 0.8rem;
   }
   .activity li {
     display: grid;
@@ -475,85 +484,98 @@
     color: var(--success);
     font-size: 0.75rem;
   }
-  .mastery {
-    margin-top: 0.8rem;
+
+  .jump-in {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
   }
-  .section-head {
+  .jump-in h2 {
+    margin: 0.15rem 0;
+    font-size: 1.15rem;
+  }
+  .jump-in p {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin: 0;
+    max-width: 46ch;
+  }
+  .jump-link {
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* deferred settings */
+  .secondary {
+    margin-top: 0.8rem;
+    padding: 0.4rem 1.25rem;
+  }
+  .secondary summary {
+    cursor: pointer;
+    padding: 0.85rem 0;
+    font-weight: 600;
+    color: var(--text);
+    list-style: revert;
+  }
+  .secondary summary:hover {
+    color: var(--primary);
+  }
+  .secondary-body {
+    padding-bottom: 1rem;
+  }
+  .preferences {
+    margin: 0.2rem 0 1rem;
+  }
+  .preferences div {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding: 0.45rem 0;
   }
-  .section-head h2 {
-    margin: 0.2rem 0;
-  }
-  .section-head > span {
-    color: var(--muted);
-    font-size: 0.7rem;
-  }
-  .mastery-row {
-    display: grid;
-    grid-template-columns: 150px 1fr 45px;
-    gap: 1rem;
-    align-items: center;
-    margin: 0.8rem 0;
-  }
-  .bar {
-    height: 9px;
-    border-radius: 99px;
-    background: var(--border);
-    overflow: hidden;
-  }
-  .bar span {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-  }
-  .cyan {
-    background: var(--primary);
-  }
-  .violet {
-    background: var(--secondary);
-  }
-  .amber {
-    background: var(--warning);
-  }
-  .green {
-    background: var(--success);
-  }
-  .blue {
-    background: var(--accent);
-  }
-  .empty {
+  .preferences dt {
     color: var(--muted);
   }
-  .data-actions {
+  .preferences dd {
+    margin: 0;
+  }
+  .secondary-actions {
     display: flex;
     align-items: center;
     gap: 0.7rem;
-    margin-top: 1.5rem;
+    flex-wrap: wrap;
   }
-  .data-actions div {
-    margin-right: auto;
+  .secondary-actions .grow {
+    flex: 1;
   }
-  .data-actions h2 {
-    font-size: 1rem;
-    margin: 0;
-  }
-  .data-actions p {
-    color: var(--muted);
-    font-size: 0.8rem;
+  .secondary-actions a {
+    color: var(--primary);
+    font-size: 0.82rem;
   }
   .danger {
     color: var(--danger);
   }
+  .data-note {
+    color: var(--muted);
+    font-size: 0.75rem;
+    margin: 0.8rem 0 0;
+  }
+
+  .empty {
+    color: var(--muted);
+  }
   .reset-message {
     color: var(--success);
+    margin-top: 0.8rem;
   }
+
   @media (max-width: 850px) {
     .metrics {
       grid-template-columns: 1fr 1fr;
     }
-    .dashboard-grid {
+    .history-grid {
       grid-template-columns: 1fr;
     }
   }
@@ -563,24 +585,17 @@
     }
     .level-ring {
       width: 85px;
-      flex: none;
     }
     .metrics {
-      grid-template-columns: 1fr;
-    }
-    .evidence-grid {
       grid-template-columns: 1fr;
     }
     .mastery-row {
       grid-template-columns: 100px 1fr 36px;
       gap: 0.5rem;
     }
-    .data-actions {
-      align-items: stretch;
+    .jump-in {
       flex-direction: column;
-    }
-    .data-actions div {
-      margin-right: 0;
+      align-items: flex-start;
     }
     .activity li {
       grid-template-columns: auto 1fr;
