@@ -1,46 +1,24 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import AiMentor from '$lib/components/ai/AiMentor.svelte';
   import QueryTable from '$lib/components/dbms/QueryTable.svelte';
   import TraceControls from '$lib/components/trace/TraceControls.svelte';
   import {
     QUERY_SCENARIOS,
     createQueryScenario,
-    evaluateClausePrediction,
-    type ClausePredictionResult,
-    type QueryRow,
     type QueryScenarioId
   } from '$lib/engines/dbms/queryPipeline';
-  import {
-    awardPrediction,
-    awardRecovery,
-    completeLesson,
-    loadProgress,
-    recordHint,
-    recordMisconception,
-    saveProgress
-  } from '$lib/progress/store';
-  import type { StepContext } from '$lib/server/openai/schemas';
-  import type { TraceValue } from '$lib/trace/types';
+  import { completeLesson, loadProgress, saveProgress } from '$lib/progress/store';
 
   let scenario = $state(createQueryScenario('active-department-payroll'));
   let index = $state(0);
   let playing = $state(false);
   let progress = $state(loadProgress());
-  let predictionResult = $state<ClausePredictionResult | null>(null);
-  let checkpointNudge = $state(false);
-  let replayOpen = $state(false);
   let scenarioFinished = $state(false);
-  let recoveryAnswer = $state('');
-  let recoveryFeedback = $state('');
-  let recovered = $state(false);
   let timer: ReturnType<typeof setInterval> | undefined;
 
   let currentStage = $derived(scenario.stages[index]);
   let finalStage = $derived(scenario.stages.at(-1)!);
-  let lessonId = $derived(`dbms-query-pipeline:${scenario.id}`);
   let rowsDelta = $derived(currentStage.rows.length - currentStage.rowsBefore.length);
-  let checkpointLocked = $derived(!predictionResult && index >= scenario.predictionAfterStage);
   let labComplete = $derived(progress.completed.includes('query-pipeline'));
 
   onMount(() => {
@@ -69,39 +47,12 @@
     stopPlayback();
     scenario = createQueryScenario(nextId);
     index = 0;
-    predictionResult = null;
-    checkpointNudge = false;
-    replayOpen = false;
-    recoveryAnswer = '';
-    recoveryFeedback = '';
-    recovered = false;
     scenarioFinished = false;
     if (updateUrl) syncUrl();
   }
 
   function jump(nextIndex: number, updateUrl = true) {
-    const clamped = Math.max(0, Math.min(nextIndex, scenario.stages.length - 1));
-    if (!predictionResult && clamped > scenario.predictionAfterStage) {
-      index = scenario.predictionAfterStage;
-      checkpointNudge = true;
-      stopPlayback();
-      if (updateUrl) syncUrl();
-      return;
-    }
-    if (
-      predictionResult &&
-      !predictionResult.correct &&
-      !recovered &&
-      clamped > scenario.predictionAfterStage + 1
-    ) {
-      index = scenario.predictionAfterStage + 1;
-      recoveryFeedback = 'Complete the recovery challenge before revealing the final relation.';
-      stopPlayback();
-      if (updateUrl) syncUrl();
-      return;
-    }
-    index = clamped;
-    checkpointNudge = false;
+    index = Math.max(0, Math.min(nextIndex, scenario.stages.length - 1));
     if (index === scenario.stages.length - 1) {
       stopPlayback();
       scenarioFinished = true;
@@ -114,12 +65,6 @@
   function restart() {
     stopPlayback();
     index = 0;
-    predictionResult = null;
-    checkpointNudge = false;
-    replayOpen = false;
-    recoveryAnswer = '';
-    recoveryFeedback = '';
-    recovered = false;
     scenarioFinished = false;
     syncUrl();
   }
@@ -136,114 +81,6 @@
       else jump(index + 1);
     }, 1150);
   }
-
-  function answerPrediction(answer: string) {
-    if (predictionResult) return;
-    predictionResult = evaluateClausePrediction(answer);
-    checkpointNudge = false;
-    const evidenceId = 'query-pipeline:where-vs-having';
-    if (predictionResult.correct) {
-      progress = awardPrediction(
-        progress,
-        'query-pipeline:where-vs-having',
-        scenario.prediction.xpReward
-      );
-    } else {
-      progress = recordMisconception(progress, evidenceId, 'where-vs-having');
-      replayOpen = true;
-    }
-    saveProgress(progress);
-  }
-
-  function recordMentorHint() {
-    progress = recordHint(progress, 'query-pipeline');
-    saveProgress(progress);
-  }
-
-  function checkRecovery(answer: string) {
-    recoveryAnswer = answer;
-    if (answer !== 'HAVING') {
-      recoveryFeedback = 'That clause still runs before grouping. Follow the COUNT value forward.';
-      return;
-    }
-    recovered = true;
-    recoveryFeedback = 'Recovered · +6 XP. Aggregate filters run in HAVING.';
-    progress = awardRecovery(progress, 'query-pipeline:where-vs-having');
-    saveProgress(progress);
-  }
-
-  function traceRows(rows: QueryRow[]): TraceValue[] {
-    return rows.map((row) =>
-      Object.fromEntries(Object.entries(row).map(([key, value]) => [key, value]))
-    );
-  }
-
-  function activeSqlLines() {
-    const lines = scenario.sql.split('\n');
-    const operation = currentStage.operation;
-    if (operation === 'SELECT') return lines.slice(0, 4);
-    const token = operation === 'JOIN' ? 'JOIN' : operation;
-    const match = lines.findIndex((line) => line.includes(token));
-    if (match < 0) return [];
-    return operation === 'JOIN' ? lines.slice(match, match + 2) : [lines[match]];
-  }
-
-  function visibleSql() {
-    if (predictionResult) return scenario.sql;
-    return scenario.sql
-      .split('\n')
-      .map((line) =>
-        line.trimStart().startsWith('HAVING')
-          ? `${line.match(/^\s*/)?.[0] ?? ''}/* Predict the aggregate-filter clause */`
-          : line
-      )
-      .join('\n');
-  }
-
-  function visibleOperation(operation: string) {
-    return operation === 'HAVING' && !predictionResult ? 'PREDICT' : operation;
-  }
-
-  function mentorContext(): StepContext {
-    const relatedMistake = predictionResult && !predictionResult.correct;
-    return {
-      subject: 'dbms',
-      lesson: lessonId,
-      learningObjective: scenario.goal,
-      activeSourceLines: activeSqlLines(),
-      stateBefore: {
-        operation: currentStage.operation,
-        rowCount: currentStage.rowsBefore.length,
-        rows: traceRows(currentStage.rowsBefore)
-      },
-      mutation: [
-        {
-          operation: currentStage.operation,
-          previousRowCount: currentStage.rowsBefore.length,
-          nextRowCount: currentStage.rows.length
-        }
-      ],
-      stateAfter: {
-        operation: currentStage.operation,
-        rowCount: currentStage.rows.length,
-        rows: traceRows(currentStage.rows)
-      },
-      deterministicExplanation: `${currentStage.description} ${currentStage.teachingPoint}`,
-      learnerLevel: progress.learnerLevel,
-      misconceptionTags: relatedMistake ? ['where-vs-having'] : [],
-      interaction: 'explain',
-      explanationLevel: progress.explanationLevel,
-      explanationLanguage: progress.explanationLanguage,
-      currentPrediction:
-        index >= scenario.predictionAfterStage
-          ? {
-              prompt: scenario.prediction.prompt,
-              learnerAnswer: predictionResult?.answer,
-              correctAnswer: scenario.prediction.correctAnswer
-            }
-          : undefined
-    };
-  }
 </script>
 
 <svelte:head>
@@ -259,7 +96,7 @@
     <a class="back" href="/learn/dbms">← DBMS</a>
     <span class="eyebrow">Flagship logical execution lab</span>
     <h1>SQL Query <span class="gradient">Pipeline</span></h1>
-    <p>Predict, inspect, and replay every relation—without sending arbitrary SQL anywhere.</p>
+    <p>Inspect and replay every relation—without sending arbitrary SQL anywhere.</p>
   </div>
   <div class="score" aria-label="Learner score">
     <span>⚡ {progress.xp} XP</span><span>♥ {progress.hearts}</span>
@@ -296,7 +133,7 @@
       </div>
       <span class="safe-badge">Deterministic</span>
     </div>
-    <pre><code>{visibleSql()}</code></pre>
+    <pre><code>{scenario.sql}</code></pre>
     <p>
       ReplayCS evaluates a fixed in-memory dataset. This lab does not execute user-provided SQL.
     </p>
@@ -310,7 +147,7 @@
       <p>The clause-by-clause result defined by SQL semantics.</p>
       <div class="mini-pipeline" aria-label="Logical SQL processing order">
         {#each scenario.stages as stage}
-          <span>{visibleOperation(stage.operation)}</span>
+          <span>{stage.operation}</span>
         {/each}
       </div>
     </div>
@@ -359,7 +196,7 @@
       class:done={stageIndex < index}
       onclick={() => jump(stageIndex)}
     >
-      <span>{stageIndex + 1}</span>{visibleOperation(item.operation)}
+      <span>{stageIndex + 1}</span>{item.operation}
     </button>
     {#if stageIndex < scenario.stages.length - 1}<i aria-hidden="true">→</i>{/if}
   {/each}
@@ -427,158 +264,25 @@
   />
 </section>
 
-{#if index >= scenario.predictionAfterStage && index <= scenario.predictionAfterStage + 1}
-  <section
-    class:nudge={checkpointNudge}
-    class="checkpoint panel"
-    aria-labelledby="prediction-heading"
-  >
-    <div class="checkpoint-copy">
-      <span class="eyebrow">Prediction checkpoint · {scenario.prediction.xpReward} XP</span>
-      <h2 id="prediction-heading">WHERE or HAVING?</h2>
-      <p>{scenario.prediction.prompt}</p>
-      {#if checkpointNudge}<p class="nudge-copy" role="status">
-          Lock a prediction before revealing the aggregate filter.
-        </p>{/if}
+<section class="final-result panel" aria-labelledby="final-heading">
+  <div class="final-head">
+    <div>
+      <span class="eyebrow">Final deterministic relation</span>
+      <h2 id="final-heading">Query result</h2>
     </div>
-    <div class="prediction-options" role="group" aria-label="Choose a SQL clause">
-      {#each scenario.prediction.options as option}
-        <button
-          type="button"
-          disabled={predictionResult !== null}
-          class:chosen={predictionResult?.answer === option.value}
-          class:correct={predictionResult && option.value === scenario.prediction.correctAnswer}
-          class:wrong={predictionResult?.answer === option.value && !predictionResult.correct}
-          onclick={() => answerPrediction(option.value)}
-        >
-          <strong>{option.label}</strong><span>{option.description}</span>
-        </button>
-      {/each}
-    </div>
-    {#if predictionResult}
-      <p
-        class:correct-feedback={predictionResult.correct}
-        class="prediction-feedback"
-        role="status"
-      >
-        <strong
-          >{predictionResult.correct ? 'Correct prediction.' : 'First divergence found.'}</strong
-        >
-        {predictionResult.feedback}
-      </p>
-    {/if}
-  </section>
-{/if}
-
-{#if predictionResult && !predictionResult.correct}
-  <section class="mistake-replay panel" aria-labelledby="mistake-heading">
-    <div class="replay-title">
-      <span class="replay-icon">↺</span>
-      <div>
-        <span class="eyebrow">Replay My Mistake</span>
-        <h2 id="mistake-heading">Find the first clause divergence</h2>
-      </div>
-    </div>
-    <div class="clause-compare">
-      <div class="predicted-clause">
-        <small>Your predicted pipeline</small><strong>{predictionResult.answer}</strong><code
-          >{predictionResult.answer} COUNT(employee_id) &gt;= 2</code
-        ><span>Runs before aggregate groups exist</span>
-      </div>
-      <div class="actual-clause">
-        <small>Deterministic SQL semantics</small><strong>HAVING</strong><code
-          >HAVING COUNT(employee_id) &gt;= 2</code
-        ><span>Runs after GROUP BY creates COUNT</span>
-      </div>
-    </div>
-    <div class="divergence-note">
-      <strong>First divergence · where-vs-having</strong>
-      <p>{scenario.prediction.explanation}</p>
-    </div>
-    <button type="button" onclick={() => (replayOpen = !replayOpen)}
-      >{replayOpen ? 'Hide correct transition' : 'Replay correct transition'}</button
-    >
-    {#if replayOpen}
-      <div class="correct-transition" aria-live="polite">
-        <div>
-          <span>GROUP BY output</span><strong
-            >{scenario.stages[scenario.predictionAfterStage].rows.length} department groups</strong
-          >
-        </div>
-        <span aria-hidden="true">HAVING COUNT ≥ 2 →</span>
-        <div>
-          <span>Qualified output</span><strong
-            >{scenario.stages[scenario.predictionAfterStage + 1].rows.length} groups remain</strong
-          >
-        </div>
-      </div>
-    {/if}
-    <div class="recovery">
-      <div>
-        <span class="eyebrow">Recovery challenge · 6 XP</span>
-        <p>{scenario.prediction.recoveryPrompt}</p>
-      </div>
-      <div class="recovery-actions" role="group" aria-label="Recovery clause">
-        <button type="button" disabled={recovered} onclick={() => checkRecovery('WHERE')}
-          >WHERE</button
-        ><button
-          class="primary"
-          type="button"
-          disabled={recovered}
-          onclick={() => checkRecovery('HAVING')}>HAVING</button
-        >
-      </div>
-      {#if recoveryFeedback}<p class:recovered class="recovery-feedback" role="status">
-          {recoveryFeedback}
-        </p>{/if}
-    </div>
-  </section>
-{/if}
-
-<div class="finish-grid">
-  <section class="final-result panel" aria-labelledby="final-heading">
-    <div class="final-head">
-      <div>
-        <span class="eyebrow">Final deterministic relation</span>
-        <h2 id="final-heading">Query result</h2>
-      </div>
-      <span class="result-count">
-        {predictionResult
-          ? `${finalStage.rows.length} row${finalStage.rows.length === 1 ? '' : 's'}`
-          : 'Locked'}
-      </span>
-    </div>
-    {#if predictionResult}
-      <QueryTable rows={finalStage.rows} caption={`Final result for ${scenario.title}`} />
-    {:else}
-      <div class="locked-result" role="note">
-        <strong>Prediction first</strong>
-        <p>Commit to WHERE or HAVING before ReplayCS reveals the final relation.</p>
-      </div>
-    {/if}
-    {#if scenarioFinished}<p class="complete-message" role="status">
-        ✓ Scenario complete. Progress saved locally.
-      </p>{:else}<p class="finish-hint">
-        {labComplete
-          ? 'Reach LIMIT to complete this scenario. Lab completion XP is awarded once.'
-          : 'Reach LIMIT to complete this scenario and earn 25 XP.'}
-      </p>{/if}
-  </section>
-
-  <aside class="mentor panel">
-    {#if checkpointLocked}
-      <div class="mentor-locked" role="note">
-        <strong>Mentor locked for this checkpoint</strong>
-        <p>Choose WHERE or HAVING first so the explanation cannot reveal your prediction.</p>
-      </div>
-    {:else}
-      {#key `${scenario.id}:${currentStage.id}`}<AiMentor
-          context={mentorContext()}
-          onhint={recordMentorHint}
-        />{/key}
-    {/if}
-  </aside>
-</div>
+    <span class="result-count">
+      {finalStage.rows.length} row{finalStage.rows.length === 1 ? '' : 's'}
+    </span>
+  </div>
+  <QueryTable rows={finalStage.rows} caption={`Final result for ${scenario.title}`} />
+  {#if scenarioFinished}<p class="complete-message" role="status">
+      ✓ Scenario complete. Progress saved locally.
+    </p>{:else}<p class="finish-hint">
+      {labComplete
+        ? 'Reach LIMIT to complete this scenario. Lab completion XP is awarded once.'
+        : 'Reach LIMIT to complete this scenario and earn 25 XP.'}
+    </p>{/if}
+</section>
 
 <style>
   .lesson-head {
@@ -677,8 +381,7 @@
   .final-head,
   .trace-head,
   .table-heading,
-  .relation-heading,
-  .replay-title {
+  .relation-heading {
     display: flex;
     justify-content: space-between;
     align-items: start;
@@ -937,199 +640,10 @@
     border-radius: 12px;
     background: #07111f99;
   }
-  .checkpoint,
-  .mistake-replay {
-    margin-top: 1rem;
-    padding: 1rem;
-  }
-  .checkpoint {
-    display: grid;
-    grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.28fr);
-    gap: 1rem;
-    border-color: #fbbf2455;
-  }
-  .checkpoint.nudge {
-    box-shadow: 0 0 0 3px #fbbf2425;
-  }
-  .checkpoint-copy h2,
-  .mistake-replay h2 {
-    margin: 0.35rem 0;
-    font-size: 1.25rem;
-  }
-  .checkpoint-copy > p {
-    margin: 0.3rem 0;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-  .checkpoint-copy .nudge-copy {
-    color: var(--warning);
-    font-weight: 700;
-  }
-  .prediction-options {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-  }
-  .prediction-options button {
-    display: grid;
-    align-content: start;
-    gap: 0.35rem;
-    min-height: 105px;
-    text-align: left;
-  }
-  .prediction-options button strong {
-    color: var(--warning);
-    font: 800 0.9rem var(--mono);
-  }
-  .prediction-options button span {
-    color: var(--muted);
-    font-size: 0.68rem;
-    line-height: 1.4;
-  }
-  .prediction-options button.correct {
-    border-color: var(--success);
-    background: #4ade8010;
-  }
-  .prediction-options button.wrong {
-    border-color: var(--danger);
-    background: #fb718510;
-  }
-  .prediction-feedback {
-    grid-column: 1/-1;
-    margin: 0;
-    padding: 0.7rem;
-    border-radius: 9px;
-    background: #fb718510;
-    color: var(--danger);
-    font-size: 0.78rem;
-  }
-  .prediction-feedback strong {
-    margin-right: 0.25rem;
-  }
-  .prediction-feedback.correct-feedback {
-    color: var(--success);
-    background: #4ade8010;
-  }
-  .mistake-replay {
-    border-color: #fb718566;
-    background: linear-gradient(145deg, #28182a, #151d2e);
-  }
-  .replay-title {
-    justify-content: flex-start;
-    align-items: center;
-  }
-  .replay-icon {
-    display: grid;
-    width: 38px;
-    height: 38px;
-    place-items: center;
-    border-radius: 50%;
-    background: #fb71851a;
-    color: var(--danger);
-    font-size: 1.25rem;
-  }
-  .clause-compare {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.65rem;
-    margin: 0.8rem 0;
-  }
-  .clause-compare > div {
-    display: grid;
-    gap: 0.4rem;
-    padding: 0.8rem;
-    border: 1px solid var(--border);
-    border-radius: 11px;
-  }
-  .clause-compare small,
-  .clause-compare span {
-    color: var(--muted);
-    font-size: 0.68rem;
-  }
-  .clause-compare code {
-    overflow: auto;
-    padding: 0.5rem;
-    border-radius: 7px;
-    background: #07111f;
-    font-size: 0.7rem;
-  }
-  .predicted-clause {
-    border-color: #fb718566 !important;
-  }
-  .predicted-clause strong {
-    color: var(--danger);
-  }
-  .actual-clause {
-    border-color: #4ade8066 !important;
-  }
-  .actual-clause strong {
-    color: var(--success);
-  }
-  .divergence-note {
-    margin: 0.75rem 0;
-  }
-  .divergence-note strong {
-    color: var(--warning);
-    font: 700 0.72rem var(--mono);
-  }
-  .divergence-note p {
-    margin: 0.35rem 0;
-    color: var(--muted);
-    font-size: 0.78rem;
-  }
-  .correct-transition {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 0.6rem;
-    align-items: center;
-    margin: 0.7rem 0;
-  }
-  .correct-transition > div {
-    display: grid;
-    gap: 0.25rem;
-    padding: 0.65rem;
-    border: 1px solid var(--border);
-    border-radius: 9px;
-  }
-  .correct-transition > div span,
-  .correct-transition > span {
-    color: var(--muted);
-    font-size: 0.68rem;
-  }
-  .recovery {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 0.7rem;
-    align-items: center;
-    margin-top: 0.9rem;
-    padding-top: 0.9rem;
-    border-top: 1px solid var(--border);
-  }
-  .recovery p {
-    margin: 0.25rem 0 0;
-    font-size: 0.76rem;
-  }
-  .recovery-actions {
-    display: flex;
-    gap: 0.4rem;
-  }
-  .recovery-feedback {
-    grid-column: 1/-1;
-    color: var(--danger);
-  }
-  .recovery-feedback.recovered {
-    color: var(--success);
-  }
-  .finish-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-  .final-result,
-  .mentor {
+  .final-result {
     min-width: 0;
     padding: 1rem;
+    margin-top: 1rem;
   }
   .result-count {
     color: var(--warning);
@@ -1143,40 +657,9 @@
   .complete-message {
     color: var(--success);
   }
-  .locked-result,
-  .mentor-locked {
-    display: grid;
-    gap: 0.35rem;
-    min-height: 9rem;
-    place-content: center;
-    margin-top: 0.7rem;
-    padding: 1rem;
-    border: 1px dashed #fbbf2466;
-    border-radius: 11px;
-    background: #fbbf2408;
-    text-align: center;
-  }
-  .locked-result strong,
-  .mentor-locked strong {
-    color: var(--warning);
-  }
-  .locked-result p,
-  .mentor-locked p {
-    max-width: 44ch;
-    margin: 0;
-    color: var(--muted);
-    font-size: 0.78rem;
-    line-height: 1.5;
-  }
-  .mentor :global(.mentor) {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: 0;
-  }
   @media (max-width: 960px) {
     .scenario-picker,
-    .query-overview,
-    .finish-grid {
+    .query-overview {
       grid-template-columns: 1fr;
     }
     .source-grid {
@@ -1196,27 +679,8 @@
     .score {
       flex-direction: column;
     }
-    .scenario-tabs,
-    .prediction-options,
-    .checkpoint,
-    .clause-compare {
+    .scenario-tabs {
       grid-template-columns: 1fr;
-    }
-    .checkpoint {
-      gap: 0.6rem;
-    }
-    .prediction-feedback {
-      grid-column: auto;
-    }
-    .correct-transition,
-    .recovery {
-      grid-template-columns: 1fr;
-    }
-    .correct-transition > span {
-      text-align: center;
-    }
-    .recovery-feedback {
-      grid-column: auto;
     }
     .trace-head {
       align-items: start;
