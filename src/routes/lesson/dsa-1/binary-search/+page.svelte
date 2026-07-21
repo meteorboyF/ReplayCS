@@ -4,21 +4,13 @@
   import CodePane from '$lib/components/code/CodePane.svelte';
   import ArrayVisualizer from '$lib/components/visualizers/ArrayVisualizer.svelte';
   import TraceControls from '$lib/components/trace/TraceControls.svelte';
-  import PredictionCheckpoint from '$lib/components/trace/PredictionCheckpoint.svelte';
-  import MistakeReplay, { type MistakeAttempt } from '$lib/components/trace/MistakeReplay.svelte';
-  import AiMentor from '$lib/components/ai/AiMentor.svelte';
   import { createBinarySearchLesson } from '$lib/engines/dsa/binarySearch';
   import {
-    awardPrediction,
-    awardRecovery,
     completeLesson,
     loadProgress,
-    recordHint,
     recordLanguageUse,
-    recordMisconception,
     saveProgress
   } from '$lib/progress/store';
-  import type { StepContext } from '$lib/server/openai/schemas';
   import type { SupportedLanguage } from '$lib/trace/types';
   const supportedLanguages: readonly SupportedLanguage[] = ['c', 'cpp', 'java', 'python'];
   function requestedLanguage() {
@@ -36,14 +28,9 @@
     language = $state<SupportedLanguage>(requestedLanguage() ?? 'cpp'),
     playing = $state(false),
     progress = $state(loadProgress()),
-    submitted = $state<string[]>([]),
-    mistake = $state<MistakeAttempt | null>(null),
     timer: ReturnType<typeof setInterval> | undefined;
   let step = $derived(lesson.steps[index]);
-  let predictionResolved = $derived(!step.prediction || submitted.includes(step.prediction.id));
-  let visibleState = $derived(
-    step.prediction && !predictionResolved ? step.stateBefore : step.stateAfter
-  );
+  let visibleState = $derived(step.stateAfter);
   onMount(() => {
     progress = loadProgress();
     const params = new URLSearchParams(location.search);
@@ -56,7 +43,10 @@
       applyInput(false);
     }
     const requestedStep = Number(params.get('step') ?? 0);
-    index = gatedIndex(Number.isSafeInteger(requestedStep) ? requestedStep : 0);
+    index = Math.max(
+      0,
+      Math.min(Number.isSafeInteger(requestedStep) ? requestedStep : 0, lesson.steps.length - 1)
+    );
     return () => clearInterval(timer);
   });
   function syncUrl() {
@@ -68,23 +58,8 @@
     });
     history.replaceState({}, '', `?${params}`);
   }
-  function gatedIndex(requested: number) {
-    const bounded = Math.max(0, Math.min(requested, lesson.steps.length - 1));
-    const unresolved = lesson.steps.findIndex(
-      (candidate, candidateIndex) =>
-        candidateIndex < bounded &&
-        candidate.prediction &&
-        !submitted.includes(candidate.prediction.id)
-    );
-    return unresolved >= 0 ? unresolved : bounded;
-  }
   function jump(n: number) {
-    const bounded = Math.max(0, Math.min(n, lesson.steps.length - 1));
-    index = gatedIndex(bounded);
-    if (index < bounded) {
-      playing = false;
-      clearInterval(timer);
-    }
+    index = Math.max(0, Math.min(n, lesson.steps.length - 1));
     syncUrl();
     if (index === lesson.steps.length - 1) {
       progress = completeLesson(progress, lesson.id);
@@ -124,8 +99,6 @@
     inputError = '';
     lesson = createBinarySearchLesson(values, target);
     index = 0;
-    submitted = [];
-    mistake = null;
     playing = false;
     clearInterval(timer);
     if (updateUrl) syncUrl();
@@ -170,68 +143,6 @@
           clearInterval(timer);
         } else jump(index + 1);
       }, 1000);
-  }
-  function predict(correct: boolean, answer: string) {
-    if (!step.prediction) return;
-    submitted = [...submitted, step.prediction.id];
-    if (correct) {
-      progress = awardPrediction(
-        progress,
-        `${lesson.id}:${step.prediction.id}`,
-        step.prediction.xpReward
-      );
-      saveProgress(progress);
-    } else {
-      const evidenceId = `${lesson.id}:${step.prediction.id}`;
-      mistake = {
-        evidenceId,
-        stepId: step.id,
-        prompt: step.prediction.prompt,
-        predicted: answer,
-        actual: String(step.prediction.correctAnswer),
-        explanation: step.prediction.explanation,
-        tag: 'index-vs-value'
-      };
-      progress = recordMisconception(progress, evidenceId, mistake.tag);
-      saveProgress(progress);
-    }
-  }
-  function recoverMistake() {
-    if (!mistake) return;
-    progress = awardRecovery(progress, mistake.evidenceId);
-    saveProgress(progress);
-  }
-  function recordMentorHint() {
-    progress = recordHint(progress, lesson.id);
-    saveProgress(progress);
-  }
-  function mentorContext(): StepContext {
-    const activeSourceLines = lesson.sourceByLanguage[language]
-      .filter((line) => line.semanticOperationId === step.semanticOperationId)
-      .map((line) => line.text);
-    return {
-      subject: lesson.subject,
-      lesson: lesson.id,
-      learningObjective: lesson.learningObjectives[0],
-      selectedLanguage: language,
-      activeSourceLines,
-      stateBefore: step.stateBefore,
-      mutation: step.mutations,
-      stateAfter: step.stateAfter,
-      deterministicExplanation: step.deterministicExplanation,
-      learnerLevel: progress.learnerLevel,
-      misconceptionTags: mistake?.stepId === step.id ? [mistake.tag] : [],
-      interaction: 'explain',
-      explanationLevel: progress.explanationLevel,
-      explanationLanguage: progress.explanationLanguage,
-      currentPrediction: step.prediction
-        ? {
-            prompt: step.prediction.prompt,
-            learnerAnswer: mistake?.stepId === step.id ? mistake.predicted : undefined,
-            correctAnswer: String(step.prediction.correctAnswer)
-          }
-        : undefined
-    };
   }
 </script>
 
@@ -324,14 +235,10 @@
   <aside class="panel">
     <span class="eyebrow">Step {index + 1}</span>
     <h2>{step.title}</h2>
-    <p class="explain">
-      {predictionResolved
-        ? step.deterministicExplanation
-        : 'Predict the operation result before ReplayCS reveals this transition.'}
-    </p>
+    <p class="explain">{step.deterministicExplanation}</p>
     <div class="state">
       <h3>State mutation</h3>
-      {#if predictionResolved && step.mutations.length}{#each step.mutations as mutation}<div>
+      {#if step.mutations.length}{#each step.mutations as mutation}<div>
             <code>{mutation.entityId}</code><span
               >{String(mutation.previousValue)} → <b>{String(mutation.nextValue)}</b></span
             >
@@ -339,26 +246,6 @@
           No values changed. This step checks control flow.
         </p>{/if}
     </div>
-    {#if step.prediction}<PredictionCheckpoint
-        challenge={step.prediction}
-        submitted={submitted.includes(step.prediction.id)}
-        onsubmit={predict}
-      />{/if}
-    {#if mistake?.stepId === step.id}
-      <MistakeReplay
-        attempt={mistake}
-        stateBefore={step.stateBefore}
-        stateAfter={step.stateAfter}
-        onrecover={recoverMistake}
-      />
-    {/if}
-    {#if predictionResolved}
-      {#key step.id}<AiMentor context={mentorContext()} onhint={recordMentorHint} />{/key}
-    {:else}
-      <div class="mentor-locked" role="note">
-        Lock your prediction to unlock the grounded explanation for this transition.
-      </div>
-    {/if}
   </aside>
 </div>
 
@@ -498,15 +385,6 @@
   }
   .state b {
     color: var(--primary);
-  }
-  .mentor-locked {
-    margin-top: 1rem;
-    padding: 0.8rem;
-    border: 1px dashed var(--border);
-    border-radius: 10px;
-    color: var(--muted);
-    font-size: 0.78rem;
-    line-height: 1.5;
   }
   @media (max-width: 1000px) {
     .input-panel {
