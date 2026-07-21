@@ -64,12 +64,10 @@ test.describe('progress evidence integrity', () => {
     await page.goto('/progress');
 
     await expect(page.getByRole('heading', { name: 'Level 2 tracer' })).toBeVisible();
-    await expect(page.getByTestId('first-attempt-accuracy')).toContainText('50%');
-    await expect(page.getByTestId('first-attempt-accuracy')).toContainText(
-      '2 of 4 unique checkpoints'
-    );
-    await expect(page.getByTestId('average-attempts')).toContainText('1.5');
-    await expect(page.getByTestId('hints-used')).toContainText('3');
+    // Completion-focused metrics (no prediction accuracy / hearts / streak).
+    await expect(page.getByTestId('traces-completed')).toContainText('2');
+    await expect(page.getByTestId('subjects-started')).toContainText('2');
+    await expect(page.getByTestId('languages-viewed')).toContainText('2');
 
     const languageUsage = page.getByTestId('language-usage');
     await expect(languageUsage).toContainText('6 recorded');
@@ -78,10 +76,6 @@ test.describe('progress evidence integrity', () => {
     await expect(languageUsage).toContainText('Python');
     await expect(languageUsage).toContainText('2');
     const recentActivity = page.getByTestId('recent-activity');
-    await expect(recentActivity).toContainText('Prediction earned');
-    await expect(recentActivity).toContainText('Binary Search');
-    await expect(recentActivity).toContainText('Mistake recovered');
-    await expect(recentActivity).toContainText('Sorting Arena');
     await expect(recentActivity).toContainText('Lesson completed');
     await expect(recentActivity).toContainText('Query Pipeline');
     expect(pageErrors).toEqual([]);
@@ -92,12 +86,8 @@ test.describe('progress evidence integrity', () => {
     await page.addInitScript(() => localStorage.removeItem('replaycs-progress'));
     await page.goto('/progress');
 
-    await expect(page.getByTestId('first-attempt-accuracy')).toContainText(
-      'No checkpoint evidence yet'
-    );
-    await expect(page.getByTestId('average-attempts')).toContainText(
-      'Make a prediction to start measuring'
-    );
+    await expect(page.getByTestId('traces-completed')).toContainText('0');
+    await expect(page.getByTestId('languages-viewed')).toContainText('0');
     await expect(page.getByTestId('language-usage')).toContainText(
       'No language interactions recorded yet'
     );

@@ -2,7 +2,6 @@
   import { onMount } from 'svelte';
   import { recommendNext } from '$lib/progress/recommendations';
   import {
-    accuracy,
     createEmptyProgress,
     levelFromXp,
     loadProgress,
@@ -13,32 +12,8 @@
   let progress = $state<Progress>(createEmptyProgress());
   let resetMessage = $state('');
   let recommendation = $derived(recommendNext(progress));
-  let accuracyScore = $derived(accuracy(progress));
   let level = $derived(levelFromXp(progress.xp));
-  let misconceptions = $derived(
-    Object.entries(progress.misconceptionCounts)
-      .filter((entry): entry is [string, number] => typeof entry[1] === 'number' && entry[1] > 0)
-      .sort((a, b) => b[1] - a[1])
-  );
-  let checkpointEvidence = $derived([
-    ...new Set([...progress.awardedPredictions, ...progress.mistakeEvidence])
-  ]);
-  let mistakenCheckpoints = $derived(new Set(progress.mistakeEvidence));
-  let firstAttemptCorrect = $derived(
-    checkpointEvidence.filter(
-      (id) => progress.awardedPredictions.includes(id) && !mistakenCheckpoints.has(id)
-    ).length
-  );
-  let firstAttemptAccuracy = $derived(
-    checkpointEvidence.length
-      ? Math.round((firstAttemptCorrect / checkpointEvidence.length) * 100)
-      : null
-  );
-  let averageAttempts = $derived(
-    checkpointEvidence.length
-      ? Math.max(progress.predictionAttempts, checkpointEvidence.length) / checkpointEvidence.length
-      : null
-  );
+
   const languageLabels: Record<SupportedLanguage, string> = {
     c: 'C',
     cpp: 'C++',
@@ -149,7 +124,7 @@
   <div>
     <p class="eyebrow">Learner profile</p>
     <h1>Level {level} tracer</h1>
-    <p>Every prediction sharpens a mental model—not just a score.</p>
+    <p>Every trace you run makes invisible state visible.</p>
   </div>
   <div
     class="level-ring"
@@ -161,55 +136,22 @@
 </section>
 
 <div class="metrics">
-  <article class="panel metric">
-    <span>Prediction accuracy</span><b>{accuracyScore}%</b><small
-      >{progress.correctPredictions} of {progress.predictionAttempts} correct</small
+  <article class="panel metric" data-testid="traces-completed">
+    <span>Traces completed</span><b>{progress.completed.length}</b><small
+      >Lessons run end to end</small
     >
   </article>
-  <article class="panel metric">
-    <span>Current streak</span><b>{progress.streak} 🔥</b><small>Correct predictions in a row</small
-    >
+  <article class="panel metric" data-testid="subjects-started">
+    <span>Subjects explored</span><b
+      >{subjectMastery.filter((subject) => masteryFor(subject.prefixes) > 0).length}</b
+    ><small>of {subjectMastery.length} tracks</small>
   </article>
-  <article class="panel metric">
-    <span>Hearts</span><b>{'♥'.repeat(progress.hearts)}<i>{'♡'.repeat(3 - progress.hearts)}</i></b
-    ><small>Recovery restores confidence, not farming</small>
-  </article>
-  <article class="panel metric">
-    <span>Lessons complete</span><b>{progress.completed.length}</b><small
-      >{progress.recoveredMistakes.length} mistakes recovered</small
+  <article class="panel metric" data-testid="languages-viewed">
+    <span>Languages viewed</span><b>{languageActivity.length}</b><small
+      >C · C++ · Java · Python</small
     >
   </article>
 </div>
-
-<section class="evidence-grid" aria-label="Learning evidence">
-  <article class="panel evidence-card" data-testid="first-attempt-accuracy">
-    <span>First-attempt accuracy</span>
-    <b>{firstAttemptAccuracy === null ? '—' : `${firstAttemptAccuracy}%`}</b>
-    <small>
-      {#if checkpointEvidence.length}
-        {firstAttemptCorrect} of {checkpointEvidence.length} unique checkpoints
-      {:else}
-        No checkpoint evidence yet
-      {/if}
-    </small>
-  </article>
-  <article class="panel evidence-card" data-testid="average-attempts">
-    <span>Average attempts</span>
-    <b>{averageAttempts === null ? '—' : averageAttempts.toFixed(1)}</b>
-    <small>
-      {#if checkpointEvidence.length}
-        Per unique evidenced checkpoint
-      {:else}
-        Make a prediction to start measuring
-      {/if}
-    </small>
-  </article>
-  <article class="panel evidence-card" data-testid="hints-used">
-    <span>Hints used</span>
-    <b>{progress.hintsUsed}</b>
-    <small>{progress.hintsUsed === 1 ? 'Recorded hint request' : 'Recorded hint requests'}</small>
-  </article>
-</section>
 
 <div class="dashboard-grid">
   <section class="panel recommendation">
@@ -317,19 +259,17 @@
       {/each}
     </ol>
   {:else}
-    <p class="empty">
-      No activity recorded yet. Predictions, recoveries, and completions will appear here.
-    </p>
+    <p class="empty">No activity recorded yet. Completed traces will appear here.</p>
   {/if}
 </section>
 
 <section class="panel mastery">
   <div class="section-head">
     <div>
-      <p class="eyebrow">Mastery map</p>
+      <p class="eyebrow">Topic progress</p>
       <h2>Subjects</h2>
     </div>
-    <span>Deterministic scoring</span>
+    <span>Completion-based</span>
   </div>
   {#each subjectMastery as subject}{@const score = masteryFor(subject.prefixes)}
     <div class="mastery-row">
@@ -338,25 +278,6 @@
       <b>{score}%</b>
     </div>{/each}
 </section>
-
-<div class="dashboard-grid lower">
-  <section class="panel">
-    <p class="eyebrow">Misconception evidence</p>
-    <h2>What to revisit</h2>
-    {#if misconceptions.length}<ul class="tags">
-        {#each misconceptions as [tag, count]}<li><span>{tag}</span><b>{count}×</b></li>{/each}
-      </ul>{:else}<p class="empty">
-        No misconception evidence yet. ReplayCS records only what your interactions demonstrate.
-      </p>{/if}
-  </section>
-  <section class="panel">
-    <p class="eyebrow">Badges</p>
-    <h2>Achievements</h2>
-    {#if progress.badges.length}<div class="badges">
-        {#each progress.badges as badge}<div><span>🏅</span><b>{badge}</b></div>{/each}
-      </div>{:else}<p class="empty">Make your first prediction to unlock a badge.</p>{/if}
-  </section>
-</div>
 
 <section class="data-actions">
   <div>
@@ -422,30 +343,6 @@
   .metric b {
     font-size: 1.65rem;
     color: var(--primary);
-  }
-  .metric i {
-    color: var(--border);
-    font-style: normal;
-  }
-  .evidence-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.8rem;
-    margin-top: 0.8rem;
-  }
-  .evidence-card {
-    display: grid;
-    gap: 0.35rem;
-    padding: 1rem;
-  }
-  .evidence-card span,
-  .evidence-card small {
-    color: var(--muted);
-    font-size: 0.72rem;
-  }
-  .evidence-card b {
-    color: var(--text);
-    font-size: 1.45rem;
   }
   .dashboard-grid {
     display: grid;
@@ -625,38 +522,6 @@
   }
   .blue {
     background: var(--accent);
-  }
-  .lower > section {
-    min-height: 230px;
-  }
-  .tags {
-    list-style: none;
-    padding: 0;
-  }
-  .tags li {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.55rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .tags span {
-    color: var(--warning);
-  }
-  .badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.7rem;
-  }
-  .badges div {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.7rem;
-    background: var(--bg);
-    border-radius: 10px;
-  }
-  .badges span {
-    font-size: 1.5rem;
   }
   .empty {
     color: var(--muted);
