@@ -20,7 +20,16 @@
   } from '$lib/progress/store';
   import type { StepContext } from '$lib/server/openai/schemas';
 
-  const algorithmOrder: SortingAlgorithm[] = ['bubble', 'selection', 'insertion'];
+  const algorithmOrder: SortingAlgorithm[] = [
+    'bubble',
+    'selection',
+    'insertion',
+    'merge',
+    'quick',
+    'heap',
+    'counting',
+    'radix'
+  ];
   const initialValues = [7, 3, 5, 2, 9, 1];
 
   let algorithm = $state<SortingAlgorithm>('bubble');
@@ -62,10 +71,15 @@
 
   function rebuild(nextAlgorithm: SortingAlgorithm, values: readonly number[]) {
     stopPlayback();
-    algorithm = nextAlgorithm;
-    trace = createSortingTrace(nextAlgorithm, values);
-    index = 0;
-    resetCheckpoint();
+    try {
+      trace = createSortingTrace(nextAlgorithm, values);
+      algorithm = nextAlgorithm;
+      inputError = '';
+      index = 0;
+      resetCheckpoint();
+    } catch (cause) {
+      inputError = cause instanceof Error ? cause.message : 'ReplayCS could not build that trace.';
+    }
   }
 
   function chooseAlgorithm(nextAlgorithm: SortingAlgorithm) {
@@ -134,9 +148,13 @@
     const misconception =
       algorithm === 'selection'
         ? 'index-vs-value'
-        : algorithm === 'insertion'
+        : algorithm === 'insertion' || algorithm === 'quick'
           ? 'key-vs-index'
-          : 'comparison-direction';
+          : algorithm === 'heap' || algorithm === 'counting'
+            ? 'off-by-one'
+            : algorithm === 'radix'
+              ? 'loop-boundary'
+              : 'comparison-direction';
     progress = correct
       ? awardPrediction(progress, `${lessonId}:first-prediction`, step.prediction.xpReward)
       : recordMisconception(progress, `${lessonId}:first-prediction`, misconception);
@@ -153,9 +171,13 @@
     const misconception =
       algorithm === 'selection'
         ? 'index-vs-value'
-        : algorithm === 'insertion'
+        : algorithm === 'insertion' || algorithm === 'quick'
           ? 'key-vs-index'
-          : 'comparison-direction';
+          : algorithm === 'heap' || algorithm === 'counting'
+            ? 'off-by-one'
+            : algorithm === 'radix'
+              ? 'loop-boundary'
+              : 'comparison-direction';
     return {
       subject: 'dsa-1',
       lesson: lessonId,
@@ -272,6 +294,23 @@
       {/each}
     </div>
 
+    {#if step.auxiliary?.length}
+      <div class="auxiliary" aria-label="Auxiliary arrays">
+        {#each step.auxiliary as view}
+          <div class="aux-row">
+            <span>{view.label}</span>
+            <div class="aux-values">
+              {#each view.values as auxValue, auxIndex}
+                <code class:aux-active={view.highlight?.includes(auxIndex)}
+                  >{auxValue === null ? '·' : auxValue}</code
+                >
+              {/each}
+            </div>
+          </div>
+        {/each}
+      </div>
+    {/if}
+
     <div class="legend" aria-label="Visualization legend">
       <span><i class="active-key"></i> Active indices</span>
       <span><i class="sorted-key"></i> Sorted region</span>
@@ -329,12 +368,18 @@
           <span class="eyebrow">Algorithm profile</span>
           <h3>{info.name}</h3>
         </div>
-        <span class:stable={info.stable} class:unstable={!info.stable}>
-          {info.stable ? 'Stable' : 'Unstable'}
-        </span>
+        <div class="badges">
+          <span class:stable={info.stable} class:unstable={!info.stable}>
+            {info.stable ? 'Stable' : 'Unstable'}
+          </span>
+          <span class:stable={info.inPlace} class:unstable={!info.inPlace}>
+            {info.inPlace ? 'In-place' : 'Not in-place'}
+          </span>
+        </div>
       </div>
       <p>{info.description}</p>
       <p class="stability-note">{info.stabilityReason}</p>
+      <p class="stability-note">{info.inPlaceReason}</p>
       <div class="complexity">
         <div><span>Best</span><code>{info.complexity.best}</code></div>
         <div><span>Average</span><code>{info.complexity.average}</code></div>
@@ -491,6 +536,49 @@
     align-items: start;
     justify-content: space-between;
     gap: 1rem;
+  }
+  .badges {
+    display: grid;
+    gap: 0.3rem;
+    justify-items: end;
+  }
+  .auxiliary {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0.7rem 0 0.2rem;
+    padding: 0.6rem;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+  }
+  .aux-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .aux-row > span {
+    min-width: 110px;
+    color: var(--muted);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .aux-values {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+  }
+  .aux-values code {
+    min-width: 30px;
+    padding: 0.2rem 0.3rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-align: center;
+    color: var(--text);
+    font-size: 0.72rem;
+  }
+  .aux-values code.aux-active {
+    border-color: var(--warning);
+    background: #fbbf2415;
   }
   .stage h2 {
     margin: 0.35rem 0 0;
