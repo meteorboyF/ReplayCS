@@ -3,6 +3,7 @@
   import AiMentor from '$lib/components/ai/AiMentor.svelte';
   import PredictionCheckpoint from '$lib/components/trace/PredictionCheckpoint.svelte';
   import TraceControls from '$lib/components/trace/TraceControls.svelte';
+  import { LEARNING_MODES, type LearningMode } from '$lib/lesson/mode';
   import {
     SORTING_ALGORITHMS,
     createSortingTrace,
@@ -32,6 +33,7 @@
   ];
   const initialValues = [7, 3, 5, 2, 9, 1];
 
+  let mode = $state<LearningMode>('learn');
   let algorithm = $state<SortingAlgorithm>('bubble');
   let input = $state(initialValues.join(', '));
   let inputError = $state('');
@@ -101,9 +103,10 @@
 
   function jump(nextIndex: number) {
     const bounded = Math.max(0, Math.min(nextIndex, trace.steps.length - 1));
-    if (bounded > 0 && !predictionSubmitted) {
+    // Only Challenge Mode gates the opening prediction; Learn and Guided are free.
+    if (mode === 'challenge' && bounded > 0 && !predictionSubmitted) {
       index = 0;
-      predictionNudge = 'Lock the opening prediction before revealing the sorting trace.';
+      predictionNudge = 'Predict the opening step to reveal the trace — you are in Challenge Mode.';
       stopPlayback();
       return;
     }
@@ -123,8 +126,8 @@
   }
 
   function togglePlayback() {
-    if (!predictionSubmitted) {
-      predictionNudge = 'Lock the opening prediction before playing the sorting trace.';
+    if (mode === 'challenge' && !predictionSubmitted) {
+      predictionNudge = 'Predict the opening step to play the trace — you are in Challenge Mode.';
       return;
     }
     if (playing) {
@@ -227,10 +230,36 @@
     <h1>Sorting <span class="gradient">Arena</span></h1>
     <p>Run the same values through three classic algorithms and inspect every operation.</p>
   </div>
-  <div class="status-pill">
-    <span class="status-dot"></span> Deterministic trace · ⚡ {progress.xp} XP
+  <div class="head-right">
+    <div class="mode-toggle" role="group" aria-label="Learning mode">
+      {#each LEARNING_MODES as option}
+        <button
+          type="button"
+          class:selected={mode === option.id}
+          aria-pressed={mode === option.id}
+          title={option.blurb}
+          onclick={() => {
+            mode = option.id;
+            stopPlayback();
+          }}>{option.label}</button
+        >
+      {/each}
+    </div>
+    <div class="status-pill">
+      <span class="status-dot"></span> ⚡ {progress.xp} XP
+    </div>
   </div>
 </div>
+
+<p class="mode-hint">
+  {#if mode === 'learn'}
+    <b>Learn Mode.</b> Step through every algorithm freely — predictions are optional.
+  {:else if mode === 'guided'}
+    <b>Guided Mode.</b> An optional opening checkpoint appears; you can skip it any time.
+  {:else}
+    <b>Challenge Mode.</b> Predict the opening step before the trace is revealed.
+  {/if}
+</p>
 
 <section class="setup panel" aria-labelledby="algorithm-heading">
   <div>
@@ -392,8 +421,10 @@
 
 <section class="panel mentor-panel" aria-label="Grounded sorting mentor">
   {#if completed}<p class="completion" role="status">✓ Sort complete · mastery saved</p>{/if}
-  {#if step.prediction && !predictionSubmitted}
-    <p class="mentor-locked" role="note">Lock the prediction before asking the mentor.</p>
+  {#if step.prediction && mode === 'challenge' && !predictionSubmitted}
+    <p class="mentor-locked" role="note">
+      Predict first to ask the mentor — you are in Challenge Mode.
+    </p>
   {:else}
     {#key `${lessonId}:${step.id}`}<AiMentor
         context={mentorContext()}
@@ -408,7 +439,42 @@
     align-items: end;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 1.2rem;
+    margin-bottom: 0.6rem;
+  }
+  .head-right {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+  }
+  .mode-toggle {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .mode-toggle button {
+    padding: 0.45rem 0.85rem;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.8rem;
+    border-right: 1px solid var(--border);
+  }
+  .mode-toggle button:last-child {
+    border-right: none;
+  }
+  .mode-toggle button.selected {
+    background: var(--primary);
+    color: #04231f;
+    font-weight: 600;
+  }
+  .mode-hint {
+    margin: 0 0 1rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  .mode-hint b {
+    color: var(--text);
   }
   .mentor-panel {
     margin-top: 1rem;
