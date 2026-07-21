@@ -3,16 +3,16 @@
 ## Current status
 
 - Updated: 2026-07-22 (+06)
-- Working branch: `feat/recursion-lab`
-- Working baseline: `2f7e827` (`origin/main`, merge of PR #35)
+- Working branch: `docs/project-handoff`
+- Working baseline: `b432030` (`origin/main`, merge of PR #36)
 - Teammate UI baseline: `d007dce` (PR #33, light-first theme and theme toggle), layered on the earlier `e75d3a9` redesign
-- Production commit: `2f7e827`
+- Production commit: `b432030`
 - Production: https://replaycs.vercel.app
-- Deployment: `dpl_AU7XKKxtK4EbDvFYeZXBnafVBm4g` (`READY`)
-- Stable deployment URL: https://replaycs-lq6n66ti2-meteorboy-f.vercel.app
+- Deployment: `dpl_92JwhY36PW5iBLqMJicTGq4Pvf7G` (`READY`)
+- Stable deployment URL: https://replaycs-82z3si5tk-meteorboy-f.vercel.app
 - Recovery branch: `origin/feat/study-recap` at `2fb3489`
-- Worktree: Recursion Lab implementation and regression coverage are in progress; local `.claude/` is untracked and must not be committed.
-- Immediate next action: complete the Recursion full gate, merge/deploy it, and verify the resulting production milestone.
+- Worktree: clean except local untracked `.claude/`, which must not be committed.
+- Immediate next action: retry the public alias audit when runner connectivity recovers, then begin the next curriculum milestone from current `origin/main` without changing the teammate UI contract.
 
 ## Current teammate UI contract
 
@@ -52,18 +52,18 @@ The only product regression found was the Sorting Arena setup form extending the
 - Progress-store cleanup: complete in PR #32 and deployed from `3003dd4`. Version 4 removes obsolete prediction-era dependencies while accepting versions 1–4 and safely ignoring legacy stored properties.
 - Light-theme regression repair: complete in PR #34 and deployed from `4e9310b`. The public Complexity Lab passes behavior and serious/critical WCAG checks (2/2).
 - Strings Lab: complete in PR #35 and deployed from `2f7e827`. It passed 205/205 unit/API and 146/146 browser tests before merge. Vercel is `READY`; this runner's post-deploy public navigation timed out at the alias before page load.
-- Recursion Lab: implemented locally with six bounded scenarios, actual call/base/work/return events, four synchronized languages, call stack and level-width visualization, accumulating call/completion/depth/work counters, return values, repeated-subproblem evidence, four recurrence families, and recursive-versus-iterative space comparison. Full gate: check/lint clean, 208/208 unit/API tests, build pass, and 154/154 browser tests.
+- Recursion Lab: complete in PR #36 and deployed from `b432030`. It includes six bounded scenarios, actual call/base/work/return events, four synchronized languages, call stack and level-width visualization, accumulating call/completion/depth/work counters, return values, repeated-subproblem evidence, four recurrence families, and recursive-versus-iterative space comparison. Full gate: check/lint clean, 208/208 unit/API tests, build pass, and 154/154 browser tests.
 
 ## Validation
 
-UI milestone `e298072`:
+Latest curriculum milestone `b432030`:
 
 - `git diff --check`: pass
 - `npm run check`: 0 errors, 0 warnings
 - `npm run lint`: pass
-- `npx vitest run`: 201/201 pass (20 files)
+- `npx vitest run`: 208/208 pass (24 files)
 - `npm run build`: pass
-- `npx playwright test`: 132/132 pass
+- `npx playwright test`: 154/154 pass
 - Public route/viewport audit: all required routes passed after the Sorting fix; deployed focused regression/control verification is 15/15.
 - Study Recap focused checks: Svelte check clean, 13/13 unit/API tests, 2/2 browser tests.
 
@@ -83,8 +83,8 @@ UI milestone `e298072`:
 5. Compatibility-safe progress-store cleanup: complete (PR #32, production `3003dd4`).
 6. Light-theme accessibility regression: complete (PR #34, production `4e9310b`, public verification 2/2).
 7. Strings Lab: complete (PR #35, production `2f7e827`).
-8. Recursion Lab: implemented locally; full gate green and ready for PR.
+8. Recursion Lab: complete (PR #36, production `b432030`).
 
 ## Blockers
 
-The Study Recap deployment is `READY` and aliased, but this environment currently times out connecting to the public alias even for `/`; the direct deployment URL is protected by Vercel SSO. Retry public verification when alias connectivity recovers. Git/Vercel writes and browser launches require managed approval.
+The latest deployment is `READY` and aliased, but this environment intermittently times out connecting to the public alias before page load; the direct deployment URL is protected by Vercel SSO. Local and CI browser gates are green. Retry public verification when alias connectivity recovers. Git/Vercel writes and browser launches require managed approval.
