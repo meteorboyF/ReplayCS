@@ -17,13 +17,9 @@ test.describe('CPU Scheduling Arena', () => {
     }
   });
 
-  test('gates the timeline on a prediction and restores the initial state', async ({ page }) => {
+  test('advances the timeline freely and restores the initial state', async ({ page }) => {
     await page.goto('/lesson/operating-systems/cpu-scheduling');
 
-    await page.getByRole('button', { name: 'Next' }).click();
-    await expect(page.getByRole('status')).toContainText('Lock a prediction');
-    await page.getByLabel('Your prediction').fill('P1');
-    await page.getByRole('button', { name: 'Lock prediction' }).click();
     await page.getByRole('button', { name: 'Next' }).click();
     await expect(page.getByText('Step 2 of')).toBeVisible();
     await page.getByRole('button', { name: 'Restart trace' }).click();

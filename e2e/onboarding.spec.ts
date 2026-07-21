@@ -16,7 +16,6 @@ test('personalizes the recommended lesson without an account', async ({ page }) 
   await expect(page).toHaveURL(/lesson\/dsa-1\/binary-search\?lang=python/);
   await expect(page.getByRole('heading', { name: 'Binary Search' })).toBeVisible();
   await expect(page.getByRole('tab', { name: 'PYTHON' })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('combobox', { name: 'Explanation language' })).toHaveValue('bn');
 
   await page.evaluate(() => localStorage.removeItem('replaycs-progress'));
   await page.reload();

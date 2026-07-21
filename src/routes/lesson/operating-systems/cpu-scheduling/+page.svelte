@@ -1,7 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import AiMentor from '$lib/components/ai/AiMentor.svelte';
-  import PredictionCheckpoint from '$lib/components/trace/PredictionCheckpoint.svelte';
   import TraceControls from '$lib/components/trace/TraceControls.svelte';
   import {
     CPU_ALGORITHMS,
@@ -15,15 +13,7 @@
     type CpuScheduleTrace,
     type CpuSchedulingAlgorithm
   } from '$lib/engines/os/cpuScheduling';
-  import {
-    awardPrediction,
-    completeLesson,
-    loadProgress,
-    recordHint,
-    recordMisconception,
-    saveProgress
-  } from '$lib/progress/store';
-  import type { StepContext } from '$lib/server/openai/schemas';
+  import { completeLesson, loadProgress, saveProgress } from '$lib/progress/store';
 
   const defaultInput = `P1, 0, 5, 2
 P2, 1, 3, 1
@@ -44,17 +34,11 @@ P4, 4, 2, 3`;
   let inputError = $state('');
   let index = $state(0);
   let playing = $state(false);
-  let predictionSubmitted = $state(false);
-  let predictionCorrect = $state<boolean | null>(null);
-  let predictionAnswer = $state('');
-  let predictionNudge = $state('');
   let progress = $state(loadProgress());
-  let traceRevision = $state(0);
   let timer: ReturnType<typeof setInterval> | undefined;
 
   let step = $derived(trace.steps[index]);
   let algorithmInfo = $derived(CPU_ALGORITHMS[algorithm]);
-  let lessonId = $derived(`cpu-scheduling:${algorithm}`);
   let completed = $derived(progress.completed.includes('cpu-scheduling'));
   let revealClock = $derived(
     step.event === 'initialize'
@@ -82,11 +66,6 @@ P4, 4, 2, 3`;
   function resetTraceState() {
     stopPlayback();
     index = 0;
-    predictionSubmitted = false;
-    predictionCorrect = null;
-    predictionAnswer = '';
-    predictionNudge = '';
-    traceRevision++;
   }
 
   function rebuild(
@@ -159,10 +138,6 @@ Gamma, 0, 3, 1`,
   }
 
   function jump(nextIndex: number) {
-    if (nextIndex > 0 && !predictionSubmitted) {
-      predictionNudge = 'Lock a prediction before revealing the first dispatch.';
-      return;
-    }
     index = Math.max(0, Math.min(nextIndex, trace.steps.length - 1));
     if (index === trace.steps.length - 1) {
       stopPlayback();
@@ -174,16 +149,9 @@ Gamma, 0, 3, 1`,
   function restart() {
     stopPlayback();
     index = 0;
-    predictionSubmitted = false;
-    predictionNudge = '';
-    traceRevision++;
   }
 
   function togglePlayback() {
-    if (!predictionSubmitted) {
-      predictionNudge = 'Lock a prediction before playing the schedule.';
-      return;
-    }
     if (playing) {
       stopPlayback();
       return;
@@ -194,64 +162,6 @@ Gamma, 0, 3, 1`,
       if (index >= trace.steps.length - 1) stopPlayback();
       else jump(index + 1);
     }, 850);
-  }
-
-  function submitPrediction(correct: boolean, answer: string) {
-    predictionSubmitted = true;
-    predictionCorrect = correct;
-    predictionAnswer = answer;
-    predictionNudge = '';
-    if (!step.prediction) return;
-    const evidenceId = `${lessonId}:first-dispatch`;
-    progress = correct
-      ? awardPrediction(progress, `${lessonId}:first-dispatch`, step.prediction.xpReward)
-      : recordMisconception(progress, evidenceId, 'scheduler-tie-break');
-    saveProgress(progress);
-  }
-
-  function recordMentorHint() {
-    progress = recordHint(progress, 'cpu-scheduling');
-    saveProgress(progress);
-  }
-
-  function mentorContext(): StepContext {
-    return {
-      subject: 'operating-systems',
-      lesson: lessonId,
-      learningObjective: `Explain how ${algorithmInfo.name} chooses work and produces waiting, turnaround, and response metrics.`,
-      activeSourceLines: [],
-      stateBefore: {
-        clock: step.clock,
-        readyQueue: step.readyProcessIds,
-        runningProcessId: step.runningProcessId,
-        remainingBurst: step.remainingBurst
-      },
-      mutation: [
-        {
-          event: step.event,
-          nextClock: step.nextClock,
-          contextSwitches: step.contextSwitches
-        }
-      ],
-      stateAfter: {
-        clock: step.nextClock,
-        completedProcessIds: step.completedProcessIds,
-        remainingBurst: step.remainingBurst
-      },
-      deterministicExplanation: step.explanation,
-      learnerLevel: progress.learnerLevel,
-      misconceptionTags: predictionCorrect === false ? ['scheduler-tie-break'] : [],
-      interaction: 'explain',
-      explanationLevel: progress.explanationLevel,
-      explanationLanguage: progress.explanationLanguage,
-      currentPrediction: step.prediction
-        ? {
-            prompt: step.prediction.prompt,
-            learnerAnswer: predictionAnswer || undefined,
-            correctAnswer: String(step.prediction.correctAnswer)
-          }
-        : undefined
-    };
   }
 
   function processStatus(
@@ -282,7 +192,7 @@ Gamma, 0, 3, 1`,
     <a href="/learn/operating-systems" class="back">← Operating Systems</a>
     <span class="eyebrow">Interactive execution lab</span>
     <h1>CPU Scheduling <span class="gradient">Arena</span></h1>
-    <p>Predict the next dispatch, replay every clock tick, and compare five schedulers fairly.</p>
+    <p>Replay every clock tick and compare five schedulers fairly on the same workload.</p>
   </div>
   <div class="deterministic-badge">
     <span aria-hidden="true"></span> Deterministic simulation · ⚡ {progress.xp} XP
@@ -385,7 +295,7 @@ Gamma, 0, 3, 1`,
         {#if visibleGantt.length === 0}
           <div class="gantt-locked">
             <span aria-hidden="true">◇</span>
-            Lock your prediction, then advance the trace to reveal the schedule.
+            Advance the trace to build the schedule tick by tick.
           </div>
         {:else}
           {#each visibleGantt as segment, segmentIndex}
@@ -492,17 +402,6 @@ Gamma, 0, 3, 1`,
       </dl>
     </section>
 
-    {#if step.prediction}
-      {#key `${step.prediction.id}-${traceRevision}`}
-        <PredictionCheckpoint
-          challenge={step.prediction}
-          submitted={predictionSubmitted}
-          onsubmit={submitPrediction}
-        />
-      {/key}
-      {#if predictionNudge}<p class="prediction-nudge" role="status">{predictionNudge}</p>{/if}
-    {/if}
-
     <section class="metric-guide panel">
       <span class="eyebrow">Metric decoder</span>
       <dl>
@@ -536,57 +435,47 @@ Gamma, 0, 3, 1`,
       <span><b>{formatMetric(trace.metrics.cpuUtilization)}%</b> CPU use</span>
     </div>
   </div>
-  {#if predictionSubmitted}
-    <div class="table-wrap panel">
-      <table>
-        <thead>
+  <div class="table-wrap panel">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Process</th>
+          <th scope="col">Arrival</th>
+          <th scope="col">Burst</th>
+          <th scope="col">Priority</th>
+          <th scope="col">First run</th>
+          <th scope="col">Completion</th>
+          <th scope="col">Waiting</th>
+          <th scope="col">Turnaround</th>
+          <th scope="col">Response</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each trace.processes as process}
+          {@const metric = trace.metrics.byProcess[process.id]}
           <tr>
-            <th scope="col">Process</th>
-            <th scope="col">Arrival</th>
-            <th scope="col">Burst</th>
-            <th scope="col">Priority</th>
-            <th scope="col">First run</th>
-            <th scope="col">Completion</th>
-            <th scope="col">Waiting</th>
-            <th scope="col">Turnaround</th>
-            <th scope="col">Response</th>
+            <th scope="row">{process.id}</th>
+            <td>{metric.arrival}</td>
+            <td>{metric.burst}</td>
+            <td>{metric.priority}</td>
+            <td>{metric.firstStart}</td>
+            <td>{metric.completion}</td>
+            <td>{metric.waiting}</td>
+            <td>{metric.turnaround}</td>
+            <td>{metric.response}</td>
           </tr>
-        </thead>
-        <tbody>
-          {#each trace.processes as process}
-            {@const metric = trace.metrics.byProcess[process.id]}
-            <tr>
-              <th scope="row">{process.id}</th>
-              <td>{metric.arrival}</td>
-              <td>{metric.burst}</td>
-              <td>{metric.priority}</td>
-              <td>{metric.firstStart}</td>
-              <td>{metric.completion}</td>
-              <td>{metric.waiting}</td>
-              <td>{metric.turnaround}</td>
-              <td>{metric.response}</td>
-            </tr>
-          {/each}
-        </tbody>
-        <tfoot>
-          <tr>
-            <th scope="row" colspan="6">Average</th>
-            <td>{formatMetric(trace.metrics.averageWaiting)}</td>
-            <td>{formatMetric(trace.metrics.averageTurnaround)}</td>
-            <td>{formatMetric(trace.metrics.averageResponse)}</td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  {:else}
-    <div class="results-locked panel">
-      <span aria-hidden="true">◇</span>
-      <div>
-        <strong>Metrics hidden until you predict</strong>
-        <p>Lock the first dispatch above to reveal every process result.</p>
-      </div>
-    </div>
-  {/if}
+        {/each}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th scope="row" colspan="6">Average</th>
+          <td>{formatMetric(trace.metrics.averageWaiting)}</td>
+          <td>{formatMetric(trace.metrics.averageTurnaround)}</td>
+          <td>{formatMetric(trace.metrics.averageResponse)}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
 </section>
 
 <section class="comparison" aria-labelledby="comparison-heading">
@@ -640,17 +529,11 @@ Gamma, 0, 3, 1`,
   </div>
 </section>
 
-<section class="panel mentor-panel" aria-label="Grounded scheduling mentor">
-  {#if completed}<p class="completion" role="status">✓ Schedule complete · mastery saved</p>{/if}
-  {#if step.prediction && !predictionSubmitted}
-    <p class="mentor-locked" role="note">Lock the dispatch prediction before asking the mentor.</p>
-  {:else}
-    {#key `${lessonId}:${step.id}`}<AiMentor
-        context={mentorContext()}
-        onhint={recordMentorHint}
-      />{/key}
-  {/if}
-</section>
+{#if completed}
+  <section class="panel completion-panel">
+    <p class="completion" role="status">✓ Schedule complete · mastery saved</p>
+  </section>
+{/if}
 
 <style>
   .lesson-head {
@@ -660,7 +543,7 @@ Gamma, 0, 3, 1`,
     gap: 2rem;
     margin-bottom: 1.5rem;
   }
-  .mentor-panel {
+  .completion-panel {
     margin-top: 1rem;
     padding: 1rem;
   }
@@ -669,10 +552,6 @@ Gamma, 0, 3, 1`,
     color: var(--success);
     font-size: 0.8rem;
     font-weight: 750;
-  }
-  .mentor-locked {
-    color: var(--warning);
-    font-size: 0.78rem;
   }
   .lesson-head > div:first-child {
     display: grid;
@@ -1123,11 +1002,6 @@ Gamma, 0, 3, 1`,
     line-height: 1.55;
     font-size: 0.83rem;
   }
-  .prediction-nudge {
-    color: var(--warning);
-    margin: -0.25rem 0 0;
-    font-size: 0.75rem;
-  }
   .step-card dl,
   .metric-guide dl,
   .comparison dl {
@@ -1184,25 +1058,6 @@ Gamma, 0, 3, 1`,
     overflow-x: auto;
     margin-top: 0.8rem;
     border-radius: 14px;
-  }
-  .results-locked {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.8rem;
-    min-height: 7rem;
-    margin-top: 0.8rem;
-    padding: 1rem;
-    text-align: left;
-  }
-  .results-locked > span {
-    color: var(--primary);
-    font-size: 1.3rem;
-  }
-  .results-locked p {
-    color: var(--muted);
-    margin: 0.25rem 0 0;
-    font-size: 0.75rem;
   }
   table {
     width: 100%;

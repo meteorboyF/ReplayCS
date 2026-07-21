@@ -24,10 +24,6 @@ test.describe('Graph Explorer', () => {
 
     await expect(page.getByText('Step 1 /')).toBeVisible();
     await page.getByRole('button', { name: 'Next' }).click();
-    await expect(page.getByText(/Lock the frontier prediction/)).toBeVisible();
-    await page.getByLabel('Your prediction').fill('A');
-    await page.getByRole('button', { name: 'Lock prediction' }).click();
-    await page.getByRole('button', { name: 'Next' }).click();
     await expect(page.getByText('Step 2 /')).toBeVisible();
     await page.getByRole('button', { name: 'Previous' }).click();
     await expect(page.getByText('Step 1 /')).toBeVisible();

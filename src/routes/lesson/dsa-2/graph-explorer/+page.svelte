@@ -1,9 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { onMount } from 'svelte';
-  import AiMentor from '$lib/components/ai/AiMentor.svelte';
   import CodePane from '$lib/components/code/CodePane.svelte';
-  import PredictionCheckpoint from '$lib/components/trace/PredictionCheckpoint.svelte';
   import TraceControls from '$lib/components/trace/TraceControls.svelte';
   import {
     createGraphTraversalLesson,
@@ -16,15 +14,11 @@
     type TraversalAlgorithm
   } from '$lib/engines/dsa/graphTraversal';
   import {
-    awardPrediction,
     completeLesson,
     loadProgress,
-    recordHint,
     recordLanguageUse,
-    recordMisconception,
     saveProgress
   } from '$lib/progress/store';
-  import type { StepContext } from '$lib/server/openai/schemas';
   import type { SupportedLanguage } from '$lib/trace/types';
 
   type InputMode = 'preset' | 'custom';
@@ -57,17 +51,11 @@
   let language = $state<SupportedLanguage>(requestedLanguage() ?? 'python');
   let playing = $state(false);
   let error = $state('');
-  let submitted = $state<string[]>([]);
   let progress = $state(loadProgress());
-  let predictionCorrect = $state<boolean | null>(null);
-  let predictionAnswer = $state('');
-  let predictionNudge = $state('');
-  let runId = $state(0);
   let timer: ReturnType<typeof setInterval> | undefined;
 
   let step = $derived(lesson.steps[index]);
-  let predictionResolved = $derived(!step.prediction || submitted.includes(step.prediction.id));
-  let visibleStep = $derived(predictionResolved ? step : { ...step, stateAfter: step.stateBefore });
+  let visibleStep = $derived(step);
   let traversal = $derived(getGraphTraversalState(visibleStep));
   let positions = $derived(layoutNodes(graph.nodes));
   let completed = $derived(progress.completed.includes('graph-explorer'));
@@ -118,11 +106,6 @@
       graph = nextGraph;
       lesson = nextLesson;
       index = 0;
-      submitted = [];
-      predictionCorrect = null;
-      predictionAnswer = '';
-      predictionNudge = '';
-      runId += 1;
       error = '';
     } catch (caught) {
       error = caught instanceof Error ? caught.message : 'The graph could not be built.';
@@ -130,17 +113,7 @@
   }
 
   function jump(next: number) {
-    const bounded = Math.max(0, Math.min(next, lesson.steps.length - 1));
-    const checkpointIndex = lesson.steps.findIndex((candidate) => candidate.prediction);
-    if (checkpointIndex >= 0 && bounded > checkpointIndex && submitted.length === 0) {
-      index = checkpointIndex;
-      predictionNudge = 'Lock the frontier prediction before revealing the traversal.';
-      playing = false;
-      clearInterval(timer);
-      return;
-    }
-    predictionNudge = '';
-    index = bounded;
+    index = Math.max(0, Math.min(next, lesson.steps.length - 1));
     if (index === lesson.steps.length - 1) {
       progress = completeLesson(progress, 'graph-explorer');
       saveProgress(progress);
@@ -148,10 +121,6 @@
   }
 
   function togglePlayback() {
-    if (submitted.length === 0) {
-      predictionNudge = 'Lock the frontier prediction before playing the traversal.';
-      return;
-    }
     playing = !playing;
     clearInterval(timer);
     if (!playing) return;
@@ -165,61 +134,10 @@
     }, 900);
   }
 
-  function recordPrediction(correct: boolean, answer: string) {
-    if (!step.prediction || submitted.includes(step.prediction.id)) return;
-    submitted = [...submitted, step.prediction.id];
-    predictionCorrect = correct;
-    predictionAnswer = answer;
-    predictionNudge = '';
-    const evidenceId = `graph-explorer:${algorithm}:frontier-prediction`;
-    progress = correct
-      ? awardPrediction(
-          progress,
-          `graph-explorer:${algorithm}:frontier-prediction`,
-          step.prediction.xpReward
-        )
-      : recordMisconception(progress, evidenceId, 'stack-vs-queue');
-    saveProgress(progress);
-  }
-
   function selectLanguage(next: SupportedLanguage) {
     language = next;
     progress = recordLanguageUse(progress, next);
     saveProgress(progress);
-  }
-
-  function recordMentorHint() {
-    progress = recordHint(progress, 'graph-explorer');
-    saveProgress(progress);
-  }
-
-  function mentorContext(): StepContext {
-    const activeLines = lesson.sourceByLanguage[language]
-      .filter((line) => step.sourceLineIds.includes(line.id))
-      .map((line) => line.text);
-    return {
-      subject: 'dsa-2',
-      lesson: lesson.id,
-      learningObjective: lesson.learningObjectives[0],
-      selectedLanguage: language,
-      activeSourceLines: activeLines,
-      stateBefore: step.stateBefore,
-      mutation: step.mutations,
-      stateAfter: step.stateAfter,
-      deterministicExplanation: step.deterministicExplanation,
-      learnerLevel: progress.learnerLevel,
-      misconceptionTags: predictionCorrect === false ? ['stack-vs-queue'] : [],
-      interaction: 'explain',
-      explanationLevel: progress.explanationLevel,
-      explanationLanguage: progress.explanationLanguage,
-      currentPrediction: step.prediction
-        ? {
-            prompt: step.prediction.prompt,
-            learnerAnswer: predictionAnswer || undefined,
-            correctAnswer: String(step.prediction.correctAnswer)
-          }
-        : undefined
-    };
   }
 
   function isTreeEdge(edge: GraphEdge): boolean {
@@ -261,7 +179,7 @@
 <header class="lesson-head">
   <div>
     <a class="back" href="/learn/dsa-2">← DSA II</a>
-    <p class="eyebrow">Prediction-first traversal lab</p>
+    <p class="eyebrow">Graph traversal lab</p>
     <h1>Graph Explorer</h1>
     <p class="intro">See exactly why a queue, stack, or call stack produces a different order.</p>
   </div>
@@ -412,7 +330,6 @@
       onplay={togglePlayback}
       onjump={jump}
     />
-    {#if predictionNudge}<p class="prediction-nudge" role="status">{predictionNudge}</p>{/if}
 
     <section class="frontiers" aria-label="Traversal frontier state">
       <article class:active-frontier={traversal.algorithm === 'bfs'} class="panel frontier-card">
@@ -447,11 +364,7 @@
   <aside class="panel inspector" aria-live="polite">
     <span class="eyebrow">Step {index + 1} / {lesson.steps.length}</span>
     <h2>{step.title}</h2>
-    <p class="explanation">
-      {predictionResolved
-        ? step.deterministicExplanation
-        : 'Predict the frontier result before ReplayCS reveals this transition.'}
-    </p>
+    <p class="explanation">{step.deterministicExplanation}</p>
 
     <dl class="state-grid">
       <div>
@@ -488,16 +401,6 @@
           </li>{:else}<li class="empty">Waiting for the first visit</li>{/each}
       </ol>
     </section>
-
-    {#if step.prediction}
-      {#key `${runId}-${step.id}`}
-        <PredictionCheckpoint
-          challenge={step.prediction}
-          submitted={submitted.includes(step.prediction.id)}
-          onsubmit={recordPrediction}
-        />
-      {/key}
-    {/if}
   </aside>
 </div>
 
@@ -515,17 +418,11 @@
   />
 </section>
 
-<section class="panel mentor-panel" aria-label="Grounded graph mentor">
-  {#if completed}<p class="completion" role="status">✓ Traversal complete · mastery saved</p>{/if}
-  {#if !predictionResolved}
-    <p class="mentor-locked" role="note">Lock the prediction before asking the mentor.</p>
-  {:else}
-    {#key `${lesson.id}:${step.id}`}<AiMentor
-        context={mentorContext()}
-        onhint={recordMentorHint}
-      />{/key}
-  {/if}
-</section>
+{#if completed}
+  <section class="panel completion-panel">
+    <p class="completion" role="status">✓ Traversal complete · mastery saved</p>
+  </section>
+{/if}
 
 <style>
   .lesson-head {
@@ -535,7 +432,7 @@
     gap: 1rem;
     margin-bottom: 1rem;
   }
-  .mentor-panel {
+  .completion-panel {
     margin-top: 1rem;
     padding: 1rem;
   }
@@ -544,11 +441,6 @@
     color: var(--success);
     font-size: 0.8rem;
     font-weight: 750;
-  }
-  .prediction-nudge,
-  .mentor-locked {
-    color: var(--warning);
-    font-size: 0.78rem;
   }
   .back {
     color: var(--primary);
