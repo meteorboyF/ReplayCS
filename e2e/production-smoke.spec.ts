@@ -12,9 +12,8 @@ test('serves the public learner journey and safe health metadata', async ({ page
   await expect(page.getByRole('heading', { name: /Pause computer science/ })).toBeVisible();
   await page.getByRole('link', { name: /Start tracing/ }).click();
   await expect(page).toHaveURL(/\/onboarding$/);
-  await expect(
-    page.getByRole('heading', { name: /Make ReplayCS fit how you learn/ })
-  ).toBeVisible();
+  await expect(page.getByText('Step 1 of 4')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Where are you starting from?' })).toBeVisible();
 });
 
 test('keeps the flagship trace usable at a mobile viewport', async ({ page }) => {
