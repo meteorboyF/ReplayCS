@@ -3,7 +3,7 @@
 ## Last updated
 
 - Date: 2026-07-21
-- Local time: 23:35 (+06)
+- Local time: 23:55 (+06)
 - Updated by: Development session
 - Repository: https://github.com/meteorboyF/ReplayCS.git
 - Production: https://replaycs.vercel.app
@@ -98,11 +98,17 @@ _None — session objective complete on branch._
   serializes `completedBossChallenges`, and the Progress page still shows prediction-centric metrics
   (accuracy, streak, hearts, first-attempt accuracy). Remove/realign in the Progress dashboard task.
 
-### Sorting Arena has no synchronized four-language code panel
+### Sorting Arena four-language code panel — DONE (branch `feat/sorting-code-trace`)
 
-- The brief (section 15) wants a persistent C/C++/Java/Python code panel mapped to each sorting step. The
-  sorting engine (`src/lib/engines/dsa/sorting.ts`) does not emit `sourceLines` per step yet — this is real
-  engine work, not a page tweak. Priority: medium.
+- Added `src/lib/engines/dsa/sortingSource.ts`: curated C/C++/Java/Python source for all 8 algorithms,
+  each line tagged with a `SortingEvent` semantic. The arena derives `activeSemantic = step.event`, so the
+  same deterministic trace highlights the equivalent line in every language with no per-language step
+  streams and no changes to the engine's step shape/call sites. Language switch preserves algorithm, input,
+  step, array, counters, and playback. Unit test `sortingSource.test.ts` proves every emitted event has a
+  tagged line in all four languages; `e2e/sorting-arena.spec.ts` proves the panel renders, highlights, and
+  preserves state across language switches.
+- REMAINING (nice-to-have): per-step ComplexityEvidence object (the arena already shows live
+  comparisons/writes/swaps counters + the per-algorithm best/avg/worst/space cases).
 
 ### Progress store still tracks prediction/mistake/boss evidence
 
@@ -183,16 +189,16 @@ Summary`, `controls` snippet, `visual` snippet, optional `about`. Do NOT add gat
 git diff --check:   clean
 npm run check:      0 errors, 0 warnings (538 files)
 npm run lint:       clean (prettier --check)
-npx vitest run:     206 passed / 206 (20 files)  # arena.test.ts (5) removed with the arena engine
+npx vitest run:     209 passed / 209 (21 files)  # +3 sortingSource.test.ts
 npm run build:      success (@sveltejs/adapter-vercel)
-npx playwright test: 30 passed / 30  # -3 challenge-arena, +2 scenario-gallery
+npx playwright test: 33 passed / 33  # +3 sorting-arena.spec.ts
 ```
 
 - Date run: 2026-07-21
-- Commit tested: Scenario Gallery branch tip (`refactor/scenario-gallery`)
+- Commit tested: Sorting code-trace branch tip (`feat/sorting-code-trace`)
 - Failing tests: none
 - Pre-existing failures: none observed
-- Production tested: Phase 0 deployed (`22654b9`); Scenario Gallery deploy pending this task's merge
+- Production tested: Phase 0 + Scenario Gallery deployed; Sorting code-trace deploy pending this merge
 
 ## Git history for this session
 
