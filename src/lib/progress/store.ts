@@ -1,13 +1,12 @@
 import { browser } from '$app/environment';
 import type { SubjectId, SupportedLanguage } from '$lib/trace/types';
-import type { MisconceptionTag } from './misconceptions';
 
 export type LearnerLevel = 'beginner' | 'intermediate' | 'advanced';
 export type LearningGoal = 'foundation' | 'exam' | 'interview' | 'curiosity';
 export type ExplanationLevel = 'beginner' | 'standard' | 'exam-ready' | 'technical';
 
 export interface Activity {
-  type: 'prediction' | 'recovery' | 'completion';
+  type: 'completion';
   lessonId: string;
   xp: number;
   at: string;
@@ -23,27 +22,15 @@ export interface OnboardingPreferences {
 }
 
 export interface Progress extends OnboardingPreferences {
-  version: 3;
+  version: 4;
   onboardingComplete: boolean;
   explanationLevel: ExplanationLevel;
   xp: number;
-  streak: number;
-  hearts: number;
   completed: string[];
-  awardedPredictions: string[];
-  misconceptionCounts: Partial<Record<MisconceptionTag, number>>;
-  mistakeEvidence: string[];
-  recoveredMistakes: string[];
   lessonMastery: Record<string, number>;
-  predictionAttempts: number;
-  correctPredictions: number;
-  firstAttemptCorrect: number;
-  hintsUsed: number;
-  hintEvidence: string[];
   recentActivity: Activity[];
   languageUsage: Partial<Record<SupportedLanguage, number>>;
   badges: string[];
-  completedBossChallenges: string[];
   badge?: string;
 }
 
@@ -69,7 +56,7 @@ const subjectIds: readonly SubjectId[] = [
   'operating-systems',
   'computer-networks'
 ];
-const activityTypes: readonly Activity['type'][] = ['prediction', 'recovery', 'completion'];
+const activityTypes: readonly Activity['type'][] = ['completion'];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -139,7 +126,7 @@ function activities(value: unknown): Activity[] {
 
 export function createEmptyProgress(): Progress {
   return {
-    version: 3,
+    version: 4,
     onboardingComplete: false,
     learnerLevel: 'beginner',
     primaryGoal: 'foundation',
@@ -149,23 +136,11 @@ export function createEmptyProgress(): Progress {
     subjectsOfInterest: ['dsa-1'],
     dailyGoalMinutes: 15,
     xp: 0,
-    streak: 0,
-    hearts: 3,
     completed: [],
-    awardedPredictions: [],
-    misconceptionCounts: {},
-    mistakeEvidence: [],
-    recoveredMistakes: [],
     lessonMastery: {},
-    predictionAttempts: 0,
-    correctPredictions: 0,
-    firstAttemptCorrect: 0,
-    hintsUsed: 0,
-    hintEvidence: [],
     recentActivity: [],
     languageUsage: {},
-    badges: [],
-    completedBossChallenges: []
+    badges: []
   };
 }
 
@@ -175,7 +150,7 @@ function activity(progress: Progress, item: Activity): Activity[] {
 
 export function sanitizeProgress(value: unknown): Progress {
   const empty = createEmptyProgress();
-  if (!isRecord(value) || ![1, 2, 3].includes(value.version as number)) return empty;
+  if (!isRecord(value) || ![1, 2, 3, 4].includes(value.version as number)) return empty;
 
   const storedSubjects = uniqueStrings(value.subjectsOfInterest).filter(
     (subject): subject is SubjectId => subjectIds.includes(subject as SubjectId)
@@ -190,23 +165,8 @@ export function sanitizeProgress(value: unknown): Progress {
   ) as Partial<Record<SupportedLanguage, number>>;
   const storedBadge =
     typeof value.badge === 'string' && value.badge.length <= 100 ? value.badge : undefined;
-  const predictionAttempts = boundedInteger(
-    value.predictionAttempts,
-    empty.predictionAttempts,
-    0,
-    1_000_000_000
-  );
-  const correctPredictions = Math.min(
-    predictionAttempts,
-    boundedInteger(value.correctPredictions, empty.correctPredictions, 0, 1_000_000_000)
-  );
-  const firstAttemptCorrect = Math.min(
-    correctPredictions,
-    boundedInteger(value.firstAttemptCorrect, empty.firstAttemptCorrect, 0, 1_000_000_000)
-  );
-
   return {
-    version: 3,
+    version: 4,
     onboardingComplete:
       typeof value.onboardingComplete === 'boolean'
         ? value.onboardingComplete
@@ -223,23 +183,11 @@ export function sanitizeProgress(value: unknown): Progress {
     subjectsOfInterest: storedSubjects.length ? storedSubjects : empty.subjectsOfInterest,
     dailyGoalMinutes: boundedInteger(value.dailyGoalMinutes, empty.dailyGoalMinutes, 5, 45),
     xp: boundedInteger(value.xp, empty.xp, 0, 1_000_000_000),
-    streak: boundedInteger(value.streak, empty.streak, 0, 1_000_000),
-    hearts: boundedInteger(value.hearts, empty.hearts, 0, 3),
     completed: uniqueStrings(value.completed),
-    awardedPredictions: uniqueStrings(value.awardedPredictions),
-    misconceptionCounts: numberRecord(value.misconceptionCounts, 1_000_000),
-    mistakeEvidence: uniqueStrings(value.mistakeEvidence),
-    recoveredMistakes: uniqueStrings(value.recoveredMistakes),
     lessonMastery: numberRecord(value.lessonMastery, 100),
-    predictionAttempts,
-    correctPredictions,
-    firstAttemptCorrect,
-    hintsUsed: boundedInteger(value.hintsUsed, empty.hintsUsed, 0, 1_000_000_000),
-    hintEvidence: uniqueStrings(value.hintEvidence),
     recentActivity: activities(value.recentActivity),
     languageUsage,
     badges: uniqueStrings(value.badges, 100),
-    completedBossChallenges: uniqueStrings(value.completedBossChallenges),
     ...(storedBadge ? { badge: storedBadge } : {})
   };
 }
@@ -279,46 +227,8 @@ export function configureProfile(progress: Progress, preferences: OnboardingPref
     : recordLanguageUse(configured, preferences.preferredLanguage);
 }
 
-function evidenceBelongsToLesson(evidenceId: string, lessonId: string) {
-  return evidenceId === lessonId || evidenceId.startsWith(`${lessonId}:`);
-}
-
-function lessonIdFromEvidence(evidenceId: string) {
-  return evidenceId.split(':', 1)[0];
-}
-
-/**
- * Lesson mastery is derived from visible learner evidence rather than an opaque average:
- * 50 points for completing the trace, 30 for a correct prediction or recovery, and
- * 20 for either a first-try answer without a hint or fully recovering every recorded mistake.
- */
 export function lessonMasteryScore(progress: Progress, id: string) {
-  if (progress.completedBossChallenges.includes(id)) return 100;
-
-  const completed = progress.completed.includes(id);
-  const correctPredictions = progress.awardedPredictions.filter((evidenceId) =>
-    evidenceBelongsToLesson(evidenceId, id)
-  );
-  const mistakes = progress.mistakeEvidence.filter((evidenceId) =>
-    evidenceBelongsToLesson(evidenceId, id)
-  );
-  const recoveredMistakes = new Set(
-    progress.recoveredMistakes.filter((evidenceId) => evidenceBelongsToLesson(evidenceId, id))
-  );
-  const demonstrated = correctPredictions.length > 0 || recoveredMistakes.size > 0;
-  const unresolvedMistake = mistakes.some((evidenceId) => !recoveredMistakes.has(evidenceId));
-  const firstTryWithoutHint =
-    correctPredictions.some((evidenceId) => !progress.mistakeEvidence.includes(evidenceId)) &&
-    !progress.hintEvidence.includes(id) &&
-    !unresolvedMistake;
-  const fullyRecovered =
-    mistakes.length > 0 && mistakes.every((evidenceId) => recoveredMistakes.has(evidenceId));
-
-  return (
-    (completed ? 50 : 0) +
-    (demonstrated ? 30 : 0) +
-    (demonstrated && (firstTryWithoutHint || fullyRecovered) ? 20 : 0)
-  );
+  return progress.completed.includes(id) ? 50 : 0;
 }
 
 function syncLessonMastery(progress: Progress, id: string) {
@@ -333,17 +243,6 @@ function syncLessonMastery(progress: Progress, id: string) {
   };
 }
 
-export function recordHint(progress: Progress, canonicalLessonId: string) {
-  const next = {
-    ...progress,
-    hintsUsed: Math.min(1_000_000_000, progress.hintsUsed + 1),
-    hintEvidence: progress.hintEvidence.includes(canonicalLessonId)
-      ? progress.hintEvidence
-      : [...progress.hintEvidence, canonicalLessonId]
-  };
-  return syncLessonMastery(next, canonicalLessonId);
-}
-
 export function recordLanguageUse(progress: Progress, language: SupportedLanguage) {
   return {
     ...progress,
@@ -352,33 +251,6 @@ export function recordLanguageUse(progress: Progress, language: SupportedLanguag
       [language]: Math.min(1_000_000, (progress.languageUsage[language] ?? 0) + 1)
     }
   };
-}
-
-export function awardPrediction(progress: Progress, id: string, xp: number) {
-  if (progress.awardedPredictions.includes(id)) return progress;
-  const firstBadge = progress.xp + xp >= 10 ? 'First Prediction' : undefined;
-  const next = {
-    ...progress,
-    xp: progress.xp + xp,
-    streak: progress.streak + 1,
-    predictionAttempts: progress.predictionAttempts + 1,
-    correctPredictions: progress.correctPredictions + 1,
-    firstAttemptCorrect:
-      progress.firstAttemptCorrect + (progress.mistakeEvidence.includes(id) ? 0 : 1),
-    awardedPredictions: [...progress.awardedPredictions, id],
-    badges:
-      firstBadge && !progress.badges.includes(firstBadge)
-        ? [...progress.badges, firstBadge]
-        : progress.badges,
-    badge: firstBadge ?? progress.badge,
-    recentActivity: activity(progress, {
-      type: 'prediction',
-      lessonId: id,
-      xp,
-      at: new Date().toISOString()
-    })
-  };
-  return syncLessonMastery(next, lessonIdFromEvidence(id));
 }
 
 export function completeLesson(progress: Progress, id: string, xp = 25) {
@@ -397,71 +269,6 @@ export function completeLesson(progress: Progress, id: string, xp = 25) {
   return syncLessonMastery(next, id);
 }
 
-export function completeBossChallenge(progress: Progress, id: string, xp: number) {
-  if (progress.completedBossChallenges.includes(id)) return progress;
-  const completedBossChallenges = [...progress.completedBossChallenges, id];
-  const badge = completedBossChallenges.length === 5 ? 'Arena Champion' : 'Boss Tracer';
-  return {
-    ...progress,
-    xp: progress.xp + xp,
-    streak: progress.streak + 1,
-    completedBossChallenges,
-    lessonMastery: {
-      ...progress.lessonMastery,
-      [id]: 100
-    },
-    badges: progress.badges.includes(badge) ? progress.badges : [...progress.badges, badge],
-    badge,
-    recentActivity: activity(progress, {
-      type: 'completion',
-      lessonId: id,
-      xp,
-      at: new Date().toISOString()
-    })
-  };
-}
-
-export function recordMisconception(progress: Progress, evidenceId: string, tag: MisconceptionTag) {
-  if (progress.mistakeEvidence.includes(evidenceId)) return progress;
-  const next = {
-    ...progress,
-    streak: 0,
-    hearts: Math.max(0, progress.hearts - 1),
-    predictionAttempts: progress.predictionAttempts + 1,
-    misconceptionCounts: {
-      ...progress.misconceptionCounts,
-      [tag]: (progress.misconceptionCounts[tag] ?? 0) + 1
-    },
-    mistakeEvidence: [...progress.mistakeEvidence, evidenceId]
-  };
-  return syncLessonMastery(next, lessonIdFromEvidence(evidenceId));
-}
-
-export function awardRecovery(progress: Progress, evidenceId: string) {
-  if (progress.recoveredMistakes.includes(evidenceId)) return progress;
-  const badge = 'State Detective';
-  const next = {
-    ...progress,
-    xp: progress.xp + 6,
-    recoveredMistakes: [...progress.recoveredMistakes, evidenceId],
-    badges: progress.badges.includes(badge) ? progress.badges : [...progress.badges, badge],
-    badge,
-    recentActivity: activity(progress, {
-      type: 'recovery',
-      lessonId: evidenceId.split(':')[0],
-      xp: 6,
-      at: new Date().toISOString()
-    })
-  };
-  return syncLessonMastery(next, lessonIdFromEvidence(evidenceId));
-}
-
 export function levelFromXp(xp: number) {
   return Math.floor(xp / 100) + 1;
-}
-
-export function accuracy(progress: Progress) {
-  return progress.predictionAttempts
-    ? Math.round((progress.correctPredictions / progress.predictionAttempts) * 100)
-    : 0;
 }

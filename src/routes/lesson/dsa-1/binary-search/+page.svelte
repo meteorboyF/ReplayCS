@@ -155,9 +155,7 @@
     <p>{lesson.description}</p>
   </div>
   <div class="score">
-    <button onclick={shareTrace}>Share this trace</button><span>⚡ {progress.xp} XP</span><span
-      >🔥 {progress.streak}</span
-    >
+    <button onclick={shareTrace}>Share this trace</button><span>⚡ {progress.xp} XP</span>
   </div>
 </div>
 {#if shareStatus}<p class="share-status" role="status">{shareStatus}</p>{/if}

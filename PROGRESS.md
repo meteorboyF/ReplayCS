@@ -3,16 +3,16 @@
 ## Current status
 
 - Updated: 2026-07-22 (+06)
-- Working branch: `feat/study-recap-current`
-- Working baseline: `e298072` (`origin/main`, merge of PR #30)
+- Working branch: `refactor/progress-store`
+- Working baseline: `1c99536` (`origin/main`, merge of PR #31)
 - Teammate UI baseline: `e75d3a9` (PRs #23 and #25–#29)
-- Production commit: `e298072`
+- Production commit: `1c99536`
 - Production: https://replaycs.vercel.app
-- Deployment: `dpl_C6qLpB16DjeHPPbC27iC3YW8yAKX` (`READY`)
-- Stable deployment URL: https://replaycs-2aumm6wez-meteorboy-f.vercel.app
+- Deployment: `dpl_2H8cEaxbiYPcUy8mf1X7K6c5kAVP` (`READY`)
+- Stable deployment URL: https://replaycs-pbigame5c-meteorboy-f.vercel.app
 - Recovery branch: `origin/feat/study-recap` at `2fb3489`
-- Worktree: Study Recap is being adapted on current main; local `.claude/` is untracked and must not be committed.
-- Immediate next action: complete the Study Recap full gate, merge/deploy it, then audit legacy progress-store consumers.
+- Worktree: obsolete progress fields are being removed with a version-4 compatibility migration; local `.claude/` is untracked and must not be committed.
+- Immediate next action: complete the progress-store full gate, merge/deploy it, then build Strings Lab from current main.
 
 ## Current teammate UI contract
 
@@ -48,8 +48,8 @@ The only product regression found was the Sorting Arena setup form extending the
 
 ## Recovery and feature status
 
-- Study Recap: recovered source was transplanted onto current main without its stale Progress layout. The deterministic generator, server-only optional model rewrite, strict validation/schema, request size limit, timeout, safe fallback, English/Bangla and concise/exam-ready controls, subject/topic selection, teammate-style Progress CTA, and responsive page are implemented. Focused tests: 13/13 unit/API and 2/2 browser. Full gate, PR, merge, and deploy remain.
-- Progress-store cleanup: not started. Current main already removed user-facing prediction metrics; legacy storage fields still require a compatibility-safe consumer audit.
+- Study Recap: complete, merged in PR #31, and deployed from `1c99536`. The deterministic generator, server-only optional model rewrite, strict validation/schema, request size limit, timeout, safe fallback, English/Bangla and concise/exam-ready controls, subject/topic selection, teammate-style Progress CTA, and responsive page are implemented.
+- Progress-store cleanup: in progress. Consumer audit found legacy fields still affected mastery, recommendations, two score badges, and activity labels. The local version-4 shape removes those dependencies while accepting versions 1–4 and ignoring obsolete stored properties. Focused checks: 15/15 unit and 7/7 browser.
 - Strings Lab: not started.
 - Recursion Lab: not started.
 
@@ -78,11 +78,11 @@ UI milestone `e298072`:
 1. Teammate UI deployed from current main: complete.
 2. Production audit: complete; one tablet overflow identified.
 3. UI regression repair and durable audit test: complete (PR #30, production `e298072`).
-4. Study Recap transplant/adaptation: in progress on `feat/study-recap-current`.
-5. Compatibility-safe progress-store cleanup: pending after Study Recap.
+4. Study Recap transplant/adaptation: complete (PR #31, production `1c99536`).
+5. Compatibility-safe progress-store cleanup: in progress on `refactor/progress-store`.
 6. Strings Lab: pending.
 7. Recursion Lab: pending.
 
 ## Blockers
 
-None. Git/Vercel writes and browser launches require managed approval in this environment.
+The Study Recap deployment is `READY` and aliased, but this environment currently times out connecting to the public alias even for `/`; the direct deployment URL is protected by Vercel SSO. Retry public verification when alias connectivity recovers. Git/Vercel writes and browser launches require managed approval.
