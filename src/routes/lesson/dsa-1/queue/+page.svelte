@@ -57,6 +57,7 @@
 
   let operation = $state<QueueOperation>(DEFAULT_QUEUE_CONFIG.operation);
   let backing = $state<QueueBacking>(DEFAULT_QUEUE_CONFIG.backing);
+  let maintainRear = $state(true);
   let valuesText = $state(DEFAULT_QUEUE_CONFIG.values?.join(', ') ?? '');
   let newValue = $state(DEFAULT_QUEUE_CONFIG.newValue ?? 99);
   let lesson = $state(createQueueLesson(config()));
@@ -84,9 +85,7 @@
     progress = loadProgress();
     language = progress.preferredLanguage;
     try {
-      const stored: unknown = JSON.parse(
-        localStorage.getItem('replaycs-queue-operations') ?? '[]'
-      );
+      const stored: unknown = JSON.parse(localStorage.getItem('replaycs-queue-operations') ?? '[]');
       completedOperations = [
         ...new Set(
           (Array.isArray(stored) ? stored : []).filter(
@@ -118,21 +117,26 @@
     return typeof value === 'string' ? value : String(record.id);
   }
 
+  // Linked-list enqueue without a rear pointer must traverse the list: encode that as
+  // capacity -1, the engine's "no rear pointer" sentinel.
+  function rearSentinel(values: number[]) {
+    return backing === 'linked-list' && !maintainRear ? -1 : Math.max(6, values.length + 2);
+  }
+
   function config(): QueueConfig {
+    const values = parseValues(false);
     return {
       operation,
       backing,
-      values: parseValues(false),
-      newValue
+      values,
+      newValue,
+      capacity: rearSentinel(values)
     };
   }
 
   function parseValues(validate = true) {
     const pieces = valuesText.split(',').map((value) => value.trim());
-    if (
-      pieces.some((value) => value === '' || !/^-?\d+$/.test(value)) ||
-      pieces.length > 8
-    ) {
+    if (pieces.some((value) => value === '' || !/^-?\d+$/.test(value)) || pieces.length > 8) {
       if (validate) inputError = 'Enter up to 8 comma-separated whole numbers.';
       return [...(DEFAULT_QUEUE_CONFIG.values ?? [])];
     }
@@ -151,8 +155,10 @@
     try {
       lesson = createQueueLesson({
         operation,
+        backing,
         values,
-        newValue
+        newValue,
+        capacity: rearSentinel(values)
       });
       index = 0;
       submitted = [];
@@ -254,20 +260,21 @@
       const inferredStateKey = firstMutation?.entityId ?? 'front';
       const stateKey = authored?.stateKey ?? inferredStateKey;
       const actual = String(authored?.correctAnswer ?? step.prediction.correctAnswer);
-      mistake = {
+      const attempt: MistakeAttempt = {
         evidenceId,
         stepId: step.id,
         prompt: authored?.prompt ?? step.prediction.prompt,
         predicted: answer,
         actual,
         explanation: authored?.explanation ?? step.prediction.explanation,
-        tag: authored?.tag ?? 'queue-update-order',
+        tag: authored?.tag ?? 'queue-front-rear',
         variableLabel: authored?.variableLabel ?? stateKey,
         stateKey,
         recoveryPrompt:
           authored?.recoveryPrompt ?? `Recovery challenge: enter the correct ${stateKey} value.`
       };
-      progress = recordMisconception(progress, evidenceId, mistake.tag);
+      mistake = attempt;
+      progress = recordMisconception(progress, evidenceId, attempt.tag);
     }
     saveProgress(progress);
   }
@@ -324,7 +331,7 @@
   }
 
   function elementCount(state: Record<string, TraceValue>) {
-    return Array.isArray(state.elements) ? state.elements.length : 0;
+    return typeof state.size === 'number' ? state.size : 0;
   }
 </script>
 
@@ -373,6 +380,21 @@
       {/each}
     </select></label
   >
+  <label
+    >Backing
+    <select
+      aria-label="Backing"
+      value={backing}
+      onchange={(event) => {
+        backing = event.currentTarget.value as QueueBacking;
+        buildTrace();
+      }}
+    >
+      <option value="naive-array">Naive array</option>
+      <option value="circular-array">Circular array</option>
+      <option value="linked-list">Linked list</option>
+    </select></label
+  >
   <label class="values-field"
     >Current queue
     <input bind:value={valuesText} aria-describedby="list-help list-error" />
@@ -384,6 +406,41 @@
   <p id="list-help">Enter comma-separated values (front to rear).</p>
   {#if inputError}<p id="list-error" class="error" role="alert">{inputError}</p>{/if}
 </form>
+
+{#if backing === 'linked-list' && String(operation) === 'enqueue'}
+  <section class="rear-switch panel" aria-labelledby="rear-switch-title">
+    <div>
+      <p class="eyebrow">Flagship comparison</p>
+      <h2 id="rear-switch-title">Maintain rear pointer</h2>
+      <p>
+        This switch rebuilds the source, trace path, exact counts, and bound for the same enqueue.
+      </p>
+    </div>
+    <button
+      type="button"
+      class:on={maintainRear}
+      role="switch"
+      aria-checked={maintainRear}
+      aria-label="Maintain rear pointer"
+      onclick={() => {
+        maintainRear = !maintainRear;
+        buildTrace();
+      }}><span>{maintainRear ? 'ON' : 'OFF'}</span><i></i></button
+    >
+    <div class="rear-paths">
+      <div class:active={!maintainRear}>
+        <b>OFF · O(n)</b><span>front → … → last node → link</span><small
+          >Traverse the whole list to find the last node, then link.</small
+        >
+      </div>
+      <div class:active={maintainRear}>
+        <b>ON · O(1)</b><span>rear.next → newNode · rear → newNode</span><small
+          >Two direct pointer updates; no traversal.</small
+        >
+      </div>
+    </div>
+  </section>
+{/if}
 
 <section class="operation-context" aria-live="polite">
   <div>
@@ -615,5 +672,95 @@
   .operation-context {
     margin: 1.5rem 0 0.7rem;
     align-items: center;
+  }
+  .rear-switch {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.8rem 1.2rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-color: #fbbf2455;
+  }
+  .rear-switch h2 {
+    margin: 0.2rem 0;
+  }
+  .rear-switch p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  .rear-switch > button {
+    position: relative;
+    width: 88px;
+    height: 42px;
+    padding: 0.2rem 0.5rem;
+    border-radius: 99px;
+    background: #172033;
+  }
+  .rear-switch > button span {
+    position: absolute;
+    left: 12px;
+    top: 13px;
+    color: var(--warning);
+    font: 0.66rem var(--mono);
+  }
+  .rear-switch > button i {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--warning);
+    transition: 180ms;
+  }
+  .rear-switch > button.on {
+    background: #2dd4bf28;
+  }
+  .rear-switch > button.on span {
+    left: auto;
+    right: 13px;
+    color: var(--primary);
+  }
+  .rear-switch > button.on i {
+    right: 52px;
+    background: var(--primary);
+  }
+  .rear-paths {
+    grid-column: 1/-1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .rear-paths div {
+    display: grid;
+    gap: 0.3rem;
+    padding: 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    opacity: 0.5;
+  }
+  .rear-paths div.active {
+    opacity: 1;
+    border-color: var(--primary);
+    background: #2dd4bf09;
+  }
+  .rear-paths b {
+    color: var(--primary);
+  }
+  .rear-paths span {
+    overflow-wrap: anywhere;
+    font: 0.68rem var(--mono);
+  }
+  .rear-paths small {
+    color: var(--muted);
+  }
+  @media (max-width: 520px) {
+    .rear-switch {
+      grid-template-columns: 1fr;
+    }
+    .rear-paths {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

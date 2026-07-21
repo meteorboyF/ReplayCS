@@ -47,7 +47,9 @@ describe('stack operation execution coverage', () => {
       expect(lesson.steps.length, variant.id).toBeGreaterThan(0);
       expect(JSON.stringify(repeated), variant.id).toBe(JSON.stringify(lesson));
       expect(lesson.supportedLanguages, variant.id).toEqual(['c', 'cpp', 'java', 'python']);
-      expect(finalStep?.complexityEvidence?.cumulativeOperationCount, variant.id).toBeGreaterThan(0);
+      expect(finalStep?.complexityEvidence?.cumulativeOperationCount, variant.id).toBeGreaterThan(
+        0
+      );
       expect(finalStep?.complexityEvidence?.timeComplexity, variant.id).toBeDefined();
 
       for (const language of lesson.supportedLanguages) {
@@ -60,6 +62,15 @@ describe('stack operation execution coverage', () => {
           `${variant.id}:${language}`
         ).toBe(true);
       }
+
+      // Every variant must expose at least one prediction checkpoint with mistake metadata.
+      const predictionStep = lesson.steps.find((step) => step.prediction);
+      expect(predictionStep, `${variant.id}:has-prediction`).toBeDefined();
+      expect(predictionStep?.metadata?.mistake, `${variant.id}:has-mistake`).toBeDefined();
+      expect(
+        lesson.steps.at(-1)?.complexityEvidence?.assumptions.length,
+        `${variant.id}:assumptions`
+      ).toBeGreaterThan(0);
 
       lesson.steps.forEach((step, index) => {
         expect(step.index, `${variant.id}:step-${index}`).toBe(index);
@@ -83,8 +94,8 @@ describe('stack operation execution coverage', () => {
     // Normal array would just fail, but for the sake of checking complexity logic:
     // It shouldn't trigger an O(n) resize.
     if (normalEvidence?.timeComplexity !== 'O(1)') {
-        // Just verify resize is O(n)
-        expect(resizeLesson.steps.length).toBeGreaterThan(normalLesson.steps.length);
+      // Just verify resize is O(n)
+      expect(resizeLesson.steps.length).toBeGreaterThan(normalLesson.steps.length);
     }
   });
 });

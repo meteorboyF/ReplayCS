@@ -2,7 +2,7 @@ export const subjects = {
   'dsa-1': {
     title: 'Data Structures & Algorithms I',
     description:
-      'Trace binary search, compare classic sorting algorithms, and replay linked-list pointer changes operation by operation.',
+      'Trace searches, sorting, arrays, linked lists, stacks, queues, and deques operation by operation.',
     lessons: [
       {
         title: 'Binary Search',
@@ -28,6 +28,25 @@ export const subjects = {
         slug: 'arrays',
         status: 'live',
         detail: 'Trace index arithmetic, shifting, resizing, and amortized growth slot by slot.'
+      },
+      {
+        title: 'Stack Lab',
+        slug: 'stack',
+        status: 'live',
+        detail:
+          'Push, pop, peek, and search across fixed-array, dynamic-array, and linked backings.'
+      },
+      {
+        title: 'Queue Lab',
+        slug: 'queue',
+        status: 'live',
+        detail: 'Compare naive-array shifting, circular wrap-around, and linked front/rear updates.'
+      },
+      {
+        title: 'Deque Lab',
+        slug: 'deque',
+        status: 'live',
+        detail: 'Push, pop, and peek at both ends of a circular buffer or doubly linked list.'
       }
     ]
   },

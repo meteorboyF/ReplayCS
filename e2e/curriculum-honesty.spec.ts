@@ -3,7 +3,15 @@ import { expect, test } from '@playwright/test';
 const subjects = [
   {
     path: '/learn/dsa-1',
-    liveLessons: ['Binary Search', 'Sorting Arena', 'Linked List Lab', 'Array & Dynamic Array Lab']
+    liveLessons: [
+      'Binary Search',
+      'Sorting Arena',
+      'Linked List Lab',
+      'Array & Dynamic Array Lab',
+      'Stack Lab',
+      'Queue Lab',
+      'Deque Lab'
+    ]
   },
   { path: '/learn/dsa-2', liveLessons: ['Graph Explorer'] },
   { path: '/learn/dbms', liveLessons: ['SQL Execution Lab'] },

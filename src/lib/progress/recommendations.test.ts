@@ -34,6 +34,9 @@ describe('adaptive recommendations', () => {
       'sorting-arena',
       'linked-list-lab',
       'array-lab',
+      'stack-lab',
+      'queue-lab',
+      'deque-lab',
       'cpu-scheduling',
       'packet-journey'
     ]);
@@ -72,6 +75,9 @@ describe('adaptive recommendations', () => {
           'sorting-arena',
           'linked-list-lab',
           'array-lab',
+          'stack-lab',
+          'queue-lab',
+          'deque-lab',
           'graph-explorer'
         ]
       }).href
